@@ -3,15 +3,23 @@ import { WordDictionary, WordEmbedding } from './types';
 let dictionary: WordDictionary | null = null;
 let wordList: string[] = [];
 let wordBaseformMap: { [key: string]: string } | null = null;
+let commonWords: string[] = [];
 
 export const loadEmbeddings = async () => {
-  if (dictionary && wordBaseformMap) {
+  if (dictionary && wordBaseformMap && commonWords.length > 0) {
     console.log('Using cached embeddings dictionary');
     return dictionary;
   }
   
   try {
     console.log('Attempting to load embeddings from files...');
+    
+    // Load common words
+    const commonWordsResponse = await fetch('/data/common_words.txt');
+    if (!commonWordsResponse.ok) throw new Error('Failed to load common words');
+    const commonWordsText = await commonWordsResponse.text();
+    commonWords = commonWordsText.split('\n').filter(word => word.trim());
+    console.log('Loaded common words:', commonWords.length, 'entries');
     
     // Load word to baseform mapping
     const wordBaseformResponse = await fetch('/data/word_baseform.json');
@@ -25,8 +33,13 @@ export const loadEmbeddings = async () => {
     dictionary = await embedsResponse.json();
     console.log('Loaded concept embeddings:', Object.keys(dictionary).length, 'entries');
     
-    // Create word list from all valid words (including variations)
-    wordList = Object.keys(wordBaseformMap);
+    // Create word list from common words that have vectors
+    wordList = commonWords.filter(word => {
+      const baseform = wordBaseformMap?.[word];
+      return baseform && dictionary?.[baseform]?.vector !== undefined;
+    });
+    
+    console.log('Filtered to valid common words with vectors:', wordList.length);
     
     // Debug: Log a sample of the loaded data
     const sampleWord = wordList[0];
@@ -53,6 +66,7 @@ export const loadEmbeddings = async () => {
       "pet": "pet"
     };
     wordList = Object.keys(wordBaseformMap);
+    commonWords = wordList;
     return dictionary;
   }
 };
@@ -126,13 +140,13 @@ export const calculateProgress = (similarity: number): number => {
 
 export const findRandomWordPair = async (): Promise<[string, string]> => {
   console.log('Finding random word pair...');
-  const words = await getWordList();
+  await loadEmbeddings(); // Ensure embeddings are loaded
   let attempts = 0;
   const maxAttempts = 100;
   
   while (attempts < maxAttempts) {
-    const word1 = words[Math.floor(Math.random() * words.length)];
-    const word2 = words[Math.floor(Math.random() * words.length)];
+    const word1 = wordList[Math.floor(Math.random() * wordList.length)];
+    const word2 = wordList[Math.floor(Math.random() * wordList.length)];
     
     if (word1 === word2) continue;
     
