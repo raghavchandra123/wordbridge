@@ -1,4 +1,12 @@
 export * from './types';
-export * from './utils';
-export * from './loader';
-export * from './game';
+export { loadWordChunk } from './chunkLoader';
+export {
+  loadEmbeddings,
+  getWordList,
+  getBaseForm,
+  isValidWord,
+  cosineSimilarity,
+  calculateProgress,
+  getWordVector
+} from './loader';
+export { findRandomWordPair } from './game';

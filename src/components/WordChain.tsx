@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
-import { cosineSimilarity } from "@/lib/embeddings/loader";
+import { cosineSimilarity, calculateProgress } from "@/lib/embeddings/loader";
 
 interface WordChainProps {
   words: string[];

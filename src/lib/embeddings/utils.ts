@@ -23,7 +23,6 @@ export const cosineSimilarity = (word1: string, word2: string, dictionary: WordD
 };
 
 export const calculateProgress = (similarity: number): number => {
-  // Changed thresholds from 0.1/0.7 to 0.05/0.3
   const progress = ((similarity - 0.05) / (0.3 - 0.05)) * 100;
   return Math.max(0, Math.min(100, progress));
 };
