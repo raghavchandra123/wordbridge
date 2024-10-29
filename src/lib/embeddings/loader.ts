@@ -5,7 +5,10 @@ let wordBaseformMap: { [key: string]: string } | null = null;
 let commonWords: string[] = [];
 let wordList: string[] = [];
 
-// Cache for the currently loaded chunk
+// Cache for loaded chunks
+const chunkCache: { [chunkIndex: number]: WordDictionary } = {};
+
+// Cache for the currently active chunk
 let cachedChunk: { 
   words: WordDictionary; 
   firstWord: string; 
@@ -15,7 +18,15 @@ let cachedChunk: {
 
 // Load and decompress a chunk file
 async function loadCompressedChunk(chunkIndex: number): Promise<WordDictionary | null> {
-  console.log(`📦 Loading and decompressing chunk ${chunkIndex}...`);
+  console.log(`📦 Checking cache for chunk ${chunkIndex}...`);
+  
+  // Check if chunk is already cached
+  if (chunkCache[chunkIndex]) {
+    console.log(`✨ Cache hit! Using cached chunk ${chunkIndex}`);
+    return chunkCache[chunkIndex];
+  }
+
+  console.log(`📦 Cache miss. Loading and decompressing chunk ${chunkIndex}...`);
   try {
     const response = await fetch(`/data/chunks/embeddings_chunk_${chunkIndex}.gz`);
     if (!response.ok) {
@@ -39,6 +50,10 @@ async function loadCompressedChunk(chunkIndex: number): Promise<WordDictionary |
         new Float32Array(vectorBytes as number[])
       ])
     );
+    
+    // Store in cache
+    chunkCache[chunkIndex] = processedData;
+    console.log(`💾 Cached chunk ${chunkIndex} for future use`);
     
     console.log(`✅ Successfully loaded chunk ${chunkIndex}`);
     return processedData;
