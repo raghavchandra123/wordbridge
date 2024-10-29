@@ -3,36 +3,49 @@ import { cosineSimilarity } from '../embeddings';
 import { GameState } from '../types';
 import { SIMILARITY_THRESHOLDS } from '../constants';
 
-// Find a random pair of words that are sufficiently dissimilar
-export const findRandomWordPair = async (): Promise<[string, string]> => {
-  console.log("🎲 Finding random word pair...");
+const getDateSeed = () => {
+  const today = new Date();
+  return `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+};
+
+const seededRandom = (seed: string) => {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    const char = seed.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  const x = Math.sin(hash) * 10000;
+  return x - Math.floor(x);
+};
+
+export const findDailyWordPair = async (): Promise<[string, string]> => {
+  console.log("🎲 Finding daily word pair...");
   const wordList = getWordList();
+  const seed = getDateSeed();
+  const random = seededRandom(seed);
+  
+  const word1Index = Math.floor(random * wordList.length);
+  let word2Index;
   let attempts = 0;
   const maxAttempts = 100;
   
-  while (attempts < maxAttempts) {
-    const word1 = wordList[Math.floor(Math.random() * wordList.length)];
-    const word2 = wordList[Math.floor(Math.random() * wordList.length)];
+  do {
+    word2Index = Math.floor(seededRandom(seed + attempts) * wordList.length);
+    if (word1Index === word2Index) continue;
     
-    if (word1 === word2) {
-      console.log(`⚠️ Same words selected (${word1}), trying again...`);
-      continue;
-    }
-    
-    console.log(`🔄 Attempt ${attempts + 1}: Testing pair "${word1}" and "${word2}"`);
-    const similarity = await cosineSimilarity(word1, word2);
-    console.log(`📊 Similarity between "${word1}" and "${word2}": ${similarity}`);
+    const similarity = await cosineSimilarity(
+      wordList[word1Index],
+      wordList[word2Index]
+    );
     
     if (similarity < SIMILARITY_THRESHOLDS.MIN) {
-      console.log(`✅ Found suitable word pair: "${word1}" → "${word2}"`);
-      return [word1, word2];
+      return [wordList[word1Index], wordList[word2Index]];
     }
     
-    console.log(`❌ Words too similar (${similarity}), trying again...`);
     attempts++;
-  }
+  } while (attempts < maxAttempts);
   
-  console.error(`❌ Failed to find suitable word pair after ${maxAttempts} attempts`);
   throw new Error('Failed to find suitable word pair');
 };
 
