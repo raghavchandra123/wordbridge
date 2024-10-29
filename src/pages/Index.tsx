@@ -19,11 +19,13 @@ import {
 } from "@/lib/embeddings";
 import { saveHighScore } from "@/lib/storage";
 import { GameState } from "@/lib/types";
+import WordChain from "@/components/WordChain";
 
 const Index = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [currentWord, setCurrentWord] = useState("");
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [game, setGame] = useState<GameState>({
     startWord: "",
     targetWord: "",
@@ -61,10 +63,7 @@ const Index = () => {
 
   const handleWordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!currentWord) return;
-    
-    console.log('Word submitted:', currentWord);
     
     if (!isValidWord(currentWord)) {
       toast({
@@ -75,11 +74,8 @@ const Index = () => {
       return;
     }
 
-    const lastWord = game.currentChain[game.currentChain.length - 1];
-    console.log('Comparing with last word:', lastWord);
-    
-    const similarity = cosineSimilarity(lastWord, currentWord);
-    console.log('Similarity with previous word:', similarity);
+    const previousWord = game.currentChain[editingIndex !== null ? editingIndex - 1 : game.currentChain.length - 1];
+    const similarity = cosineSimilarity(previousWord, currentWord);
     
     if (similarity < 0.7) {
       toast({
@@ -90,15 +86,18 @@ const Index = () => {
       return;
     }
     
-    const newChain = [...game.currentChain, currentWord];
-    const similarityToTarget = cosineSimilarity(currentWord, game.targetWord);
-    console.log('Similarity to target word:', similarityToTarget);
+    let newChain;
+    if (editingIndex !== null) {
+      newChain = [...game.currentChain.slice(0, editingIndex), currentWord];
+    } else {
+      newChain = [...game.currentChain, currentWord];
+    }
     
+    const similarityToTarget = cosineSimilarity(currentWord, game.targetWord);
     const newProgress = calculateProgress(similarityToTarget);
     setProgress(newProgress);
     
     if (similarityToTarget >= 0.7) {
-      console.log('Game completed!');
       setGame({
         ...game,
         currentChain: newChain,
@@ -127,6 +126,13 @@ const Index = () => {
     }
     
     setCurrentWord("");
+    setEditingIndex(null);
+  };
+
+  const handleWordClick = (index: number) => {
+    if (index === 0 || game.isComplete) return;
+    setEditingIndex(index);
+    setCurrentWord(game.currentChain[index]);
   };
 
   const handleNewGame = async () => {
@@ -140,15 +146,16 @@ const Index = () => {
       score: 0,
     });
     setProgress(0);
+    setEditingIndex(null);
     setIsLoading(false);
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
-        <Card className="w-[90vw] max-w-md border-2 border-pink-100 dark:border-gray-700">
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="w-[90vw] max-w-md">
           <CardHeader>
-            <CardTitle className="text-2xl text-center bg-gradient-to-r from-pink-400 to-blue-400 bg-clip-text text-transparent">
+            <CardTitle className="text-2xl text-center">
               Loading Word Bridge...
             </CardTitle>
             <CardDescription className="text-center">
@@ -156,7 +163,7 @@ const Index = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Progress value={undefined} className="w-full bg-pink-100 dark:bg-gray-700" />
+            <Progress value={undefined} />
           </CardContent>
         </Card>
       </div>
@@ -164,10 +171,10 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen p-4 bg-gradient-to-br from-pink-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
-      <Card className="max-w-2xl mx-auto border-2 border-pink-100 dark:border-gray-700 shadow-lg">
+    <div className="min-h-screen p-4">
+      <Card className="max-w-2xl mx-auto">
         <CardHeader>
-          <CardTitle className="text-4xl text-center mb-2 bg-gradient-to-r from-pink-400 to-blue-400 bg-clip-text text-transparent">
+          <CardTitle className="text-4xl text-center mb-2">
             Word Bridge
           </CardTitle>
           <CardDescription className="text-center text-lg">
@@ -176,57 +183,44 @@ const Index = () => {
         </CardHeader>
         <CardContent className="space-y-8">
           <div className="flex justify-between items-center text-2xl font-bold">
-            <div className="p-4 bg-pink-100/50 dark:bg-pink-900/20 rounded-lg border border-pink-200 dark:border-pink-800">
+            <div className="p-4 bg-pink-900/20 rounded-lg border border-pink-800/20">
               {game.startWord}
             </div>
-            <div className="text-blue-400 dark:text-blue-300">→</div>
-            <div className="p-4 bg-blue-100/50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div className="text-blue-400">→</div>
+            <div className="p-4 bg-blue-900/20 rounded-lg border border-blue-800/20">
               {game.targetWord}
             </div>
           </div>
 
-          <Progress 
-            value={progress} 
-            className="w-full h-2 bg-pink-100 dark:bg-gray-700" 
-          />
+          <Progress value={progress} />
 
-          <div className="space-y-2">
-            {game.currentChain.map((word, index) => (
-              <div
-                key={index}
-                className="p-3 bg-gradient-to-r from-pink-100/50 to-blue-100/50 dark:from-pink-900/20 dark:to-blue-900/20 rounded-md text-center font-medium border border-pink-200/50 dark:border-gray-700"
-              >
-                {word}
-              </div>
-            ))}
-          </div>
+          <WordChain
+            words={game.currentChain}
+            targetWord={game.targetWord}
+            onWordClick={handleWordClick}
+            isGameComplete={game.isComplete}
+          />
 
           {!game.isComplete && (
             <form onSubmit={handleWordSubmit} className="space-y-4">
               <Input
                 value={currentWord}
                 onChange={(e) => setCurrentWord(e.target.value.toLowerCase())}
-                placeholder="Enter a word..."
-                className="text-center text-lg border-2 border-pink-100 dark:border-gray-700 focus:border-pink-200 dark:focus:border-pink-600"
+                placeholder={editingIndex !== null ? `Change word #${editingIndex + 1}` : "Enter a word..."}
+                className="text-center text-lg"
               />
-              <Button 
-                type="submit" 
-                className="w-full text-lg bg-gradient-to-r from-pink-400 to-blue-400 hover:from-pink-500 hover:to-blue-500 text-white border-none"
-              >
-                Submit Word
+              <Button type="submit" className="w-full text-lg">
+                {editingIndex !== null ? "Update Word" : "Submit Word"}
               </Button>
             </form>
           )}
 
           {game.isComplete && (
             <div className="space-y-4">
-              <div className="text-center text-2xl font-semibold bg-gradient-to-r from-pink-400 to-blue-400 bg-clip-text text-transparent">
+              <div className="text-center text-2xl font-semibold">
                 Score: {game.score} steps
               </div>
-              <Button 
-                onClick={handleNewGame} 
-                className="w-full text-lg bg-gradient-to-r from-pink-400 to-blue-400 hover:from-pink-500 hover:to-blue-500 text-white border-none"
-              >
+              <Button onClick={handleNewGame} className="w-full text-lg">
                 New Game
               </Button>
             </div>
