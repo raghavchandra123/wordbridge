@@ -49,7 +49,6 @@ export const findDailyWordPair = async (): Promise<[string, string]> => {
   throw new Error('Failed to find suitable word pair');
 };
 
-// Check if a word is valid for the chain
 export const validateWordForChain = async (
   word: string,
   previousWord: string,
@@ -82,10 +81,9 @@ export const validateWordForChain = async (
   };
 };
 
-// Initialize a new game state
 export const initializeGame = async (): Promise<GameState> => {
   console.log("🎮 Initializing new game...");
-  const [startWord, targetWord] = await findRandomWordPair();
+  const [startWord, targetWord] = await findDailyWordPair();
   console.log(`✅ Game initialized with start word "${startWord}" and target word "${targetWord}"`);
   return {
     startWord,
