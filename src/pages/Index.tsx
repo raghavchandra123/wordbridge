@@ -8,6 +8,7 @@ import {
   findRandomWordPair,
   cosineSimilarity,
   calculateProgress,
+  isValidWord,
 } from "@/lib/embeddings";
 import { saveHighScore } from "@/lib/storage";
 import { GameState } from "@/lib/types";
@@ -55,16 +56,26 @@ const Index = () => {
     
     if (!currentWord) return;
     
+    if (!isValidWord(currentWord)) {
+      toast({
+        title: "Invalid word",
+        description: "This word is not in our dictionary",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const lastWord = game.currentChain[game.currentChain.length - 1];
-    const similarity = cosineSimilarity(
-      (await loadEmbeddings())[lastWord],
-      (await loadEmbeddings())[currentWord]
-    );
+    const embeddings = await loadEmbeddings();
+    const lastWordBase = embeddings[lastWord];
+    const currentWordBase = embeddings[currentWord];
+    
+    const similarity = cosineSimilarity(lastWordBase, currentWordBase);
     
     if (similarity < 0.7) {
       toast({
-        title: "Invalid word",
-        description: "This word is not similar enough to the previous word",
+        title: "Word not similar enough",
+        description: "Try a word that's more closely related to the previous word",
         variant: "destructive",
       });
       return;
@@ -72,8 +83,8 @@ const Index = () => {
     
     const newChain = [...game.currentChain, currentWord];
     const similarityToTarget = cosineSimilarity(
-      (await loadEmbeddings())[currentWord],
-      (await loadEmbeddings())[game.targetWord]
+      currentWordBase,
+      embeddings[game.targetWord]
     );
     
     const newProgress = calculateProgress(similarityToTarget);

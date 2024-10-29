@@ -10,10 +10,12 @@ export const loadEmbeddings = async () => {
   try {
     // Load word to baseform mapping
     const wordBaseformResponse = await fetch('/data/word_baseform.json');
+    if (!wordBaseformResponse.ok) throw new Error('Failed to load word baseform mappings');
     wordBaseformMap = await wordBaseformResponse.json();
     
     // Load baseform to vector mapping
     const embedsResponse = await fetch('/data/concept_embeds.json');
+    if (!embedsResponse.ok) throw new Error('Failed to load concept embeddings');
     dictionary = await embedsResponse.json();
     
     // Create word list from all valid words (including variations)
@@ -21,7 +23,7 @@ export const loadEmbeddings = async () => {
     
     return dictionary;
   } catch (error) {
-    console.error('Failed to load embeddings, falling back to test dictionary');
+    console.error('Failed to load embeddings:', error);
     // Fallback to test dictionary if files aren't found
     dictionary = {
       "cat": { vector: new Float32Array(Array(300).fill(0.1)) },
@@ -35,7 +37,7 @@ export const loadEmbeddings = async () => {
       "animal": "animal",
       "pet": "pet"
     };
-    wordList = Object.keys(dictionary);
+    wordList = Object.keys(wordBaseformMap);
     return dictionary;
   }
 };
@@ -44,6 +46,10 @@ export const getWordList = async (): Promise<string[]> => {
   if (wordList.length) return wordList;
   await loadEmbeddings();
   return wordList;
+};
+
+export const isValidWord = (word: string): boolean => {
+  return wordBaseformMap ? word in wordBaseformMap : false;
 };
 
 export const cosineSimilarity = (a: WordEmbedding | undefined, b: WordEmbedding | undefined): number => {
