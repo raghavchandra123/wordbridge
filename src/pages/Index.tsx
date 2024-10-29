@@ -21,11 +21,9 @@ import { GameState } from "@/lib/types";
 import WordChain from "@/components/WordChain";
 import { SIMILARITY_THRESHOLDS } from "@/lib/constants";
 
-const Index = () => {
-  const { toast } = useToast();
+// Extract game initialization logic
+const useGameInitialization = () => {
   const [isLoading, setIsLoading] = useState(true);
-  const [currentWord, setCurrentWord] = useState("");
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [game, setGame] = useState<GameState>({
     startWord: "",
     targetWord: "",
@@ -33,7 +31,6 @@ const Index = () => {
     isComplete: false,
     score: 0,
   });
-  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     const initGame = async () => {
@@ -50,16 +47,21 @@ const Index = () => {
         setIsLoading(false);
       } catch (error) {
         console.error('Game initialization failed:', error);
-        toast({
-          title: "Error",
-          description: "Failed to initialize game",
-          variant: "destructive",
-        });
       }
     };
 
     initGame();
   }, []);
+
+  return { isLoading, game, setGame };
+};
+
+const Index = () => {
+  const { toast } = useToast();
+  const { isLoading, game, setGame } = useGameInitialization();
+  const [currentWord, setCurrentWord] = useState("");
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [progress, setProgress] = useState(0);
 
   const handleWordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,6 +69,11 @@ const Index = () => {
 
     const previousWord = game.currentChain[editingIndex !== null ? editingIndex - 1 : game.currentChain.length - 1];
     const similarity = await cosineSimilarity(previousWord, currentWord);
+    const similarityToTarget = await cosineSimilarity(currentWord, game.targetWord);
+    
+    // Log similarities regardless of threshold
+    console.log(`Word "${currentWord}" similarity to previous word "${previousWord}": ${similarity}`);
+    console.log(`Word "${currentWord}" similarity to target word "${game.targetWord}": ${similarityToTarget}`);
     
     if (similarity < SIMILARITY_THRESHOLDS.MIN) {
       toast({
@@ -84,7 +91,6 @@ const Index = () => {
       newChain = [...game.currentChain, currentWord];
     }
     
-    const similarityToTarget = await cosineSimilarity(currentWord, game.targetWord);
     const newProgress = calculateProgress(similarityToTarget);
     setProgress(newProgress);
     
