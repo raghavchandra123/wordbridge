@@ -1,12 +1,12 @@
-import { useState, useEffect } from "react";
-import { GameState } from "@/lib/types";
-import { loadEmbeddings, findRandomWordPair } from "@/lib/embeddings";
-import { WordDictionary } from "@/lib/embeddings/types";
+import { useState, useEffect } from 'react';
+import { GameState } from '@/lib/types';
+import { loadEmbeddings } from '@/lib/embeddings';
+import { initializeGame } from '@/lib/services/gameService';
 
 export const useGameInitialization = () => {
   const [game, setGame] = useState<GameState>({
-    startWord: "",
-    targetWord: "",
+    startWord: '',
+    targetWord: '',
     currentChain: [],
     isComplete: false,
     score: 0,
@@ -17,18 +17,12 @@ export const useGameInitialization = () => {
     const initGame = async () => {
       try {
         await loadEmbeddings();
-        const emptyDict: WordDictionary = {};
-        const [start, target] = await findRandomWordPair(emptyDict);
-        setGame({
-          startWord: start,
-          targetWord: target,
-          currentChain: [start],
-          isComplete: false,
-          score: 0,
-        });
-        setIsLoading(false);
+        const initialGame = await initializeGame();
+        setGame(initialGame);
       } catch (error) {
         console.error('Game initialization failed:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 

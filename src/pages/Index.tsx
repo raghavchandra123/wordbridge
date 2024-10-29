@@ -10,18 +10,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  cosineSimilarity,
-  isValidWord,
-  findRandomWordPair,
-} from "@/lib/embeddings";
+import { isValidWord } from "@/lib/embeddings";
 import { calculateProgress } from "@/lib/embeddings/utils";
 import { saveHighScore } from "@/lib/storage";
 import WordChain from "@/components/WordChain";
 import { SIMILARITY_THRESHOLDS } from "@/lib/constants";
-import { checkConceptNetRelation } from "@/lib/conceptnet";
 import { useGameInitialization } from "@/hooks/useGameInitialization";
-import { WordDictionary } from "@/lib/embeddings/types";
+import { validateWordForChain, initializeGame } from "@/lib/services/gameService";
 
 const Index = () => {
   const { toast } = useToast();
@@ -31,118 +26,103 @@ const Index = () => {
   const [progress, setProgress] = useState(0);
   const [isChecking, setIsChecking] = useState(false);
 
+  // Handle word submission
   const handleWordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentWord || isChecking) return;
 
     setIsChecking(true);
 
-    // First check if the word exists in our dictionary
-    if (!isValidWord(currentWord)) {
-      toast({
-        title: "Invalid word",
-        description: "This word is not in our dictionary",
-        variant: "destructive",
-      });
-      setIsChecking(false);
-      return;
-    }
-
-    const previousWord = game.currentChain[editingIndex !== null ? editingIndex - 1 : game.currentChain.length - 1];
-    const similarity = await cosineSimilarity(previousWord, currentWord);
-    const similarityToTarget = await cosineSimilarity(currentWord, game.targetWord);
-    
-    // Log similarities for debugging
-    console.log(`Word "${currentWord}" similarity to previous word "${previousWord}": ${similarity}`);
-    console.log(`Word "${currentWord}" similarity to target word "${game.targetWord}": ${similarityToTarget}`);
-    
-    // Check vector similarity first
-    if (similarity >= SIMILARITY_THRESHOLDS.MIN || similarityToTarget >= SIMILARITY_THRESHOLDS.TARGET) {
-      await handleValidWord(similarityToTarget);
-    } else {
-      // If vector similarity fails, try ConceptNet
-      const isRelatedToPrevious = await checkConceptNetRelation(previousWord, currentWord);
-      
-      if (!isRelatedToPrevious) {
+    try {
+      // Validate word exists
+      if (!isValidWord(currentWord)) {
         toast({
-          title: "Word not similar enough",
-          description: `Try a word that's more closely related to "${previousWord}"`,
+          title: "Invalid word",
+          description: "This word is not in our dictionary",
           variant: "destructive",
         });
-        setIsChecking(false);
         return;
       }
 
-      const isRelatedToTarget = await checkConceptNetRelation(currentWord, game.targetWord);
-      await handleValidWord(isRelatedToTarget ? SIMILARITY_THRESHOLDS.TARGET : 0);
-    }
+      // Get previous word based on editing context
+      const previousWord = game.currentChain[editingIndex !== null ? editingIndex - 1 : game.currentChain.length - 1];
+      
+      // Validate word for the chain
+      const validation = await validateWordForChain(currentWord, previousWord, game.targetWord);
+      
+      if (!validation.isValid) {
+        toast({
+          title: "Word not similar enough",
+          description: validation.message,
+          variant: "destructive",
+        });
+        return;
+      }
 
-    setIsChecking(false);
+      // Update game state
+      const newChain = editingIndex !== null
+        ? [...game.currentChain.slice(0, editingIndex), currentWord]
+        : [...game.currentChain, currentWord];
+      
+      const newProgress = calculateProgress(validation.similarityToTarget);
+      setProgress(newProgress);
+      
+      if (validation.similarityToTarget >= SIMILARITY_THRESHOLDS.TARGET) {
+        handleGameComplete(newChain);
+      } else {
+        setGame({
+          ...game,
+          currentChain: newChain,
+          score: newChain.length - 1,
+        });
+      }
+      
+      setCurrentWord("");
+      setEditingIndex(null);
+    } finally {
+      setIsChecking(false);
+    }
   };
 
-  const handleValidWord = async (similarityToTarget: number) => {
-    let newChain;
-    if (editingIndex !== null) {
-      newChain = [...game.currentChain.slice(0, editingIndex), currentWord];
-    } else {
-      newChain = [...game.currentChain, currentWord];
-    }
+  // Handle game completion
+  const handleGameComplete = (chain: string[]) => {
+    setGame({
+      ...game,
+      currentChain: chain,
+      isComplete: true,
+      score: chain.length - 1,
+    });
     
-    const newProgress = calculateProgress(similarityToTarget);
-    setProgress(newProgress);
+    saveHighScore({
+      startWord: game.startWord,
+      targetWord: game.targetWord,
+      chain,
+      score: chain.length - 1,
+      timestamp: Date.now(),
+    });
     
-    if (similarityToTarget >= SIMILARITY_THRESHOLDS.TARGET) {
-      setGame({
-        ...game,
-        currentChain: newChain,
-        isComplete: true,
-        score: newChain.length - 1,
-      });
-      
-      saveHighScore({
-        startWord: game.startWord,
-        targetWord: game.targetWord,
-        chain: newChain,
-        score: newChain.length - 1,
-        timestamp: Date.now(),
-      });
-      
-      toast({
-        title: "Congratulations!",
-        description: `You completed the chain in ${newChain.length - 1} steps!`,
-      });
-    } else {
-      setGame({
-        ...game,
-        currentChain: newChain,
-        score: newChain.length - 1,
-      });
-    }
-    
-    setCurrentWord("");
-    setEditingIndex(null);
+    toast({
+      title: "Congratulations!",
+      description: `You completed the chain in ${chain.length - 1} steps!`,
+    });
   };
 
+  // Handle word selection for editing
   const handleWordClick = (index: number | null) => {
     if (index === 0 || game.isComplete) return;
     setEditingIndex(index);
     setCurrentWord(index !== null ? game.currentChain[index] : "");
   };
 
+  // Start a new game
   const handleNewGame = async () => {
-    const emptyDict: WordDictionary = {};
-    const [start, target] = await findRandomWordPair(emptyDict);
-    setGame({
-      startWord: start,
-      targetWord: target,
-      currentChain: [start],
-      isComplete: false,
-      score: 0,
-    });
+    const newGame = await initializeGame();
+    setGame(newGame);
     setProgress(0);
     setEditingIndex(null);
   };
 
+  // Loading state
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -163,6 +143,7 @@ const Index = () => {
     );
   }
 
+  // Main game UI
   return (
     <div className="min-h-screen p-4">
       <Card className="max-w-2xl mx-auto">
@@ -175,6 +156,7 @@ const Index = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
+          {/* Word display */}
           <div className="flex justify-between items-center text-2xl font-bold">
             <div className="p-4 bg-pink-100/70 rounded-lg border border-pink-200/70">
               {game.startWord}
@@ -195,6 +177,7 @@ const Index = () => {
             isGameComplete={game.isComplete}
           />
 
+          {/* Word input form */}
           {!game.isComplete && (
             <form onSubmit={handleWordSubmit} className="space-y-4">
               <Input
@@ -226,6 +209,7 @@ const Index = () => {
             </form>
           )}
 
+          {/* Game complete UI */}
           {game.isComplete && (
             <div className="space-y-4">
               <div className="text-center text-2xl font-semibold">
