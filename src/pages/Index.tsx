@@ -14,12 +14,15 @@ import {
   loadEmbeddings,
   findRandomWordPair,
   cosineSimilarity,
+  isValidWord,
+  getWordVector
 } from "@/lib/embeddings";
 import { calculateProgress } from "@/lib/embeddings/utils";
 import { saveHighScore } from "@/lib/storage";
 import { GameState } from "@/lib/types";
 import WordChain from "@/components/WordChain";
 import { SIMILARITY_THRESHOLDS } from "@/lib/constants";
+import { checkConceptNetRelation } from "@/lib/conceptnet";
 
 // Extract game initialization logic
 const useGameInitialization = (setLoading: (loading: boolean) => void) => {
@@ -62,28 +65,58 @@ const Index = () => {
   const [currentWord, setCurrentWord] = useState("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [progress, setProgress] = useState(0);
+  const [isChecking, setIsChecking] = useState(false);
 
   const handleWordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentWord) return;
+    if (!currentWord || isChecking) return;
+
+    setIsChecking(true);
+
+    // First check if the word exists in our dictionary
+    if (!isValidWord(currentWord)) {
+      toast({
+        title: "Invalid word",
+        description: "This word is not in our dictionary",
+        variant: "destructive",
+      });
+      setIsChecking(false);
+      return;
+    }
 
     const previousWord = game.currentChain[editingIndex !== null ? editingIndex - 1 : game.currentChain.length - 1];
     const similarity = await cosineSimilarity(previousWord, currentWord);
     const similarityToTarget = await cosineSimilarity(currentWord, game.targetWord);
     
-    // Log similarities regardless of threshold
+    // Log similarities for debugging
     console.log(`Word "${currentWord}" similarity to previous word "${previousWord}": ${similarity}`);
     console.log(`Word "${currentWord}" similarity to target word "${game.targetWord}": ${similarityToTarget}`);
     
-    if (similarity < SIMILARITY_THRESHOLDS.MIN) {
-      toast({
-        title: "Word not similar enough",
-        description: `Try a word that's more closely related to "${previousWord}"`,
-        variant: "destructive",
-      });
-      return;
+    // Check vector similarity first
+    if (similarity >= SIMILARITY_THRESHOLDS.MIN || similarityToTarget >= SIMILARITY_THRESHOLDS.TARGET) {
+      await handleValidWord(similarityToTarget);
+    } else {
+      // If vector similarity fails, try ConceptNet
+      const isRelatedToPrevious = await checkConceptNetRelation(previousWord, currentWord);
+      
+      if (!isRelatedToPrevious) {
+        toast({
+          title: "Word not similar enough",
+          description: `Try a word that's more closely related to "${previousWord}"`,
+          variant: "destructive",
+        });
+        setIsChecking(false);
+        return;
+      }
+
+      const isRelatedToTarget = await checkConceptNetRelation(currentWord, game.targetWord);
+      await handleValidWord(isRelatedToTarget ? SIMILARITY_THRESHOLDS.TARGET : 0);
     }
-    
+
+    setIsChecking(false);
+  };
+
+  const handleValidWord = async (similarityToTarget: number) => {
     let newChain;
     if (editingIndex !== null) {
       newChain = [...game.currentChain.slice(0, editingIndex), currentWord];
@@ -206,10 +239,11 @@ const Index = () => {
                 onChange={(e) => setCurrentWord(e.target.value.toLowerCase())}
                 placeholder={editingIndex !== null ? `Change word #${editingIndex + 1}` : "Enter a word..."}
                 className="text-center text-lg"
+                disabled={isChecking}
               />
               <div className="flex gap-2">
-                <Button type="submit" className="flex-1 text-lg">
-                  {editingIndex !== null ? "Update Word" : "Submit Word"}
+                <Button type="submit" className="flex-1 text-lg" disabled={isChecking}>
+                  {isChecking ? "Checking..." : (editingIndex !== null ? "Update Word" : "Submit Word")}
                 </Button>
                 {editingIndex !== null && (
                   <Button 
@@ -220,6 +254,7 @@ const Index = () => {
                       setCurrentWord("");
                     }}
                     className="text-lg"
+                    disabled={isChecking}
                   >
                     Add New Word
                   </Button>
