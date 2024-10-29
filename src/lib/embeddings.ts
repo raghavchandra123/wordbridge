@@ -12,7 +12,7 @@ export const loadEmbeddings = async () => {
   }
   
   try {
-    console.log('Attempting to load embeddings from files...');
+    console.log('Starting embeddings loading process...');
     
     // Load common words
     const commonWordsResponse = await fetch('/data/common_words.txt');
@@ -23,6 +23,7 @@ export const loadEmbeddings = async () => {
     console.log('Sample common words:', commonWords.slice(0, 5));
     
     // Load word to baseform mapping
+    console.log('Fetching word baseform mappings...');
     const wordBaseformResponse = await fetch('/data/word_baseform.json');
     if (!wordBaseformResponse.ok) throw new Error('Failed to load word baseform mappings');
     wordBaseformMap = await wordBaseformResponse.json();
@@ -30,20 +31,38 @@ export const loadEmbeddings = async () => {
     console.log('Sample baseforms:', Object.entries(wordBaseformMap).slice(0, 5));
     
     // Load baseform to vector mapping
+    console.log('Fetching concept embeddings...');
     const embedsResponse = await fetch('/data/concept_embeds.json');
     if (!embedsResponse.ok) throw new Error('Failed to load concept embeddings');
+    console.log('Concept embeddings response received, parsing JSON...');
     const rawData = await embedsResponse.json();
+    console.log('Raw embeddings data loaded, structure:', {
+      type: typeof rawData,
+      isNull: rawData === null,
+      isObject: typeof rawData === 'object',
+      keys: Object.keys(rawData || {}).length,
+      sampleKey: Object.keys(rawData || {})[0],
+    });
     
     // Convert raw data to dictionary format with Float32Array vectors
     dictionary = {};
+    let vectorCount = 0;
     for (const [word, embedding] of Object.entries(rawData)) {
+      console.log(`Processing embedding for word: ${word}`, {
+        hasEmbedding: !!embedding,
+        embeddingType: typeof embedding,
+        hasVector: embedding && (embedding as any).vector !== undefined,
+        vectorType: embedding && (embedding as any).vector ? typeof (embedding as any).vector : 'N/A',
+      });
+      
       if (embedding && Array.isArray((embedding as any).vector)) {
         dictionary[word] = {
           vector: new Float32Array((embedding as any).vector)
         };
+        vectorCount++;
       }
     }
-    
+    console.log(`Processed ${vectorCount} vectors out of ${Object.keys(rawData).length} entries`);
     console.log('Loaded concept embeddings:', Object.keys(dictionary).length, 'entries');
     
     // Print sample of embeddings for verification
@@ -61,7 +80,16 @@ export const loadEmbeddings = async () => {
     // Create word list from common words that have vectors
     wordList = commonWords.filter(word => {
       const baseform = wordBaseformMap?.[word];
-      return baseform && dictionary && dictionary[baseform]?.vector !== undefined;
+      const hasVector = baseform && dictionary && dictionary[baseform]?.vector !== undefined;
+      if (!hasVector) {
+        console.log(`Word "${word}" validation:`, {
+          baseform,
+          hasBaseform: !!baseform,
+          hasVectorEntry: baseform ? !!dictionary?.[baseform] : false,
+          hasValidVector: baseform ? !!dictionary?.[baseform]?.vector : false,
+        });
+      }
+      return hasVector;
     });
     
     console.log('Filtered to valid common words with vectors:', wordList.length);
