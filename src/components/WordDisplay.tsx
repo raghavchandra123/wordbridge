@@ -1,3 +1,5 @@
+import LetterSquare from "./LetterSquare";
+
 interface WordDisplayProps {
   word: string;
   progress: number;
