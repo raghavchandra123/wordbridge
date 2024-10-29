@@ -4,6 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import WordDisplay from "./WordDisplay";
 import { GameState } from "@/lib/types";
 import { calculateProgress } from "@/lib/embeddings/utils";
+import { checkConceptNetRelation } from "@/lib/conceptnet";
 
 interface GameBoardProps {
   game: GameState;
@@ -28,24 +29,24 @@ const GameBoard = ({
 }: GameBoardProps) => {
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-center text-2xl font-bold">
-        <div className="p-4 bg-[#FF8B8B]/70 rounded-lg border border-[#FF8B8B]">
+      <div className="flex flex-col md:flex-row justify-between items-center text-2xl font-bold gap-4">
+        <div className="p-4 rounded-lg">
           <WordDisplay word={game.startWord} progress={100} />
         </div>
-        <div className="text-[#FF8B8B]">→</div>
-        <div className="p-4 bg-[#FFD93D]/70 rounded-lg border border-[#FFD93D]">
+        <div className="text-[#FF8B8B] transform md:rotate-0 rotate-90">→</div>
+        <div className="p-4 rounded-lg">
           <WordDisplay word={game.targetWord} progress={0} />
         </div>
       </div>
 
-      <Progress value={progress} />
+      <Progress value={progress} className="h-2" />
 
       <div className="space-y-2">
         {game.currentChain.map((word, index) => (
           <Button
             key={index}
             variant="ghost"
-            className="w-full p-3 text-center font-medium border transition-colors"
+            className="w-full p-3 text-center font-medium transition-colors hover:bg-transparent"
             onClick={() => onWordClick(index === editingIndex ? null : index)}
             disabled={index === 0 || game.isComplete}
           >

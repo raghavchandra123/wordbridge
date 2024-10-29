@@ -7,7 +7,7 @@ interface WordDisplayProps {
 
 const WordDisplay = ({ word, progress }: WordDisplayProps) => {
   return (
-    <div className="flex">
+    <div className="flex flex-wrap justify-center gap-0.5 max-w-[300px]">
       {word.split('').map((letter, index) => (
         <LetterSquare 
           key={`${word}-${index}`}
