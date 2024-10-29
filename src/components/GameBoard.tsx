@@ -1,10 +1,9 @@
+import { useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Progress } from "@/components/ui/progress";
 import WordDisplay from "./WordDisplay";
 import { GameState } from "@/lib/types";
 import { ArrowDown } from "lucide-react";
-import { THEME_COLORS } from "@/lib/constants/colors";
 
 interface GameBoardProps {
   game: GameState;
