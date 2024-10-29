@@ -2,38 +2,42 @@ import { WordDictionary, WordEmbedding } from './types';
 
 let dictionary: WordDictionary | null = null;
 let wordList: string[] = [];
-
-// For development, we'll use a small test dictionary
-// This will be replaced with proper chunked binary loading
-const TEST_DICTIONARY: WordDictionary = {
-  "cat": {
-    vector: new Float32Array(Array(300).fill(0.1))
-  },
-  "dog": {
-    vector: new Float32Array(Array(300).fill(0.2))
-  },
-  "animal": {
-    vector: new Float32Array(Array(300).fill(0.15))
-  },
-  "pet": {
-    vector: new Float32Array(Array(300).fill(0.18))
-  }
-};
+let wordBaseformMap: { [key: string]: string } | null = null;
 
 export const loadEmbeddings = async () => {
-  if (dictionary) return dictionary;
+  if (dictionary && wordBaseformMap) return dictionary;
   
-  // For now, we'll use the test dictionary
-  // Later this will be replaced with actual binary chunk loading
-  dictionary = TEST_DICTIONARY;
-  wordList = Object.keys(dictionary);
-  return dictionary;
+  try {
+    // Load word to baseform mapping
+    const wordBaseformResponse = await fetch('/data/word_baseform.json');
+    wordBaseformMap = await wordBaseformResponse.json();
+    
+    // Load baseform to vector mapping
+    const embedsResponse = await fetch('/data/concept_embeds.json');
+    dictionary = await embedsResponse.json();
+    
+    // Create word list from all valid words (including variations)
+    wordList = Object.keys(wordBaseformMap);
+    
+    return dictionary;
+  } catch (error) {
+    console.error('Failed to load embeddings, falling back to test dictionary');
+    // Fallback to test dictionary if files aren't found
+    dictionary = {
+      "cat": { vector: new Float32Array(Array(300).fill(0.1)) },
+      "dog": { vector: new Float32Array(Array(300).fill(0.2)) },
+      "animal": { vector: new Float32Array(Array(300).fill(0.15)) },
+      "pet": { vector: new Float32Array(Array(300).fill(0.18)) }
+    };
+    wordList = Object.keys(dictionary);
+    return dictionary;
+  }
 };
 
 export const getWordList = async (): Promise<string[]> => {
   if (wordList.length) return wordList;
   await loadEmbeddings();
-  return Object.keys(dictionary!);
+  return wordList;
 };
 
 export const cosineSimilarity = (a: WordEmbedding, b: WordEmbedding): number => {
@@ -66,7 +70,11 @@ export const findRandomWordPair = async (): Promise<[string, string]> => {
     
     if (word1 === word2) continue;
     
-    const similarity = cosineSimilarity(dictionary![word1], dictionary![word2]);
+    // Get base forms for the words
+    const base1 = wordBaseformMap?.[word1] || word1;
+    const base2 = wordBaseformMap?.[word2] || word2;
+    
+    const similarity = cosineSimilarity(dictionary![base1], dictionary![base2]);
     if (similarity < 0.1) {
       return [word1, word2];
     }
@@ -74,6 +82,6 @@ export const findRandomWordPair = async (): Promise<[string, string]> => {
     attempts++;
   }
   
-  // If we can't find a pair, return a default pair from our test dictionary
+  // If we can't find a pair, return a default pair
   return ["cat", "dog"];
 };
