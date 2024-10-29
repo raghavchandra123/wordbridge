@@ -22,8 +22,7 @@ import WordChain from "@/components/WordChain";
 import { SIMILARITY_THRESHOLDS } from "@/lib/constants";
 
 // Extract game initialization logic
-const useGameInitialization = () => {
-  const [isLoading, setIsLoading] = useState(true);
+const useGameInitialization = (setLoading: (loading: boolean) => void) => {
   const [game, setGame] = useState<GameState>({
     startWord: "",
     targetWord: "",
@@ -44,21 +43,22 @@ const useGameInitialization = () => {
           isComplete: false,
           score: 0,
         });
-        setIsLoading(false);
+        setLoading(false);
       } catch (error) {
         console.error('Game initialization failed:', error);
       }
     };
 
     initGame();
-  }, []);
+  }, [setLoading]);
 
-  return { isLoading, game, setGame };
+  return { game, setGame };
 };
 
 const Index = () => {
   const { toast } = useToast();
-  const { isLoading, game, setGame } = useGameInitialization();
+  const [isLoading, setIsLoading] = useState(true);
+  const { game, setGame } = useGameInitialization(setIsLoading);
   const [currentWord, setCurrentWord] = useState("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [progress, setProgress] = useState(0);
