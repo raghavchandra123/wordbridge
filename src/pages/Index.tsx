@@ -13,6 +13,7 @@ import {
 import {
   cosineSimilarity,
   isValidWord,
+  findRandomWordPair,
 } from "@/lib/embeddings";
 import { calculateProgress } from "@/lib/embeddings/utils";
 import { saveHighScore } from "@/lib/storage";
@@ -20,6 +21,7 @@ import WordChain from "@/components/WordChain";
 import { SIMILARITY_THRESHOLDS } from "@/lib/constants";
 import { checkConceptNetRelation } from "@/lib/conceptnet";
 import { useGameInitialization } from "@/hooks/useGameInitialization";
+import { WordDictionary } from "@/lib/embeddings/types";
 
 const Index = () => {
   const { toast } = useToast();
@@ -128,7 +130,6 @@ const Index = () => {
   };
 
   const handleNewGame = async () => {
-    setIsLoading(true);
     const emptyDict: WordDictionary = {};
     const [start, target] = await findRandomWordPair(emptyDict);
     setGame({
@@ -140,7 +141,6 @@ const Index = () => {
     });
     setProgress(0);
     setEditingIndex(null);
-    setIsLoading(false);
   };
 
   if (isLoading) {
