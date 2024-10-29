@@ -14,11 +14,11 @@ const WordChain = ({ words, targetWord, onWordClick, isGameComplete }: WordChain
     const similarity = cosineSimilarity(word, targetWord);
     const progress = calculateProgress(similarity);
     
-    // Pastel color gradient from cool to warm
-    if (progress < 25) return "bg-blue-100 hover:bg-blue-200 text-blue-900";
-    if (progress < 50) return "bg-green-100 hover:bg-green-200 text-green-900";
-    if (progress < 75) return "bg-yellow-100 hover:bg-yellow-200 text-yellow-900";
-    return "bg-red-100 hover:bg-red-200 text-red-900";
+    // Lighter pastel colors with consistent opacity
+    if (progress < 25) return "bg-blue-50 hover:bg-blue-100 text-blue-800";
+    if (progress < 50) return "bg-green-50 hover:bg-green-100 text-green-800";
+    if (progress < 75) return "bg-yellow-50 hover:bg-yellow-100 text-yellow-800";
+    return "bg-red-50 hover:bg-red-100 text-red-800";
   };
 
   return (
@@ -29,7 +29,7 @@ const WordChain = ({ words, targetWord, onWordClick, isGameComplete }: WordChain
           variant="ghost"
           className={cn(
             "w-full p-3 text-center font-medium border transition-colors",
-            index === 0 ? "bg-pink-100 text-pink-900 cursor-not-allowed" : getWordColor(word),
+            index === 0 ? "bg-pink-50 text-pink-800 cursor-not-allowed" : getWordColor(word),
             isGameComplete && "cursor-not-allowed"
           )}
           disabled={index === 0 || isGameComplete}
