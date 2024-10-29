@@ -64,7 +64,7 @@ const useGameInitialization = (setLoading: (loading: boolean) => void) => {
 const Index = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
-  const { game, setGame } = useGameInitialization(setLoading);
+  const { game, setGame } = useGameInitialization(setIsLoading);
   const [currentWord, setCurrentWord] = useState("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [progress, setProgress] = useState(0);
