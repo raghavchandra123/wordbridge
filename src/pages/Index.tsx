@@ -77,7 +77,7 @@ const Index = () => {
     const previousWord = game.currentChain[editingIndex !== null ? editingIndex - 1 : game.currentChain.length - 1];
     const similarity = cosineSimilarity(previousWord, currentWord);
     
-    if (similarity < 0.7) {
+    if (similarity < 0.05) {
       toast({
         title: "Word not similar enough",
         description: "Try a word that's more closely related to the previous word",
@@ -97,7 +97,7 @@ const Index = () => {
     const newProgress = calculateProgress(similarityToTarget);
     setProgress(newProgress);
     
-    if (similarityToTarget >= 0.7) {
+    if (similarityToTarget >= 0.3) {
       setGame({
         ...game,
         currentChain: newChain,
