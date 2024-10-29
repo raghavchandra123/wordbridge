@@ -1,6 +1,5 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
 import { Progress } from "@/components/ui/progress";
 import WordDisplay from "./WordDisplay";
 import { GameState } from "@/lib/types";
@@ -51,11 +50,12 @@ const GameBoard = ({
         </div>
       </div>
 
-      <Progress 
-        value={progress} 
-        className="h-2 bg-[#f6bc66]/20" 
-        indicatorClassName="bg-gradient-to-r from-[#f6bc66] to-[#f55c7a]" 
-      />
+      <div className="relative w-full h-2 bg-[#f6bc66]/20 rounded-full overflow-hidden">
+        <div 
+          className="h-full bg-gradient-to-r from-[#f6bc66] to-[#f55c7a] transition-all"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
 
       <div className="space-y-2">
         {game.currentChain.map((word, index) => (
