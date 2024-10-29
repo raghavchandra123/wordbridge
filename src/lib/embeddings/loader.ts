@@ -15,77 +15,99 @@ let cachedChunk: {
 
 // Load and decompress a chunk file
 async function loadCompressedChunk(chunkIndex: number): Promise<WordDictionary | null> {
+  console.log(`📦 Loading and decompressing chunk ${chunkIndex}...`);
   try {
     const response = await fetch(`/data/chunks/embeddings_chunk_${chunkIndex}.gz`);
-    if (!response.ok) return null;
+    if (!response.ok) {
+      console.log(`❌ Failed to fetch chunk ${chunkIndex}: ${response.status} ${response.statusText}`);
+      return null;
+    }
 
-    // Get the compressed data as an ArrayBuffer
+    console.log(`📥 Fetched chunk ${chunkIndex}, getting ArrayBuffer...`);
     const compressedData = await response.arrayBuffer();
     
-    // Decompress the data using pako
+    console.log(`🔄 Decompressing chunk ${chunkIndex} data...`);
     const decompressedData = pako.inflate(new Uint8Array(compressedData), { to: 'string' });
     
-    // Parse the JSON data
+    console.log(`📋 Parsing JSON data for chunk ${chunkIndex}...`);
     const chunkData = JSON.parse(decompressedData);
     
-    // Convert byte arrays back to Float32Arrays
-    return Object.fromEntries(
+    console.log(`✨ Converting vectors to Float32Arrays for chunk ${chunkIndex}...`);
+    const processedData = Object.fromEntries(
       Object.entries(chunkData).map(([key, vectorBytes]) => [
         key,
         new Float32Array(vectorBytes as number[])
       ])
     );
+    
+    console.log(`✅ Successfully loaded chunk ${chunkIndex}`);
+    return processedData;
   } catch (error) {
-    console.error('Error loading chunk:', error);
+    console.error(`❌ Error processing chunk ${chunkIndex}:`, error);
     return null;
   }
 }
 
 // Initialize the word embeddings system
 export const loadEmbeddings = async () => {
-  if (wordBaseformMap && commonWords.length > 0) return true;
+  console.log("🔄 Loading initial embeddings data...");
+  
+  if (wordBaseformMap && commonWords.length > 0) {
+    console.log("✅ Using cached embeddings data");
+    return true;
+  }
   
   try {
-    // Load common words
+    console.log("📖 Loading common words list...");
     const commonWordsResponse = await fetch('/data/common_words.txt');
     const commonWordsText = await commonWordsResponse.text();
     commonWords = commonWordsText.split('\n').filter(word => word.trim());
+    console.log(`✅ Loaded ${commonWords.length} common words`);
     
-    // Load word baseform mappings
+    console.log("📖 Loading word baseform mappings...");
     const wordBaseformResponse = await fetch('/data/word_baseform.json');
     wordBaseformMap = await wordBaseformResponse.json();
+    console.log("✅ Word baseform mappings loaded");
     
-    // Generate word list
     wordList = commonWords.filter(word => wordBaseformMap?.[word]);
+    console.log(`✅ Generated word list with ${wordList.length} words`);
     
     return true;
   } catch (error) {
-    console.error('Failed to load initial data:', error);
+    console.error('❌ Failed to load initial data:', error);
     throw error;
   }
 };
 
 // Binary search to find the correct chunk for a word
 async function findWordChunk(word: string): Promise<WordDictionary | null> {
+  console.log(`🔍 Binary searching for chunk containing word: "${word}"`);
   let left = 0;
   let right = 8; // Number of chunks - 1
   
   while (left <= right) {
     const mid = Math.floor((left + right) / 2);
+    console.log(`  Checking chunk ${mid} (left=${left}, right=${right})`);
+    
     const chunkData = await loadCompressedChunk(mid);
     
     if (!chunkData) {
+      console.log(`  ❌ Failed to load chunk ${mid}, searching lower chunks`);
       right = mid - 1;
       continue;
     }
     
     const words = Object.keys(chunkData);
     if (words.length === 0) {
+      console.log(`  ⚠️ Chunk ${mid} is empty, searching lower chunks`);
       right = mid - 1;
       continue;
     }
     
+    console.log(`  📊 Chunk ${mid} word range: ${words[0]} to ${words[words.length - 1]}`);
+    
     if (word >= words[0] && (word <= words[words.length - 1] || mid === right)) {
+      console.log(`  ✅ Found word "${word}" in chunk ${mid}`);
       cachedChunk = {
         words: chunkData,
         firstWord: words[0],
@@ -96,39 +118,58 @@ async function findWordChunk(word: string): Promise<WordDictionary | null> {
     }
     
     if (word < words[0]) {
+      console.log(`  🔍 Word comes before chunk ${mid}, searching lower chunks`);
       right = mid - 1;
     } else {
+      console.log(`  🔍 Word comes after chunk ${mid}, searching higher chunks`);
       left = mid + 1;
     }
   }
   
+  console.log(`❌ Word "${word}" not found in any chunk`);
   return null;
 }
 
 // Get the vector for a specific word
 export const getWordVector = async (word: string): Promise<Float32Array | null> => {
-  if (!wordBaseformMap) return null;
+  console.log(`🔤 Getting vector for word: "${word}"`);
+  if (!wordBaseformMap) {
+    console.log('❌ Word baseform map not initialized');
+    return null;
+  }
   
   const baseform = wordBaseformMap[word];
-  if (!baseform) return null;
+  if (!baseform) {
+    console.log(`❌ No baseform found for word: "${word}"`);
+    return null;
+  }
+  
+  console.log(`📝 Using baseform: "${baseform}" for word: "${word}"`);
   
   // Check cache first
   if (cachedChunk && 
       baseform >= cachedChunk.firstWord && 
       baseform <= cachedChunk.lastWord) {
+    console.log(`✨ Cache hit for baseform "${baseform}" in chunk ${cachedChunk.chunkIndex}`);
     return cachedChunk.words[baseform] || null;
   }
   
+  console.log(`🔄 Cache miss for baseform "${baseform}", loading appropriate chunk...`);
   const chunkData = await findWordChunk(baseform);
   return chunkData?.[baseform] || null;
 };
 
 // Calculate cosine similarity between two words
 export const cosineSimilarity = async (word1: string, word2: string): Promise<number> => {
+  console.log(`📊 Calculating similarity between "${word1}" and "${word2}"`);
+  
   const vec1 = await getWordVector(word1);
   const vec2 = await getWordVector(word2);
   
-  if (!vec1 || !vec2) return 0;
+  if (!vec1 || !vec2) {
+    console.log(`❌ Could not find vectors for both words`);
+    return 0;
+  }
   
   let dotProduct = 0;
   let normA = 0;
@@ -140,7 +181,9 @@ export const cosineSimilarity = async (word1: string, word2: string): Promise<nu
     normB += vec2[i] * vec2[i];
   }
   
-  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+  const similarity = dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+  console.log(`✅ Similarity between "${word1}" and "${word2}": ${similarity}`);
+  return similarity;
 };
 
 export const getWordList = (): string[] => wordList;
