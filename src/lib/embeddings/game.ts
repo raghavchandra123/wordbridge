@@ -2,7 +2,7 @@ import { getWordList } from './loader';
 import { cosineSimilarity } from '../embeddings';
 import { WordDictionary } from './types';
 
-export const findRandomWordPair = async (dictionary: WordDictionary): Promise<[string, string]> => {
+export const findRandomWordPair = async (_dictionary: WordDictionary): Promise<[string, string]> => {
   const wordList = getWordList();
   let attempts = 0;
   const maxAttempts = 100;
