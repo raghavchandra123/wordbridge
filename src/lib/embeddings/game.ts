@@ -1,5 +1,5 @@
 import { getWordList } from './loader';
-import { cosineSimilarity } from './utils';
+import { cosineSimilarity } from '../embeddings';
 import { WordDictionary } from './types';
 
 export const findRandomWordPair = async (dictionary: WordDictionary): Promise<[string, string]> => {
@@ -13,7 +13,7 @@ export const findRandomWordPair = async (dictionary: WordDictionary): Promise<[s
     
     if (word1 === word2) continue;
     
-    const similarity = cosineSimilarity(word1, word2, dictionary);
+    const similarity = await cosineSimilarity(word1, word2);
     
     if (similarity < 0.1) {
       return [word1, word2];
