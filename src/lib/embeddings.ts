@@ -29,6 +29,12 @@ export const loadEmbeddings = async () => {
       "animal": { vector: new Float32Array(Array(300).fill(0.15)) },
       "pet": { vector: new Float32Array(Array(300).fill(0.18)) }
     };
+    wordBaseformMap = {
+      "cat": "cat",
+      "dog": "dog",
+      "animal": "animal",
+      "pet": "pet"
+    };
     wordList = Object.keys(dictionary);
     return dictionary;
   }
@@ -40,7 +46,9 @@ export const getWordList = async (): Promise<string[]> => {
   return wordList;
 };
 
-export const cosineSimilarity = (a: WordEmbedding, b: WordEmbedding): number => {
+export const cosineSimilarity = (a: WordEmbedding | undefined, b: WordEmbedding | undefined): number => {
+  if (!a?.vector || !b?.vector) return 0;
+  
   let dotProduct = 0;
   let normA = 0;
   let normB = 0;
@@ -74,7 +82,9 @@ export const findRandomWordPair = async (): Promise<[string, string]> => {
     const base1 = wordBaseformMap?.[word1] || word1;
     const base2 = wordBaseformMap?.[word2] || word2;
     
-    const similarity = cosineSimilarity(dictionary![base1], dictionary![base2]);
+    if (!dictionary?.[base1] || !dictionary?.[base2]) continue;
+    
+    const similarity = cosineSimilarity(dictionary[base1], dictionary[base2]);
     if (similarity < 0.1) {
       return [word1, word2];
     }
