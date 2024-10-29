@@ -1,9 +1,5 @@
-export interface WordEmbedding {
-  vector: Float32Array;
-}
-
 export interface WordDictionary {
-  [word: string]: WordEmbedding;
+  [word: string]: Float32Array;
 }
 
 export interface GameState {
