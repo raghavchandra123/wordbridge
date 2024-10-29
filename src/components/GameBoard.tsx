@@ -4,8 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import WordDisplay from "./WordDisplay";
 import { GameState } from "@/lib/types";
-import { calculateProgress } from "@/lib/embeddings/utils";
-import { checkConceptNetRelation } from "@/lib/conceptnet";
+import { ArrowDown } from "lucide-react";
+import { THEME_COLORS } from "@/lib/constants/colors";
 
 interface GameBoardProps {
   game: GameState;
@@ -33,7 +33,7 @@ const GameBoard = ({
 
   return (
     <div className="space-y-8" ref={setContainerRef}>
-      <div className="flex flex-col md:flex-row justify-between items-center text-2xl font-bold gap-4">
+      <div className="flex flex-col items-center gap-4">
         <div className="p-4 rounded-lg w-full">
           <WordDisplay 
             word={game.startWord} 
@@ -41,7 +41,7 @@ const GameBoard = ({
             containerWidth={containerWidth} 
           />
         </div>
-        <div className="text-[#FF8B8B] transform md:rotate-0 rotate-90">→</div>
+        <ArrowDown className="text-[#f55c7a]" size={24} />
         <div className="p-4 rounded-lg w-full">
           <WordDisplay 
             word={game.targetWord} 
@@ -51,7 +51,11 @@ const GameBoard = ({
         </div>
       </div>
 
-      <Progress value={progress} className="h-2" />
+      <Progress 
+        value={progress} 
+        className="h-2 bg-[#f6bc66]/20" 
+        indicatorClassName="bg-gradient-to-r from-[#f6bc66] to-[#f55c7a]" 
+      />
 
       <div className="space-y-2">
         {game.currentChain.map((word, index) => (
@@ -77,11 +81,15 @@ const GameBoard = ({
             value={currentWord}
             onChange={(e) => onWordChange(e.target.value.toLowerCase())}
             placeholder={editingIndex !== null ? `Change word #${editingIndex + 1}` : "Enter a word..."}
-            className="text-center text-lg"
+            className="text-center text-lg bg-[#f6bc66]/10 border-[#f55c7a]/20"
             disabled={isChecking}
           />
           <div className="flex gap-2">
-            <Button type="submit" className="flex-1 text-lg" disabled={isChecking}>
+            <Button 
+              type="submit" 
+              className="flex-1 text-lg bg-[#f55c7a] hover:bg-[#f55c7a]/90 text-white"
+              disabled={isChecking}
+            >
               {isChecking ? "Checking..." : (editingIndex !== null ? "Update Word" : "Submit Word")}
             </Button>
             {editingIndex !== null && (
@@ -89,7 +97,7 @@ const GameBoard = ({
                 type="button" 
                 variant="outline"
                 onClick={() => onWordClick(null)}
-                className="text-lg"
+                className="text-lg border-[#f55c7a] text-[#f55c7a] hover:bg-[#f55c7a]/10"
                 disabled={isChecking}
               >
                 Add New Word

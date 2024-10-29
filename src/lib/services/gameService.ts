@@ -63,33 +63,22 @@ export const validateWordForChain = async (
   console.log(`📊 Similarity to previous word: ${similarity}`);
   console.log(`📊 Similarity to target word: ${similarityToTarget}`);
   
-  // Check if similarity threshold is met
-  if (similarity < SIMILARITY_THRESHOLDS.MIN) {
-    console.log(`❌ Word "${word}" failed similarity check`);
-    return {
-      isValid: false,
-      similarityToTarget,
-      message: `Try a word that's more closely related to "${previousWord}"`
-    };
+  if (similarity >= SIMILARITY_THRESHOLDS.MIN) {
+    return { isValid: true, similarityToTarget };
   }
 
-  // Only check ConceptNet if similarity check fails
+  // If similarity check fails, try ConceptNet
   const hasRelation = await checkConceptNetRelation(previousWord, word);
   console.log(`🔗 ConceptNet relation check: ${hasRelation ? "Found" : "Not found"}`);
   
-  if (!hasRelation && similarityToTarget < SIMILARITY_THRESHOLDS.TARGET) {
-    console.log(`❌ Word "${word}" failed both similarity and ConceptNet checks`);
-    return {
-      isValid: false,
-      similarityToTarget,
-      message: `Try a word that's more closely related to "${previousWord}"`
-    };
+  if (hasRelation) {
+    return { isValid: true, similarityToTarget };
   }
   
-  console.log(`✅ Word "${word}" is valid for the chain`);
   return {
-    isValid: true,
-    similarityToTarget
+    isValid: false,
+    similarityToTarget,
+    message: `Try a word that's more closely related to "${previousWord}"`
   };
 };
 

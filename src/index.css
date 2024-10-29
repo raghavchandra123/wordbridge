@@ -4,33 +4,33 @@
 
 @layer base {
   :root {
-    --background: 45 70% 96%;
-    --foreground: 220 20% 40%;
+    --background: 0 0% 100%;
+    --foreground: 20 14.3% 4.1%;
     
-    --card: 45 70% 96%;
-    --card-foreground: 220 20% 40%;
+    --card: 0 0% 100%;
+    --card-foreground: 20 14.3% 4.1%;
     
-    --popover: 45 70% 96%;
-    --popover-foreground: 220 20% 40%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 14.3% 4.1%;
     
-    --primary: 220 70% 85%;
-    --primary-foreground: 220 20% 40%;
+    --primary: 346 89% 66%;
+    --primary-foreground: 60 9.1% 97.8%;
     
-    --secondary: 180 40% 90%;
-    --secondary-foreground: 220 20% 40%;
+    --secondary: 60 84% 88%;
+    --secondary-foreground: 24 9.8% 10%;
     
-    --muted: 180 40% 90%;
-    --muted-foreground: 220 20% 50%;
+    --muted: 60 84% 88%;
+    --muted-foreground: 25 5.3% 44.7%;
     
-    --accent: 300 40% 90%;
-    --accent-foreground: 220 20% 40%;
+    --accent: 60 84% 88%;
+    --accent-foreground: 24 9.8% 10%;
     
-    --destructive: 0 70% 90%;
-    --destructive-foreground: 0 50% 40%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 60 9.1% 97.8%;
     
-    --border: 220 30% 85%;
-    --input: 220 30% 85%;
-    --ring: 220 70% 85%;
+    --border: 20 5.9% 90%;
+    --input: 20 5.9% 90%;
+    --ring: 346 89% 66%;
 
     --radius: 0.5rem;
   }
@@ -42,7 +42,7 @@
   }
   body {
     @apply bg-background text-foreground;
-    background: linear-gradient(to bottom right, hsl(45 70% 96%), hsl(180 40% 94%));
+    background: linear-gradient(135deg, #f6bc66/5 0%, #f55c7a/5 100%);
     min-height: 100vh;
   }
 }
