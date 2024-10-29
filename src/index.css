@@ -13,7 +13,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 20 14.3% 4.1%;
     
-    --primary: 346 89% 66%;
+    --primary: 39 89% 69%;
     --primary-foreground: 60 9.1% 97.8%;
     
     --secondary: 60 84% 88%;
@@ -28,9 +28,9 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 60 9.1% 97.8%;
     
-    --border: 20 5.9% 90%;
-    --input: 20 5.9% 90%;
-    --ring: 346 89% 66%;
+    --border: 39 89% 69%;
+    --input: 39 89% 69%;
+    --ring: 39 89% 69%;
 
     --radius: 0.5rem;
   }
@@ -42,7 +42,7 @@
   }
   body {
     @apply bg-background text-foreground;
-    background: linear-gradient(135deg, #f6bc66/5 0%, #f55c7a/5 100%);
+    background: #fff5eb;
     min-height: 100vh;
   }
 }

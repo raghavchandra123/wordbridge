@@ -39,7 +39,7 @@ const GameBoard = ({
             containerWidth={containerWidth} 
           />
         </div>
-        <ArrowDown className="text-[#f55c7a]" size={24} />
+        <ArrowDown className="text-[#f6bc66]" size={24} />
         <div className="p-4 rounded-lg w-full">
           <WordDisplay 
             word={game.targetWord} 
@@ -49,9 +49,9 @@ const GameBoard = ({
         </div>
       </div>
 
-      <div className="relative w-full h-2 bg-[#f6bc66]/20 rounded-full overflow-hidden">
+      <div className="relative w-full h-2 bg-[#f55c7a]/20 rounded-full overflow-hidden">
         <div 
-          className="h-full bg-gradient-to-r from-[#f6bc66] to-[#f55c7a] transition-all"
+          className="h-full bg-gradient-to-r from-[#f55c7a] to-[#f6bc66] transition-all"
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -80,13 +80,13 @@ const GameBoard = ({
             value={currentWord}
             onChange={(e) => onWordChange(e.target.value.toLowerCase())}
             placeholder={editingIndex !== null ? `Change word #${editingIndex + 1}` : "Enter a word..."}
-            className="text-center text-lg bg-[#f6bc66]/10 border-[#f55c7a]/20"
+            className="text-center text-lg bg-[#f55c7a]/10 border-[#f6bc66]/20"
             disabled={isChecking}
           />
           <div className="flex gap-2">
             <Button 
               type="submit" 
-              className="flex-1 text-lg bg-[#f55c7a] hover:bg-[#f55c7a]/90 text-white"
+              className="flex-1 text-lg bg-[#ffb366] hover:bg-[#ffb366]/90 text-white"
               disabled={isChecking}
             >
               {isChecking ? "Checking..." : (editingIndex !== null ? "Update Word" : "Submit Word")}
@@ -96,7 +96,7 @@ const GameBoard = ({
                 type="button" 
                 variant="outline"
                 onClick={() => onWordClick(null)}
-                className="text-lg border-[#f55c7a] text-[#f55c7a] hover:bg-[#f55c7a]/10"
+                className="text-lg border-[#f6bc66] text-[#f6bc66] hover:bg-[#f6bc66]/10"
                 disabled={isChecking}
               >
                 Add New Word
