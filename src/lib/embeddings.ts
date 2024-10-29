@@ -3,12 +3,30 @@ import { WordDictionary, WordEmbedding } from './types';
 let dictionary: WordDictionary | null = null;
 let wordList: string[] = [];
 
+// For development, we'll use a small test dictionary
+// This will be replaced with proper chunked binary loading
+const TEST_DICTIONARY: WordDictionary = {
+  "cat": {
+    vector: new Float32Array(Array(300).fill(0.1))
+  },
+  "dog": {
+    vector: new Float32Array(Array(300).fill(0.2))
+  },
+  "animal": {
+    vector: new Float32Array(Array(300).fill(0.15))
+  },
+  "pet": {
+    vector: new Float32Array(Array(300).fill(0.18))
+  }
+};
+
 export const loadEmbeddings = async () => {
   if (dictionary) return dictionary;
   
-  // Placeholder for actual loading logic
-  // In reality, this would load and decompress the binary chunks
-  dictionary = {};
+  // For now, we'll use the test dictionary
+  // Later this will be replaced with actual binary chunk loading
+  dictionary = TEST_DICTIONARY;
+  wordList = Object.keys(dictionary);
   return dictionary;
 };
 
@@ -56,5 +74,6 @@ export const findRandomWordPair = async (): Promise<[string, string]> => {
     attempts++;
   }
   
-  throw new Error("Could not find suitable word pair");
+  // If we can't find a pair, return a default pair from our test dictionary
+  return ["cat", "dog"];
 };
