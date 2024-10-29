@@ -32,6 +32,15 @@ export const loadEmbeddings = async () => {
     if (!embedsResponse.ok) throw new Error('Failed to load concept embeddings');
     dictionary = await embedsResponse.json();
     console.log('Loaded concept embeddings:', Object.keys(dictionary).length, 'entries');
+
+    // Print sample of embeddings for verification
+    const sampleWords = Object.keys(dictionary).slice(0, 3);
+    console.log('Sample of loaded embeddings:');
+    sampleWords.forEach(word => {
+      const vector = dictionary![word].vector;
+      console.log(`Word: ${word}`);
+      console.log(`Vector (first 5 dimensions): [${Array.from(vector).slice(0, 5).join(', ')}]`);
+    });
     
     // Create word list from common words that have vectors
     wordList = commonWords.filter(word => {
@@ -40,6 +49,7 @@ export const loadEmbeddings = async () => {
     });
     
     console.log('Filtered to valid common words with vectors:', wordList.length);
+    console.log('Sample of valid words:', wordList.slice(0, 5));
     
     // Debug: Log a sample of the loaded data
     const sampleWord = wordList[0];
