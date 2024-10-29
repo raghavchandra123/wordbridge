@@ -6,7 +6,7 @@ export {
   getBaseForm,
   isValidWord,
   cosineSimilarity,
-  calculateProgress,
   getWordVector
 } from './loader';
 export { findRandomWordPair } from './game';
+export { calculateProgress } from './utils';
