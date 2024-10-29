@@ -20,49 +20,56 @@ export const loadEmbeddings = async () => {
     const commonWordsText = await commonWordsResponse.text();
     commonWords = commonWordsText.split('\n').filter(word => word.trim());
     console.log('Loaded common words:', commonWords.length, 'entries');
+    console.log('Sample common words:', commonWords.slice(0, 5));
     
     // Load word to baseform mapping
     const wordBaseformResponse = await fetch('/data/word_baseform.json');
     if (!wordBaseformResponse.ok) throw new Error('Failed to load word baseform mappings');
     wordBaseformMap = await wordBaseformResponse.json();
     console.log('Loaded word baseform mappings:', Object.keys(wordBaseformMap).length, 'entries');
+    console.log('Sample baseforms:', Object.entries(wordBaseformMap).slice(0, 5));
     
     // Load baseform to vector mapping
     const embedsResponse = await fetch('/data/concept_embeds.json');
     if (!embedsResponse.ok) throw new Error('Failed to load concept embeddings');
-    dictionary = await embedsResponse.json();
+    const rawData = await embedsResponse.json();
+    
+    // Convert raw data to dictionary format with Float32Array vectors
+    dictionary = {};
+    for (const [word, embedding] of Object.entries(rawData)) {
+      if (embedding && Array.isArray((embedding as any).vector)) {
+        dictionary[word] = {
+          vector: new Float32Array((embedding as any).vector)
+        };
+      }
+    }
+    
     console.log('Loaded concept embeddings:', Object.keys(dictionary).length, 'entries');
-
-    // Print sample of embeddings for verification with safety checks
+    
+    // Print sample of embeddings for verification
     const sampleWords = Object.keys(dictionary).slice(0, 3);
     console.log('Sample of loaded embeddings:');
     sampleWords.forEach(word => {
-      if (dictionary && dictionary[word] && dictionary[word].vector) {
+      if (dictionary && dictionary[word]) {
         const vector = dictionary[word].vector;
-        const vectorArray = Array.from(vector || []);
         console.log(`Word: ${word}`);
-        console.log(`Vector (first 5 dimensions): [${vectorArray.slice(0, 5).join(', ')}]`);
-      } else {
-        console.log(`Word: ${word} (no vector available)`);
+        console.log(`Vector length: ${vector.length}`);
+        console.log(`Vector sample: [${Array.from(vector.slice(0, 5)).join(', ')}]`);
       }
     });
     
     // Create word list from common words that have vectors
     wordList = commonWords.filter(word => {
       const baseform = wordBaseformMap?.[word];
-      return baseform && dictionary?.[baseform]?.vector !== undefined;
+      return baseform && dictionary && dictionary[baseform]?.vector !== undefined;
     });
     
     console.log('Filtered to valid common words with vectors:', wordList.length);
     console.log('Sample of valid words:', wordList.slice(0, 5));
     
-    // Debug: Log a sample of the loaded data
-    const sampleWord = wordList[0];
-    console.log('Sample word data:', {
-      word: sampleWord,
-      baseform: wordBaseformMap[sampleWord],
-      hasVector: dictionary[wordBaseformMap[sampleWord]] !== undefined
-    });
+    if (wordList.length === 0) {
+      throw new Error('No valid words found with vectors');
+    }
     
     return dictionary;
   } catch (error) {
