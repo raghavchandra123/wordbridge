@@ -71,7 +71,7 @@ const Index = () => {
     if (similarity < SIMILARITY_THRESHOLDS.MIN) {
       toast({
         title: "Word not similar enough",
-        description: `Try a word that's more closely related to "${previousWord}" (similarity: ${(similarity * 100).toFixed(1)}%)`,
+        description: `Try a word that's more closely related to "${previousWord}"`,
         variant: "destructive",
       });
       return;
@@ -120,10 +120,10 @@ const Index = () => {
     setEditingIndex(null);
   };
 
-  const handleWordClick = (index: number) => {
+  const handleWordClick = (index: number | null) => {
     if (index === 0 || game.isComplete) return;
     setEditingIndex(index);
-    setCurrentWord(game.currentChain[index]);
+    setCurrentWord(index !== null ? game.currentChain[index] : "");
   };
 
   const handleNewGame = async () => {
@@ -189,6 +189,7 @@ const Index = () => {
             words={game.currentChain}
             targetWord={game.targetWord}
             onWordClick={handleWordClick}
+            selectedWordIndex={editingIndex}
             isGameComplete={game.isComplete}
           />
 
@@ -200,9 +201,24 @@ const Index = () => {
                 placeholder={editingIndex !== null ? `Change word #${editingIndex + 1}` : "Enter a word..."}
                 className="text-center text-lg"
               />
-              <Button type="submit" className="w-full text-lg">
-                {editingIndex !== null ? "Update Word" : "Submit Word"}
-              </Button>
+              <div className="flex gap-2">
+                <Button type="submit" className="flex-1 text-lg">
+                  {editingIndex !== null ? "Update Word" : "Submit Word"}
+                </Button>
+                {editingIndex !== null && (
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => {
+                      setEditingIndex(null);
+                      setCurrentWord("");
+                    }}
+                    className="text-lg"
+                  >
+                    Add New Word
+                  </Button>
+                )}
+              </div>
             </form>
           )}
 
