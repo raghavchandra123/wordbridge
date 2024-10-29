@@ -1,7 +1,7 @@
 import { getWordList } from '../embeddings/loader';
 import { cosineSimilarity } from '../embeddings';
 import { GameState } from '../types';
-import { SIMILARITY_THRESHOLDS } from '../constants';
+import { SIMILARITY_THRESHOLD } from '../constants';
 import { checkConceptNetRelation } from '../conceptnet';
 
 const getDateSeed = () => {
@@ -40,7 +40,7 @@ export const findDailyWordPair = async (): Promise<[string, string]> => {
       wordList[word2Index]
     );
     
-    if (similarity < SIMILARITY_THRESHOLDS.MIN) {
+    if (similarity < SIMILARITY_THRESHOLD) {
       return [wordList[word1Index], wordList[word2Index]];
     }
     
@@ -57,28 +57,44 @@ export const validateWordForChain = async (
 ): Promise<{ isValid: boolean; similarityToTarget: number; message?: string }> => {
   console.log(`🔍 Validating word "${word}" in chain...`);
   
-  const similarity = await cosineSimilarity(previousWord, word);
-  const similarityToTarget = await cosineSimilarity(word, targetWord);
+  // Check similarity with previous word
+  const similarityToPrevious = await cosineSimilarity(previousWord, word);
+  console.log(`📊 Similarity to previous word: ${similarityToPrevious}`);
   
-  console.log(`📊 Similarity to previous word: ${similarity}`);
+  // If similarity is below threshold, check ConceptNet
+  if (similarityToPrevious < SIMILARITY_THRESHOLD) {
+    const hasRelation = await checkConceptNetRelation(previousWord, word);
+    console.log(`🔗 ConceptNet relation check: ${hasRelation ? "Found" : "Not found"}`);
+    
+    if (!hasRelation) {
+      return {
+        isValid: false,
+        similarityToTarget: 0,
+        message: `Try a word that's more closely related to "${previousWord}"`
+      };
+    }
+  }
+  
+  // If we get here, either similarity was good or ConceptNet found a relation
+  // Now check similarity to target
+  const similarityToTarget = await cosineSimilarity(word, targetWord);
   console.log(`📊 Similarity to target word: ${similarityToTarget}`);
   
-  if (similarity >= SIMILARITY_THRESHOLDS.MIN) {
-    return { isValid: true, similarityToTarget };
+  // For target word, also check ConceptNet if similarity is low
+  if (similarityToTarget < SIMILARITY_THRESHOLD) {
+    const hasTargetRelation = await checkConceptNetRelation(word, targetWord);
+    if (!hasTargetRelation) {
+      return {
+        isValid: false,
+        similarityToTarget,
+        message: `This word isn't getting closer to the target word "${targetWord}"`
+      };
+    }
   }
-
-  // If similarity check fails, try ConceptNet
-  const hasRelation = await checkConceptNetRelation(previousWord, word);
-  console.log(`🔗 ConceptNet relation check: ${hasRelation ? "Found" : "Not found"}`);
   
-  if (hasRelation) {
-    return { isValid: true, similarityToTarget };
-  }
-  
-  return {
-    isValid: false,
-    similarityToTarget,
-    message: `Try a word that's more closely related to "${previousWord}"`
+  return { 
+    isValid: true, 
+    similarityToTarget 
   };
 };
 

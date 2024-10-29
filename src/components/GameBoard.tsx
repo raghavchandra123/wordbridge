@@ -30,7 +30,7 @@ const GameBoard = ({
   const containerWidth = containerRef?.offsetWidth ?? 300;
 
   return (
-    <div className="space-y-8" ref={setContainerRef}>
+    <div className="space-y-8 bg-[#fff5eb] p-6 rounded-lg" ref={setContainerRef}>
       <div className="flex flex-col items-center gap-4">
         <div className="p-4 rounded-lg w-full">
           <WordDisplay 
@@ -49,9 +49,9 @@ const GameBoard = ({
         </div>
       </div>
 
-      <div className="relative w-full h-2 bg-[#f55c7a]/20 rounded-full overflow-hidden">
+      <div className="relative w-full h-2 bg-[#f6bc66]/20 rounded-full overflow-hidden">
         <div 
-          className="h-full bg-gradient-to-r from-[#f55c7a] to-[#f6bc66] transition-all"
+          className="h-full bg-gradient-to-r from-[#f6bc66] to-[#f55c7a] transition-all"
           style={{ width: `${progress}%` }}
         />
       </div>
