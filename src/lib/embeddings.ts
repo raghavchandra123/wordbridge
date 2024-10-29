@@ -5,18 +5,25 @@ let wordList: string[] = [];
 let wordBaseformMap: { [key: string]: string } | null = null;
 
 export const loadEmbeddings = async () => {
-  if (dictionary && wordBaseformMap) return dictionary;
+  if (dictionary && wordBaseformMap) {
+    console.log('Using cached embeddings dictionary');
+    return dictionary;
+  }
   
   try {
+    console.log('Attempting to load embeddings from files...');
+    
     // Load word to baseform mapping
     const wordBaseformResponse = await fetch('/data/word_baseform.json');
     if (!wordBaseformResponse.ok) throw new Error('Failed to load word baseform mappings');
     wordBaseformMap = await wordBaseformResponse.json();
+    console.log('Loaded word baseform mappings:', Object.keys(wordBaseformMap).length, 'entries');
     
     // Load baseform to vector mapping
     const embedsResponse = await fetch('/data/concept_embeds.json');
     if (!embedsResponse.ok) throw new Error('Failed to load concept embeddings');
     dictionary = await embedsResponse.json();
+    console.log('Loaded concept embeddings:', Object.keys(dictionary).length, 'entries');
     
     // Create word list from all valid words (including variations)
     wordList = Object.keys(wordBaseformMap);
@@ -24,6 +31,7 @@ export const loadEmbeddings = async () => {
     return dictionary;
   } catch (error) {
     console.error('Failed to load embeddings:', error);
+    console.log('Falling back to test dictionary');
     // Fallback to test dictionary if files aren't found
     dictionary = {
       "cat": { vector: new Float32Array(Array(300).fill(0.1)) },
@@ -49,11 +57,19 @@ export const getWordList = async (): Promise<string[]> => {
 };
 
 export const isValidWord = (word: string): boolean => {
-  return wordBaseformMap ? word in wordBaseformMap : false;
+  const isValid = wordBaseformMap ? word in wordBaseformMap : false;
+  console.log('Word validation check:', word, isValid ? 'valid' : 'invalid');
+  return isValid;
 };
 
 export const cosineSimilarity = (a: WordEmbedding | undefined, b: WordEmbedding | undefined): number => {
-  if (!a?.vector || !b?.vector) return 0;
+  if (!a?.vector || !b?.vector) {
+    console.log('Cosine similarity calculation failed - missing vectors:', { 
+      hasVectorA: !!a?.vector, 
+      hasVectorB: !!b?.vector 
+    });
+    return 0;
+  }
   
   let dotProduct = 0;
   let normA = 0;
@@ -65,15 +81,20 @@ export const cosineSimilarity = (a: WordEmbedding | undefined, b: WordEmbedding 
     normB += b.vector[i] * b.vector[i];
   }
   
-  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+  const similarity = dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+  console.log('Calculated cosine similarity:', similarity);
+  return similarity;
 };
 
 export const calculateProgress = (similarity: number): number => {
   const progress = ((similarity - 0.1) / (0.7 - 0.1)) * 100;
-  return Math.max(0, Math.min(100, progress));
+  const clampedProgress = Math.max(0, Math.min(100, progress));
+  console.log('Progress calculation:', { similarity, rawProgress: progress, clampedProgress });
+  return clampedProgress;
 };
 
 export const findRandomWordPair = async (): Promise<[string, string]> => {
+  console.log('Finding random word pair...');
   const words = await getWordList();
   let attempts = 0;
   const maxAttempts = 100;
@@ -91,13 +112,16 @@ export const findRandomWordPair = async (): Promise<[string, string]> => {
     if (!dictionary?.[base1] || !dictionary?.[base2]) continue;
     
     const similarity = cosineSimilarity(dictionary[base1], dictionary[base2]);
+    console.log('Checking word pair:', { word1, word2, similarity });
+    
     if (similarity < 0.1) {
+      console.log('Found suitable word pair:', { word1, word2, similarity });
       return [word1, word2];
     }
     
     attempts++;
   }
   
-  // If we can't find a pair, return a default pair
+  console.log('Failed to find suitable word pair, using fallback pair');
   return ["cat", "dog"];
 };

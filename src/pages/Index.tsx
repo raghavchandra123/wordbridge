@@ -29,8 +29,10 @@ const Index = () => {
   useEffect(() => {
     const initGame = async () => {
       try {
+        console.log('Initializing game...');
         await loadEmbeddings();
         const [start, target] = await findRandomWordPair();
+        console.log('Game initialized with words:', { start, target });
         setGame({
           startWord: start,
           targetWord: target,
@@ -40,6 +42,7 @@ const Index = () => {
         });
         setIsLoading(false);
       } catch (error) {
+        console.error('Game initialization failed:', error);
         toast({
           title: "Error",
           description: "Failed to initialize game",
@@ -56,6 +59,8 @@ const Index = () => {
     
     if (!currentWord) return;
     
+    console.log('Word submitted:', currentWord);
+    
     if (!isValidWord(currentWord)) {
       toast({
         title: "Invalid word",
@@ -66,11 +71,14 @@ const Index = () => {
     }
 
     const lastWord = game.currentChain[game.currentChain.length - 1];
+    console.log('Comparing with last word:', lastWord);
+    
     const embeddings = await loadEmbeddings();
     const lastWordBase = embeddings[lastWord];
     const currentWordBase = embeddings[currentWord];
     
     const similarity = cosineSimilarity(lastWordBase, currentWordBase);
+    console.log('Similarity with previous word:', similarity);
     
     if (similarity < 0.7) {
       toast({
@@ -86,11 +94,13 @@ const Index = () => {
       currentWordBase,
       embeddings[game.targetWord]
     );
+    console.log('Similarity to target word:', similarityToTarget);
     
     const newProgress = calculateProgress(similarityToTarget);
     setProgress(newProgress);
     
     if (similarityToTarget >= 0.7) {
+      console.log('Game completed!');
       setGame({
         ...game,
         currentChain: newChain,
