@@ -15,7 +15,6 @@ import {
   findRandomWordPair,
   cosineSimilarity,
   isValidWord,
-  getWordVector
 } from "@/lib/embeddings";
 import { calculateProgress } from "@/lib/embeddings/utils";
 import { saveHighScore } from "@/lib/storage";
