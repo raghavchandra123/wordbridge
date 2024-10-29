@@ -1,23 +1,13 @@
-import { RawEmbedding, RawEmbeddingDictionary, WordDictionary } from './types';
-
-export const convertRawDictionary = (rawDict: RawEmbeddingDictionary): WordDictionary => {
-  const dictionary: WordDictionary = {};
-  for (const [word, embedding] of Object.entries(rawDict)) {
-    dictionary[word] = {
-      vector: new Float32Array(embedding)
-    };
-  }
-  return dictionary;
-};
+import { WordDictionary } from './types';
 
 export const cosineSimilarity = (word1: string, word2: string, dictionary: WordDictionary): number => {
-  if (!dictionary[word1]?.vector || !dictionary[word2]?.vector) {
+  if (!dictionary[word1] || !dictionary[word2]) {
     console.log('Missing vectors for words:', { word1, word2 });
     return 0;
   }
 
-  const vec1 = dictionary[word1].vector;
-  const vec2 = dictionary[word2].vector;
+  const vec1 = dictionary[word1];
+  const vec2 = dictionary[word2];
   
   let dotProduct = 0;
   let normA = 0;

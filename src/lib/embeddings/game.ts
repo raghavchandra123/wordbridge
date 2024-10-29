@@ -3,7 +3,6 @@ import { cosineSimilarity } from './utils';
 import { WordDictionary } from './types';
 
 export const findRandomWordPair = async (dictionary: WordDictionary): Promise<[string, string]> => {
-  console.log('Finding random word pair...');
   const wordList = getWordList();
   let attempts = 0;
   const maxAttempts = 100;
@@ -15,10 +14,8 @@ export const findRandomWordPair = async (dictionary: WordDictionary): Promise<[s
     if (word1 === word2) continue;
     
     const similarity = cosineSimilarity(word1, word2, dictionary);
-    console.log('Checking word pair:', { word1, word2, similarity });
     
     if (similarity < 0.1) {
-      console.log('Found suitable word pair:', { word1, word2, similarity });
       return [word1, word2];
     }
     

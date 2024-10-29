@@ -1,10 +1,3 @@
-export interface WordEmbedding {
-  vector: Float32Array;
-}
-
 export interface WordDictionary {
-  [word: string]: WordEmbedding;
+  [word: string]: Float32Array;
 }
-
-export type RawEmbedding = number[];
-export type RawEmbeddingDictionary = { [word: string]: RawEmbedding };
