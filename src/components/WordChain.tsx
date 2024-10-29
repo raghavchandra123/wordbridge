@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
-import { cosineSimilarity, calculateProgress } from "@/lib/embeddings";
+import { cosineSimilarity } from "@/lib/embeddings/loader";
 
 interface WordChainProps {
   words: string[];
@@ -10,15 +10,15 @@ interface WordChainProps {
 }
 
 const WordChain = ({ words, targetWord, onWordClick, isGameComplete }: WordChainProps) => {
-  const getWordColor = (word: string) => {
-    const similarity = cosineSimilarity(word, targetWord);
+  const getWordColor = async (word: string) => {
+    const similarity = await cosineSimilarity(word, targetWord);
     const progress = calculateProgress(similarity);
     
     // Lighter pastel colors with consistent opacity
-    if (progress < 25) return "bg-blue-50 hover:bg-blue-100 text-blue-800";
-    if (progress < 50) return "bg-green-50 hover:bg-green-100 text-green-800";
-    if (progress < 75) return "bg-yellow-50 hover:bg-yellow-100 text-yellow-800";
-    return "bg-red-50 hover:bg-red-100 text-red-800";
+    if (progress < 25) return "bg-blue-50 hover:bg-blue-100 text-blue-600";
+    if (progress < 50) return "bg-violet-50 hover:bg-violet-100 text-violet-600";
+    if (progress < 75) return "bg-rose-50 hover:bg-rose-100 text-rose-600";
+    return "bg-emerald-50 hover:bg-emerald-100 text-emerald-600";
   };
 
   return (
@@ -29,7 +29,7 @@ const WordChain = ({ words, targetWord, onWordClick, isGameComplete }: WordChain
           variant="ghost"
           className={cn(
             "w-full p-3 text-center font-medium border transition-colors",
-            index === 0 ? "bg-pink-50 text-pink-800 cursor-not-allowed" : getWordColor(word),
+            index === 0 ? "bg-pink-50 text-pink-600 cursor-not-allowed" : getWordColor(word),
             isGameComplete && "cursor-not-allowed"
           )}
           disabled={index === 0 || isGameComplete}
