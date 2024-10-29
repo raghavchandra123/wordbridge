@@ -33,13 +33,18 @@ export const loadEmbeddings = async () => {
     dictionary = await embedsResponse.json();
     console.log('Loaded concept embeddings:', Object.keys(dictionary).length, 'entries');
 
-    // Print sample of embeddings for verification
+    // Print sample of embeddings for verification with safety checks
     const sampleWords = Object.keys(dictionary).slice(0, 3);
     console.log('Sample of loaded embeddings:');
     sampleWords.forEach(word => {
-      const vector = dictionary![word].vector;
-      console.log(`Word: ${word}`);
-      console.log(`Vector (first 5 dimensions): [${Array.from(vector).slice(0, 5).join(', ')}]`);
+      if (dictionary && dictionary[word] && dictionary[word].vector) {
+        const vector = dictionary[word].vector;
+        const vectorArray = Array.from(vector || []);
+        console.log(`Word: ${word}`);
+        console.log(`Vector (first 5 dimensions): [${vectorArray.slice(0, 5).join(', ')}]`);
+      } else {
+        console.log(`Word: ${word} (no vector available)`);
+      }
     });
     
     // Create word list from common words that have vectors
