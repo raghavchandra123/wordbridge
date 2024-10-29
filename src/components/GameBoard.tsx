@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
@@ -27,15 +28,26 @@ const GameBoard = ({
   onWordClick,
   progress,
 }: GameBoardProps) => {
+  const [containerRef, setContainerRef] = useState<HTMLDivElement | null>(null);
+  const containerWidth = containerRef?.offsetWidth ?? 300;
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" ref={setContainerRef}>
       <div className="flex flex-col md:flex-row justify-between items-center text-2xl font-bold gap-4">
-        <div className="p-4 rounded-lg">
-          <WordDisplay word={game.startWord} progress={100} />
+        <div className="p-4 rounded-lg w-full">
+          <WordDisplay 
+            word={game.startWord} 
+            progress={100}
+            containerWidth={containerWidth} 
+          />
         </div>
         <div className="text-[#FF8B8B] transform md:rotate-0 rotate-90">→</div>
-        <div className="p-4 rounded-lg">
-          <WordDisplay word={game.targetWord} progress={0} />
+        <div className="p-4 rounded-lg w-full">
+          <WordDisplay 
+            word={game.targetWord} 
+            progress={0}
+            containerWidth={containerWidth} 
+          />
         </div>
       </div>
 
@@ -52,7 +64,8 @@ const GameBoard = ({
           >
             <WordDisplay 
               word={word} 
-              progress={index === 0 ? 100 : calculateProgress(progress)} 
+              progress={index === 0 ? 100 : progress}
+              containerWidth={containerWidth} 
             />
           </Button>
         ))}

@@ -3,27 +3,29 @@ import { THEME_COLORS } from "@/lib/constants/colors";
 interface LetterSquareProps {
   letter: string;
   progress: number;
+  size: number;
 }
 
-const LetterSquare = ({ letter, progress }: LetterSquareProps) => {
-  // Calculate colors based on progress
+const LetterSquare = ({ letter, progress, size }: LetterSquareProps) => {
   const startColor = THEME_COLORS.START;
   const endColor = THEME_COLORS.END;
   
-  // Convert hex to RGB for interpolation
   const startRGB = hexToRgb(startColor);
   const endRGB = hexToRgb(endColor);
   
   const interpolatedColor = interpolateColor(startRGB, endRGB, progress / 100);
-  const borderColor = progress === 100 ? endColor : startColor;
+  const borderColor = endColor;
   
   return (
     <div 
-      className="w-10 h-10 flex items-center justify-center text-lg font-bold rounded-lg m-0.5 transition-colors"
+      className="flex items-center justify-center font-bold rounded-lg m-0.5 transition-colors"
       style={{
+        width: `${size}px`,
+        height: `${size}px`,
         border: `2px solid ${borderColor}`,
         backgroundColor: `rgba(${interpolatedColor.r}, ${interpolatedColor.g}, ${interpolatedColor.b}, 0.2)`,
         color: THEME_COLORS.TEXT.PRIMARY,
+        fontSize: `${Math.max(size * 0.4, 12)}px`,
       }}
     >
       {letter.toUpperCase()}
