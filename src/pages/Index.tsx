@@ -14,12 +14,12 @@ import {
   loadEmbeddings,
   findRandomWordPair,
   cosineSimilarity,
-  calculateProgress,
-  isValidWord,
 } from "@/lib/embeddings";
+import { calculateProgress } from "@/lib/embeddings/utils";
 import { saveHighScore } from "@/lib/storage";
 import { GameState } from "@/lib/types";
 import WordChain from "@/components/WordChain";
+import { SIMILARITY_THRESHOLDS } from "@/lib/constants";
 
 const Index = () => {
   const { toast } = useToast();
@@ -64,23 +64,14 @@ const Index = () => {
   const handleWordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentWord) return;
-    
-    if (!isValidWord(currentWord)) {
-      toast({
-        title: "Invalid word",
-        description: "This word is not in our dictionary",
-        variant: "destructive",
-      });
-      return;
-    }
 
     const previousWord = game.currentChain[editingIndex !== null ? editingIndex - 1 : game.currentChain.length - 1];
-    const similarity = cosineSimilarity(previousWord, currentWord);
+    const similarity = await cosineSimilarity(previousWord, currentWord);
     
-    if (similarity < 0.05) {
+    if (similarity < SIMILARITY_THRESHOLDS.MIN) {
       toast({
         title: "Word not similar enough",
-        description: "Try a word that's more closely related to the previous word",
+        description: `Try a word that's more closely related to "${previousWord}" (similarity: ${(similarity * 100).toFixed(1)}%)`,
         variant: "destructive",
       });
       return;
@@ -93,11 +84,11 @@ const Index = () => {
       newChain = [...game.currentChain, currentWord];
     }
     
-    const similarityToTarget = cosineSimilarity(currentWord, game.targetWord);
+    const similarityToTarget = await cosineSimilarity(currentWord, game.targetWord);
     const newProgress = calculateProgress(similarityToTarget);
     setProgress(newProgress);
     
-    if (similarityToTarget >= 0.3) {
+    if (similarityToTarget >= SIMILARITY_THRESHOLDS.TARGET) {
       setGame({
         ...game,
         currentChain: newChain,
@@ -183,11 +174,11 @@ const Index = () => {
         </CardHeader>
         <CardContent className="space-y-8">
           <div className="flex justify-between items-center text-2xl font-bold">
-            <div className="p-4 bg-pink-900/20 rounded-lg border border-pink-800/20">
+            <div className="p-4 bg-pink-100/70 rounded-lg border border-pink-200/70">
               {game.startWord}
             </div>
             <div className="text-blue-400">→</div>
-            <div className="p-4 bg-blue-900/20 rounded-lg border border-blue-800/20">
+            <div className="p-4 bg-blue-100/70 rounded-lg border border-blue-200/70">
               {game.targetWord}
             </div>
           </div>

@@ -1,6 +1,8 @@
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
-import { cosineSimilarity, calculateProgress } from "@/lib/embeddings";
+import { cosineSimilarity } from "@/lib/embeddings";
+import { calculateProgress } from "@/lib/embeddings/utils";
+import { PROGRESS_COLORS } from "@/lib/constants";
 
 interface WordChainProps {
   words: string[];
@@ -14,29 +16,41 @@ const WordChain = ({ words, targetWord, onWordClick, isGameComplete }: WordChain
     const similarity = await cosineSimilarity(word, targetWord);
     const progress = calculateProgress(similarity);
     
-    if (progress < 25) return "bg-blue-100/70 hover:bg-blue-200/70 text-blue-700";
-    if (progress < 50) return "bg-violet-100/70 hover:bg-violet-200/70 text-violet-700";
-    if (progress < 75) return "bg-rose-100/70 hover:bg-rose-200/70 text-rose-700";
-    return "bg-emerald-100/70 hover:bg-emerald-200/70 text-emerald-700";
+    if (progress < 25) return PROGRESS_COLORS.LOW;
+    if (progress < 50) return PROGRESS_COLORS.MEDIUM;
+    if (progress < 75) return PROGRESS_COLORS.HIGH;
+    return PROGRESS_COLORS.COMPLETE;
+  };
+
+  const getSimilarityText = async (currentWord: string, previousWord: string | null) => {
+    if (!previousWord) return "";
+    const similarity = await cosineSimilarity(currentWord, previousWord);
+    return `(${(similarity * 100).toFixed(1)}% similar to previous)`;
   };
 
   return (
     <div className="space-y-2">
-      {words.map((word, index) => (
-        <Button
-          key={index}
-          variant="ghost"
-          className={cn(
-            "w-full p-3 text-center font-medium border transition-colors",
-            index === 0 ? "bg-pink-100/70 text-pink-700 cursor-not-allowed" : getWordColor(word),
-            isGameComplete && "cursor-not-allowed"
-          )}
-          disabled={index === 0 || isGameComplete}
-          onClick={() => onWordClick(index)}
-        >
-          {word}
-        </Button>
-      ))}
+      {words.map(async (word, index) => {
+        const similarityText = await getSimilarityText(word, index > 0 ? words[index - 1] : null);
+        return (
+          <Button
+            key={index}
+            variant="ghost"
+            className={cn(
+              "w-full p-3 text-center font-medium border transition-colors flex flex-col gap-1",
+              index === 0 ? "bg-pink-100/70 text-pink-700 cursor-not-allowed" : await getWordColor(word),
+              isGameComplete && "cursor-not-allowed"
+            )}
+            disabled={index === 0 || isGameComplete}
+            onClick={() => onWordClick(index)}
+          >
+            <span>{word}</span>
+            {similarityText && (
+              <span className="text-xs opacity-70">{similarityText}</span>
+            )}
+          </Button>
+        );
+      })}
     </div>
   );
 };
