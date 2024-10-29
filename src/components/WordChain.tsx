@@ -12,19 +12,14 @@ interface WordChainProps {
   isGameComplete: boolean;
 }
 
-interface WordData {
-  word: string;
-  color: string;
-}
-
 const WordChain = ({ words, targetWord, onWordClick, selectedWordIndex, isGameComplete }: WordChainProps) => {
   const updateSimilarities = async (word: string, index: number) => {
     if (index > 0) {
       const prevSimilarity = await cosineSimilarity(word, words[index - 1]);
-      console.log(`Word "${word}" similarity to previous word "${words[index - 1]}": ${(prevSimilarity * 100).toFixed(1)}%`);
+      console.log(`Word "${word}" similarity to previous word "${words[index - 1]}": ${prevSimilarity}`);
     }
     const targetSimilarity = await cosineSimilarity(word, targetWord);
-    console.log(`Word "${word}" similarity to target word "${targetWord}": ${(targetSimilarity * 100).toFixed(1)}%`);
+    console.log(`Word "${word}" similarity to target word "${targetWord}": ${targetSimilarity}`);
     return calculateProgress(targetSimilarity);
   };
 
