@@ -28,11 +28,18 @@ export const loadEmbeddings = async () => {
     // Create word list from all valid words (including variations)
     wordList = Object.keys(wordBaseformMap);
     
+    // Debug: Log a sample of the loaded data
+    const sampleWord = wordList[0];
+    console.log('Sample word data:', {
+      word: sampleWord,
+      baseform: wordBaseformMap[sampleWord],
+      hasVector: dictionary[wordBaseformMap[sampleWord]] !== undefined
+    });
+    
     return dictionary;
   } catch (error) {
     console.error('Failed to load embeddings:', error);
     console.log('Falling back to test dictionary');
-    // Fallback to test dictionary if files aren't found
     dictionary = {
       "cat": { vector: new Float32Array(Array(300).fill(0.1)) },
       "dog": { vector: new Float32Array(Array(300).fill(0.2)) },
@@ -56,29 +63,53 @@ export const getWordList = async (): Promise<string[]> => {
   return wordList;
 };
 
+export const getBaseForm = (word: string): string | null => {
+  if (!wordBaseformMap) return null;
+  const baseform = wordBaseformMap[word];
+  console.log('Getting base form:', { word, baseform });
+  return baseform || null;
+};
+
 export const isValidWord = (word: string): boolean => {
   const isValid = wordBaseformMap ? word in wordBaseformMap : false;
   console.log('Word validation check:', word, isValid ? 'valid' : 'invalid');
   return isValid;
 };
 
-export const cosineSimilarity = (a: WordEmbedding | undefined, b: WordEmbedding | undefined): number => {
-  if (!a?.vector || !b?.vector) {
-    console.log('Cosine similarity calculation failed - missing vectors:', { 
-      hasVectorA: !!a?.vector, 
-      hasVectorB: !!b?.vector 
-    });
+export const cosineSimilarity = (word1: string, word2: string): number => {
+  if (!dictionary || !wordBaseformMap) {
+    console.log('Dictionary or baseform map not loaded');
     return 0;
   }
+
+  const base1 = wordBaseformMap[word1];
+  const base2 = wordBaseformMap[word2];
+  
+  console.log('Comparing words:', {
+    word1,
+    word2,
+    base1,
+    base2,
+    hasVector1: dictionary[base1]?.vector !== undefined,
+    hasVector2: dictionary[base2]?.vector !== undefined
+  });
+
+  if (!base1 || !base2 || !dictionary[base1]?.vector || !dictionary[base2]?.vector) {
+    console.log('Missing vectors for words');
+    return 0;
+  }
+
+  const vec1 = dictionary[base1].vector;
+  const vec2 = dictionary[base2].vector;
   
   let dotProduct = 0;
   let normA = 0;
   let normB = 0;
   
-  for (let i = 0; i < 300; i++) {
-    dotProduct += a.vector[i] * b.vector[i];
-    normA += a.vector[i] * a.vector[i];
-    normB += b.vector[i] * b.vector[i];
+  for (let i = 0; i < vec1.length; i++) {
+    dotProduct += vec1[i] * vec2[i];
+    normA += vec1[i] * vec1[i];
+    normB += vec2[i] * vec2[i];
   }
   
   const similarity = dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
@@ -105,13 +136,7 @@ export const findRandomWordPair = async (): Promise<[string, string]> => {
     
     if (word1 === word2) continue;
     
-    // Get base forms for the words
-    const base1 = wordBaseformMap?.[word1] || word1;
-    const base2 = wordBaseformMap?.[word2] || word2;
-    
-    if (!dictionary?.[base1] || !dictionary?.[base2]) continue;
-    
-    const similarity = cosineSimilarity(dictionary[base1], dictionary[base2]);
+    const similarity = cosineSimilarity(word1, word2);
     console.log('Checking word pair:', { word1, word2, similarity });
     
     if (similarity < 0.1) {

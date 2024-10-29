@@ -73,11 +73,7 @@ const Index = () => {
     const lastWord = game.currentChain[game.currentChain.length - 1];
     console.log('Comparing with last word:', lastWord);
     
-    const embeddings = await loadEmbeddings();
-    const lastWordBase = embeddings[lastWord];
-    const currentWordBase = embeddings[currentWord];
-    
-    const similarity = cosineSimilarity(lastWordBase, currentWordBase);
+    const similarity = cosineSimilarity(lastWord, currentWord);
     console.log('Similarity with previous word:', similarity);
     
     if (similarity < 0.7) {
@@ -90,10 +86,7 @@ const Index = () => {
     }
     
     const newChain = [...game.currentChain, currentWord];
-    const similarityToTarget = cosineSimilarity(
-      currentWordBase,
-      embeddings[game.targetWord]
-    );
+    const similarityToTarget = cosineSimilarity(currentWord, game.targetWord);
     console.log('Similarity to target word:', similarityToTarget);
     
     const newProgress = calculateProgress(similarityToTarget);
