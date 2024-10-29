@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
@@ -11,60 +11,19 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  loadEmbeddings,
-  findRandomWordPair,
   cosineSimilarity,
   isValidWord,
-  getWordVector,
 } from "@/lib/embeddings";
 import { calculateProgress } from "@/lib/embeddings/utils";
 import { saveHighScore } from "@/lib/storage";
-import { GameState } from "@/lib/types";
 import WordChain from "@/components/WordChain";
 import { SIMILARITY_THRESHOLDS } from "@/lib/constants";
 import { checkConceptNetRelation } from "@/lib/conceptnet";
-import { WordDictionary } from "@/lib/embeddings/types";
-
-// Extract game initialization logic
-const useGameInitialization = (setLoading: (loading: boolean) => void) => {
-  const [game, setGame] = useState<GameState>({
-    startWord: "",
-    targetWord: "",
-    currentChain: [],
-    isComplete: false,
-    score: 0,
-  });
-
-  useEffect(() => {
-    const initGame = async () => {
-      try {
-        await loadEmbeddings();
-        // Create an empty dictionary to pass to findRandomWordPair
-        const emptyDict: WordDictionary = {};
-        const [start, target] = await findRandomWordPair(emptyDict);
-        setGame({
-          startWord: start,
-          targetWord: target,
-          currentChain: [start],
-          isComplete: false,
-          score: 0,
-        });
-        setLoading(false);
-      } catch (error) {
-        console.error('Game initialization failed:', error);
-      }
-    };
-
-    initGame();
-  }, [setLoading]);
-
-  return { game, setGame };
-};
+import { useGameInitialization } from "@/hooks/useGameInitialization";
 
 const Index = () => {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(true);
-  const { game, setGame } = useGameInitialization(setIsLoading);
+  const { game, setGame, isLoading } = useGameInitialization();
   const [currentWord, setCurrentWord] = useState("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [progress, setProgress] = useState(0);
