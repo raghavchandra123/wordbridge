@@ -77,8 +77,3 @@ export const cosineSimilarity = async (word1: string, word2: string): Promise<nu
   
   return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
 };
-
-export const calculateProgress = (similarity: number): number => {
-  const progress = ((similarity - 0.05) / (0.3 - 0.05)) * 100;
-  return Math.max(0, Math.min(100, progress));
-};
