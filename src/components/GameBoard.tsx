@@ -4,6 +4,8 @@ import { Button } from "./ui/button";
 import WordDisplay from "./WordDisplay";
 import HeaderSection from "./game/HeaderSection";
 import WordInput from "./game/WordInput";
+import { GameContainer } from "./game/layout/GameContainer";
+import { GameCard } from "./game/layout/GameCard";
 import { THEME_COLORS } from "@/lib/constants";
 import { GameState } from "@/lib/types";
 
@@ -94,23 +96,19 @@ const GameBoard = ({
     return game.wordProgresses[index - 1] || 0;
   };
 
-  // Calculate component heights
-  const safeAreaInsets = 'env(safe-area-inset-bottom)';
-  const totalMargins = 32; // 2rem (32px) total padding from root container
+  // Calculate component heights with reduced spacing
+  const totalMargins = 16; // Reduced from 32px to 16px
   const mainHeight = visualViewport.height - totalMargins;
   
-  // Component heights (updated with more accurate measurements)
-  const headerHeight = 150; // Increased to account for start/end words, arrow, progress bar
-  const inputSectionHeight = 120; // Increased to account for input field, buttons
-  const cardPadding = 24; // 1.5rem padding from Card component
-  const cardHeaderHeight = 80; // Reduced since we only need title + description
+  const headerHeight = 120; // Reduced from 150px
+  const inputSectionHeight = 100; // Reduced from 120px
+  const cardPadding = 16; // Reduced from 24px
+  const cardHeaderHeight = 60; // Reduced from 80px
   const containerWidth = containerRef?.offsetWidth ?? 300;
   
-  // Calculate available height for scroll area
   const availableScrollHeight = mainHeight - headerHeight - inputSectionHeight - cardPadding - cardHeaderHeight;
-  const maxScrollHeight = Math.min(availableScrollHeight, visualViewport.height * 0.2); // Reduced to 20% of viewport
+  const maxScrollHeight = Math.min(availableScrollHeight, visualViewport.height * 0.3); // Increased to 30% of viewport
 
-  // Debug logging
   console.log('VIEW: Size calculations:', {
     visualViewportHeight: visualViewport.height,
     totalMargins,
@@ -131,15 +129,7 @@ const GameBoard = ({
   });
 
   return (
-    <div 
-      className="flex flex-col space-y-2 mx-4 pb-safe" 
-      style={{ 
-        height: mainHeight + 'px',
-        maxHeight: '100%',
-        paddingBottom: `calc(${safeAreaInsets} + 1rem)`
-      }}
-      ref={setContainerRef}
-    >
+    <GameContainer mainHeight={mainHeight} ref={setContainerRef}>
       <HeaderSection 
         startWord={game.startWord}
         targetWord={game.targetWord}
@@ -156,12 +146,12 @@ const GameBoard = ({
           maxHeight: `${maxScrollHeight}px`
         }}
       >
-        <div className="space-y-1 p-2">
+        <div className="space-y-0.5 p-1">
           {game.currentChain.map((word, index) => (
             <Button
               key={`${word}-${index}`}
               variant="ghost"
-              className="w-full py-1 text-center font-medium transition-colors hover:bg-opacity-10"
+              className="w-full py-0.5 text-center font-medium transition-colors hover:bg-opacity-10"
               onClick={() => {
                 onWordClick(index === editingIndex ? null : index);
                 setTimeout(() => inputRef.current?.focus(), 0);
@@ -197,7 +187,7 @@ const GameBoard = ({
           inputRef={inputRef}
         />
       )}
-    </div>
+    </GameContainer>
   );
 };
 

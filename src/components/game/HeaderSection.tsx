@@ -10,19 +10,19 @@ interface HeaderSectionProps {
 }
 
 const HeaderSection = ({ startWord, targetWord, progress, containerWidth }: HeaderSectionProps) => (
-  <div className="flex-none space-y-1">
-    <div className="flex flex-col items-center gap-1">
+  <div className="flex-none space-y-0.5">
+    <div className="flex flex-col items-center gap-0.5">
       <div className="w-full">
         <WordDisplay word={startWord} progress={0} containerWidth={containerWidth} />
       </div>
-      <ArrowDown style={{ color: THEME_COLORS.GRADIENT.MID2 }} size={16} />
+      <ArrowDown style={{ color: THEME_COLORS.GRADIENT.MID2 }} size={12} />
       <div className="w-full">
         <WordDisplay word={targetWord} progress={100} containerWidth={containerWidth} />
       </div>
     </div>
 
     <div 
-      className="relative w-full h-1.5 rounded-full overflow-hidden" 
+      className="relative w-full h-1 rounded-full overflow-hidden mt-1" 
       style={{ backgroundColor: `${THEME_COLORS.GRADIENT.MID2}33` }}
     >
       <div 
