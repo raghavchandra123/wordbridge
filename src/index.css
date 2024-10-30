@@ -42,6 +42,6 @@
   }
   body {
     @apply bg-background text-foreground;
-    background: #FFF5EB;
+    background: #f57c73;
   }
 }

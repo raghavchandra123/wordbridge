@@ -40,7 +40,7 @@ const GameBoard = ({
             containerWidth={containerWidth} 
           />
         </div>
-        <ArrowDown style={{ color: THEME_COLORS.BORDER.DARK }} size={24} />
+        <ArrowDown style={{ color: THEME_COLORS.BORDER.LIGHT }} size={24} />
         <div className="p-4 rounded-lg w-full">
           <WordDisplay 
             word={game.targetWord} 
@@ -50,7 +50,7 @@ const GameBoard = ({
         </div>
       </div>
 
-      <div className="relative w-full h-2 rounded-full overflow-hidden bg-pink-100">
+      <div className="relative w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: THEME_COLORS.START }}>
         <div 
           className="h-full transition-all"
           style={{ 
@@ -66,10 +66,7 @@ const GameBoard = ({
             key={index}
             variant="ghost"
             className="w-full p-3 text-center font-medium transition-colors"
-            style={{ 
-              backgroundColor: index === 0 ? 'rgba(255, 139, 139, 0.2)' : undefined,
-              border: '1px solid rgba(255, 139, 139, 0.3)'
-            }}
+            style={{ backgroundColor: index === 0 ? THEME_COLORS.START : undefined }}
             onClick={() => onWordClick(index === editingIndex ? null : index)}
             disabled={index === 0 || game.isComplete}
           >
@@ -90,16 +87,15 @@ const GameBoard = ({
             placeholder={editingIndex !== null ? `Change word #${editingIndex + 1}` : "Enter a word..."}
             className="text-center text-lg"
             style={{ 
-              backgroundColor: 'rgba(255, 139, 139, 0.1)',
-              borderColor: THEME_COLORS.START,
-              color: THEME_COLORS.TEXT.PRIMARY
+              backgroundColor: THEME_COLORS.START,
+              borderColor: THEME_COLORS.BORDER.LIGHT
             }}
             disabled={isChecking}
           />
           <div className="flex gap-2">
             <Button 
               type="submit" 
-              className="flex-1 text-lg text-white hover:opacity-90 transition-opacity"
+              className="flex-1 text-lg text-white"
               style={{ backgroundColor: THEME_COLORS.END }}
               disabled={isChecking}
             >
@@ -109,8 +105,8 @@ const GameBoard = ({
               <Button 
                 type="button" 
                 variant="outline"
-                className="text-lg hover:bg-orange-50 transition-colors"
-                style={{ borderColor: THEME_COLORS.END, color: THEME_COLORS.END }}
+                className="text-lg"
+                style={{ borderColor: THEME_COLORS.BORDER.LIGHT, color: THEME_COLORS.BORDER.LIGHT }}
                 disabled={isChecking}
                 onClick={() => onWordClick(null)}
               >
