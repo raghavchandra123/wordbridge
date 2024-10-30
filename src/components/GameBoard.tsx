@@ -87,9 +87,7 @@ const GameBoard = ({
           <Button
             key={index}
             variant="ghost"
-            className={`w-full py-2 text-center font-medium transition-colors hover:bg-opacity-10 ${
-              index === 0 ? 'opacity-100' : ''
-            }`}
+            className="w-full py-2 text-center font-medium transition-colors hover:bg-opacity-10"
             onClick={() => onWordClick(index === editingIndex ? null : index)}
             disabled={index === 0 || game.isComplete}
             style={{ 
@@ -115,7 +113,7 @@ const GameBoard = ({
             placeholder={editingIndex !== null ? `Change word #${editingIndex + 1}` : "Enter a word..."}
             className="text-center text-lg"
             style={{ 
-              backgroundColor: `${THEME_COLORS.GRADIENT.MID3}33`,
+              backgroundColor: `${THEME_COLORS.GRADIENT.MID2}33`,
               borderColor: THEME_COLORS.GRADIENT.MID2
             }}
             disabled={isChecking}
