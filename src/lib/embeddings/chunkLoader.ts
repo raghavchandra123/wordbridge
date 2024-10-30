@@ -83,16 +83,11 @@ export async function loadWordChunk(word: string): Promise<WordDictionary | null
       // Load new chunk if not in cache
       try {
         const response = await fetch(`/data/chunks/embeddings_chunk_${mid}.gz`);
+        const compressedData = await response.arrayBuffer();
+        const decompressedData = pako.inflate(new Uint8Array(compressedData), { to: 'string' });
+        const chunkData = JSON.parse(decompressedData);
         
-        if (!response.ok) {
-          right = mid - 1;
-          continue;
-        }
-        
-        const chunkData = await response.json();
-        const words = Object.keys(chunkData);
-        
-        if (words.length === 0) {
+        if (!chunkData || Object.keys(chunkData).length === 0) {
           right = mid - 1;
           continue;
         }
@@ -108,6 +103,7 @@ export async function loadWordChunk(word: string): Promise<WordDictionary | null
         chunkCache[mid] = processedChunk;
         
         // Check if word is in this chunk
+        const words = Object.keys(processedChunk);
         if (word >= words[0] && (word <= words[words.length - 1] || mid === right)) {
           return processedChunk;
         }
@@ -117,7 +113,8 @@ export async function loadWordChunk(word: string): Promise<WordDictionary | null
         } else {
           left = mid + 1;
         }
-      } catch {
+      } catch (error) {
+        console.error(`Error loading chunk ${mid}:`, error);
         right = mid - 1;
       }
     }

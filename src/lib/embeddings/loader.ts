@@ -1,47 +1,10 @@
 import pako from 'pako';
 import { WordDictionary } from './types';
+import { loadWordChunk } from './chunkLoader';
 
 let wordBaseformMap: { [key: string]: string } | null = null;
 let commonWords: string[] = [];
 let wordList: string[] = [];
-const chunkCache: { [chunkIndex: number]: WordDictionary } = {};
-let cachedChunk: { 
-  words: WordDictionary; 
-  firstWord: string; 
-  lastWord: string;
-  chunkIndex: number;
-} | null = null;
-
-async function loadCompressedChunk(chunkIndex: number): Promise<WordDictionary | null> {
-  if (chunkCache[chunkIndex]) {
-    return chunkCache[chunkIndex];
-  }
-
-  try {
-    const response = await fetch(`/data/chunks/embeddings_chunk_${chunkIndex}.gz`);
-    if (!response.ok) {
-      console.error(`Failed to fetch chunk ${chunkIndex}: ${response.status}`);
-      return null;
-    }
-
-    const compressedData = await response.arrayBuffer();
-    const decompressedData = pako.inflate(new Uint8Array(compressedData), { to: 'string' });
-    const chunkData = JSON.parse(decompressedData);
-    
-    const processedData = Object.fromEntries(
-      Object.entries(chunkData).map(([key, vectorBytes]) => [
-        key,
-        new Float32Array(vectorBytes as number[])
-      ])
-    );
-    
-    chunkCache[chunkIndex] = processedData;
-    return processedData;
-  } catch (error) {
-    console.error(`Error loading chunk ${chunkIndex}:`, error);
-    return null;
-  }
-}
 
 export const loadEmbeddings = async () => {
   console.log("🔄 Loading initial embeddings data...");
@@ -73,57 +36,6 @@ export const loadEmbeddings = async () => {
   }
 };
 
-// Binary search to find the correct chunk for a word
-async function findWordChunk(word: string): Promise<WordDictionary | null> {
-  console.log(`🔍 Binary searching for chunk containing word: "${word}"`);
-  let left = 0;
-  let right = 8; // Number of chunks - 1
-  
-  while (left <= right) {
-    const mid = Math.floor((left + right) / 2);
-    console.log(`  Checking chunk ${mid} (left=${left}, right=${right})`);
-    
-    const chunkData = await loadCompressedChunk(mid);
-    
-    if (!chunkData) {
-      console.log(`  ❌ Failed to load chunk ${mid}, searching lower chunks`);
-      right = mid - 1;
-      continue;
-    }
-    
-    const words = Object.keys(chunkData);
-    if (words.length === 0) {
-      console.log(`  ⚠️ Chunk ${mid} is empty, searching lower chunks`);
-      right = mid - 1;
-      continue;
-    }
-    
-    console.log(`  📊 Chunk ${mid} word range: ${words[0]} to ${words[words.length - 1]}`);
-    
-    if (word >= words[0] && (word <= words[words.length - 1] || mid === right)) {
-      console.log(`  ✅ Found word "${word}" in chunk ${mid}`);
-      cachedChunk = {
-        words: chunkData,
-        firstWord: words[0],
-        lastWord: words[words.length - 1],
-        chunkIndex: mid
-      };
-      return chunkData;
-    }
-    
-    if (word < words[0]) {
-      console.log(`  🔍 Word comes before chunk ${mid}, searching lower chunks`);
-      right = mid - 1;
-    } else {
-      console.log(`  🔍 Word comes after chunk ${mid}, searching higher chunks`);
-      left = mid + 1;
-    }
-  }
-  
-  console.log(`❌ Word "${word}" not found in any chunk`);
-  return null;
-}
-
 // Get the vector for a specific word
 export const getWordVector = async (word: string): Promise<Float32Array | null> => {
   console.log(`🔤 Getting vector for word: "${word}"`);
@@ -140,16 +52,7 @@ export const getWordVector = async (word: string): Promise<Float32Array | null> 
   
   console.log(`📝 Using baseform: "${baseform}" for word: "${word}"`);
   
-  // Check cache first
-  if (cachedChunk && 
-      baseform >= cachedChunk.firstWord && 
-      baseform <= cachedChunk.lastWord) {
-    console.log(`✨ Cache hit for baseform "${baseform}" in chunk ${cachedChunk.chunkIndex}`);
-    return cachedChunk.words[baseform] || null;
-  }
-  
-  console.log(`🔄 Cache miss for baseform "${baseform}", loading appropriate chunk...`);
-  const chunkData = await findWordChunk(baseform);
+  const chunkData = await loadWordChunk(baseform);
   return chunkData?.[baseform] || null;
 };
 
