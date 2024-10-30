@@ -37,6 +37,17 @@ const GameBoard = ({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const containerWidth = containerRef?.offsetWidth ?? 300;
 
+  const scrollToBottom = () => {
+    if (scrollAreaRef.current) {
+      const scrollElement = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollElement) {
+        setTimeout(() => {
+          scrollElement.scrollTop = scrollElement.scrollHeight;
+        }, 50);
+      }
+    }
+  };
+
   useEffect(() => {
     const handleResize = () => {
       if (window.visualViewport) {
@@ -57,19 +68,23 @@ const GameBoard = ({
   }, []);
 
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      const scrollElement = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (scrollElement) {
-        scrollElement.scrollTop = scrollElement.scrollHeight;
-      }
-    }
+    scrollToBottom();
   }, [game.currentChain.length]);
 
+  // Keep focus on input and keyboard open
   useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [currentWord, game.currentChain.length]);
+    const focusInput = () => {
+      if (inputRef.current && !game.isComplete) {
+        inputRef.current.focus();
+      }
+    };
+
+    focusInput();
+    // Reapply focus after a short delay to handle mobile keyboard
+    const focusInterval = setInterval(focusInput, 300);
+
+    return () => clearInterval(focusInterval);
+  }, [currentWord, isChecking, game.isComplete]);
 
   const getWordProgress = (index: number) => {
     if (index === 0) return 0;
@@ -77,18 +92,20 @@ const GameBoard = ({
     return game.wordProgresses[index - 1] || 0;
   };
 
-  const mainHeight = visualViewport.height - 32; // Account for padding
-  const headerHeight = 120; // Approximate height for title and progress sections
-  const inputSectionHeight = 100; // Height for input and buttons
+  // Calculate heights considering all margins and padding
+  const totalMargins = 48; // 24px top + 24px bottom
+  const mainHeight = visualViewport.height - totalMargins;
+  const headerHeight = 100; // Reduced from 120
+  const inputSectionHeight = 90; // Reduced from 100
   const availableScrollHeight = mainHeight - headerHeight - inputSectionHeight;
 
   return (
     <div 
-      className="flex flex-col space-y-2" 
-      style={{ height: mainHeight + 'px' }}
+      className="flex flex-col space-y-2 mx-4" 
+      style={{ height: mainHeight + 'px', maxHeight: '100%' }}
       ref={setContainerRef}
     >
-      <div className="flex-none space-y-2">
+      <div className="flex-none space-y-1">
         <div className="flex flex-col items-center gap-1">
           <div className="w-full">
             <WordDisplay 
@@ -123,7 +140,11 @@ const GameBoard = ({
       <ScrollArea 
         ref={scrollAreaRef}
         className="flex-grow min-h-0 rounded-md border"
-        style={{ height: `${availableScrollHeight}px` }}
+        style={{ 
+          height: `${Math.max(availableScrollHeight, 100)}px`,
+          minHeight: '100px',
+          maxHeight: `${availableScrollHeight}px`
+        }}
       >
         <div className="space-y-1 p-2">
           {game.currentChain.map((word, index) => (
@@ -150,7 +171,7 @@ const GameBoard = ({
       </ScrollArea>
 
       {!game.isComplete && (
-        <form onSubmit={onWordSubmit} className="flex-none space-y-1.5">
+        <form onSubmit={onWordSubmit} className="flex-none space-y-1">
           <Input
             ref={inputRef}
             value={currentWord}
@@ -163,6 +184,10 @@ const GameBoard = ({
             }}
             readOnly={isChecking}
             inputMode="text"
+            autoComplete="off"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck="false"
           />
           <div className="flex gap-1.5">
             <Button 
