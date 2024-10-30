@@ -9,8 +9,7 @@ import { validateWordForChain, initializeGame } from "@/lib/services/gameService
 import EndGameDialog from "@/components/EndGameDialog";
 import GameBoard from "@/components/GameBoard";
 import { saveGameProgress } from "@/lib/storage/gameStorage";
-import { SIMILARITY_THRESHOLD } from "@/lib/constants";
-import { calculateProgress } from "@/lib/embeddings/utils";
+import { CHAIN_SIMILARITY_THRESHOLD } from "@/lib/constants";
 import { Share } from "lucide-react";
 
 const Index = () => {
@@ -68,7 +67,7 @@ const Index = () => {
       
       setProgress(newProgress);
       
-      const isComplete = validation.similarityToTarget >= SIMILARITY_THRESHOLD;
+      const isComplete = validation.similarityToTarget >= CHAIN_SIMILARITY_THRESHOLD;
       
       const newGame = {
         ...game,

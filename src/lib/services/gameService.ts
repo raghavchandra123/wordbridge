@@ -1,7 +1,7 @@
 import { getWordList } from '../embeddings/loader';
 import { cosineSimilarity } from '../embeddings';
 import { GameState } from '../types';
-import { SIMILARITY_THRESHOLD, MIN_SIMILARITY } from '../constants';
+import { CHAIN_SIMILARITY_THRESHOLD, PROGRESS_MIN_SIMILARITY } from '../constants';
 import { checkConceptNetRelation } from '../conceptnet';
 import { calculateProgress } from '../embeddings/utils';
 
@@ -42,7 +42,7 @@ export const findDailyWordPair = async (): Promise<[string, string]> => {
     );
     console.log(`📊 Word pair similarity check: ${similarity}`);
     
-    if (similarity < MIN_SIMILARITY) {
+    if (similarity < PROGRESS_MIN_SIMILARITY) {
       return [wordList[word1Index], wordList[word2Index]];
     }
     
@@ -62,7 +62,7 @@ export const validateWordForChain = async (
   const similarityToPrevious = await cosineSimilarity(previousWord, word);
   console.log(`SQUARE CHECK: Similarity to previous word: ${similarityToPrevious}`);
   
-  if (similarityToPrevious < SIMILARITY_THRESHOLD) {
+  if (similarityToPrevious < CHAIN_SIMILARITY_THRESHOLD) {
     console.log(`SQUARE CHECK: Checking ConceptNet relation between "${previousWord}" and "${word}"`);
     const hasRelation = await checkConceptNetRelation(previousWord, word);
     console.log(`SQUARE CHECK: ConceptNet relation found: ${hasRelation}`);
