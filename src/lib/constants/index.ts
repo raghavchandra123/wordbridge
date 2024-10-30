@@ -3,30 +3,30 @@ export const SIMILARITY_THRESHOLD = 0.3;
 
 // Theme Colors
 export const THEME_COLORS = {
-  START: "#f55c7a",    // Pink - Starting word color
-  END: "#f6bc66",      // Yellow - Target word color
+  START: "#8C9EDE",    // Pastel Blue
+  END: "#E8B7D4",      // Pastel Pink
   GRADIENT: {
-    START: "#f55c7a",  // Pink - Top of gradient
-    MID1: "#f57c73",   // Gradient step 1
-    MID2: "#f68c70",   // Gradient step 2
-    MID3: "#f6ac69",   // Gradient step 3
-    END: "#f6bc66",    // Yellow - Bottom of gradient
+    START: "#8C9EDE",  // Pastel Blue
+    MID1: "#97BED9",   // Pastel Blue-Green
+    MID2: "#A2CEC5",   // Pastel Mint
+    MID3: "#B5DABE",   // Pastel Light Green
+    END: "#E8B7D4",    // Pastel Pink
   },
-  BACKGROUND: "#f57c73", // Main background color
+  BACKGROUND: "#97BED9", // Pastel Blue-Green
   TEXT: {
-    PRIMARY: "#333333",
-    SECONDARY: "#666666",
+    PRIMARY: "#4A5568",
+    SECONDARY: "#718096",
   },
   BORDER: {
-    LIGHT: "#f6bc66",  // Light border color
-    DARK: "#f6bc66"    // Dark border color
+    LIGHT: "#A2CEC5",  // Pastel Mint
+    DARK: "#8C9EDE"    // Pastel Blue
   }
 } as const;
 
 // Progress Colors for Word Chain
 export const PROGRESS_COLORS = {
   LOW: "bg-blue-100/70 hover:bg-blue-200/70 text-blue-700",
-  MEDIUM: "bg-violet-100/70 hover:bg-violet-200/70 text-violet-700",
-  HIGH: "bg-rose-100/70 hover:bg-rose-200/70 text-rose-700",
-  COMPLETE: "bg-emerald-100/70 hover:bg-emerald-200/70 text-emerald-700",
+  MEDIUM: "bg-emerald-100/70 hover:bg-emerald-200/70 text-emerald-700",
+  HIGH: "bg-pink-100/70 hover:bg-pink-200/70 text-pink-700",
+  COMPLETE: "bg-purple-100/70 hover:bg-purple-200/70 text-purple-700",
 } as const;

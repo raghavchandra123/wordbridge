@@ -14,7 +14,7 @@ const LetterSquare = ({ letter, progress, size }: LetterSquareProps) => {
   const endRGB = hexToRgb(endColor);
   
   const interpolatedColor = interpolateColor(startRGB, endRGB, progress / 100);
-  const borderColor = endColor;
+  const borderColor = THEME_COLORS.GRADIENT.MID2;
   
   return (
     <div 
