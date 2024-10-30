@@ -4,6 +4,7 @@ import { Input } from "./ui/input";
 import WordDisplay from "./WordDisplay";
 import { GameState } from "@/lib/types";
 import { ArrowDown } from "lucide-react";
+import { THEME_COLORS } from "@/lib/constants/colors";
 
 interface GameBoardProps {
   game: GameState;
@@ -30,7 +31,7 @@ const GameBoard = ({
   const containerWidth = containerRef?.offsetWidth ?? 300;
 
   return (
-    <div className="space-y-8 bg-[#fff8f0] border border-[#f6bc66] rounded-lg p-6" ref={setContainerRef}>
+    <div className="space-y-8" ref={setContainerRef}>
       <div className="flex flex-col items-center gap-4">
         <div className="p-4 rounded-lg w-full">
           <WordDisplay 
@@ -39,7 +40,7 @@ const GameBoard = ({
             containerWidth={containerWidth} 
           />
         </div>
-        <ArrowDown className="text-[#f6bc66]" size={24} />
+        <ArrowDown style={{ color: THEME_COLORS.BORDER.LIGHT }} size={24} />
         <div className="p-4 rounded-lg w-full">
           <WordDisplay 
             word={game.targetWord} 
@@ -49,10 +50,13 @@ const GameBoard = ({
         </div>
       </div>
 
-      <div className="relative w-full h-2 bg-[#f55c7a]/20 rounded-full overflow-hidden">
+      <div className="relative w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: `${THEME_COLORS.START}20` }}>
         <div 
-          className="h-full bg-gradient-to-r from-[#f55c7a] to-[#f6bc66] transition-all"
-          style={{ width: `${progress}%` }}
+          className="h-full transition-all"
+          style={{ 
+            width: `${progress}%`,
+            background: `linear-gradient(to right, ${THEME_COLORS.START}, ${THEME_COLORS.END})`
+          }}
         />
       </div>
 
@@ -80,13 +84,21 @@ const GameBoard = ({
             value={currentWord}
             onChange={(e) => onWordChange(e.target.value.toLowerCase())}
             placeholder={editingIndex !== null ? `Change word #${editingIndex + 1}` : "Enter a word..."}
-            className="text-center text-lg bg-[#f55c7a]/10 border-[#f6bc66]/20"
+            className="text-center text-lg"
+            style={{ 
+              backgroundColor: `${THEME_COLORS.START}10`,
+              borderColor: `${THEME_COLORS.BORDER.LIGHT}20`
+            }}
             disabled={isChecking}
           />
           <div className="flex gap-2">
             <Button 
               type="submit" 
-              className="flex-1 text-lg bg-[#ffb366] hover:bg-[#ffb366]/90 text-white"
+              className="flex-1 text-lg text-white"
+              style={{ 
+                backgroundColor: THEME_COLORS.END,
+                ":hover": { backgroundColor: `${THEME_COLORS.END}90` }
+              }}
               disabled={isChecking}
             >
               {isChecking ? "Checking..." : (editingIndex !== null ? "Update Word" : "Submit Word")}
@@ -95,9 +107,13 @@ const GameBoard = ({
               <Button 
                 type="button" 
                 variant="outline"
-                onClick={() => onWordClick(null)}
-                className="text-lg border-[#f6bc66] text-[#f6bc66] hover:bg-[#f6bc66]/10"
+                className="text-lg"
+                style={{ 
+                  borderColor: THEME_COLORS.BORDER.LIGHT,
+                  color: THEME_COLORS.BORDER.LIGHT
+                }}
                 disabled={isChecking}
+                onClick={() => onWordClick(null)}
               >
                 Add New Word
               </Button>
