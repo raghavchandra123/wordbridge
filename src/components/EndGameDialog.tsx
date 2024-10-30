@@ -33,7 +33,7 @@ const EndGameDialog = ({ game, open, onClose }: EndGameDialogProps) => {
     try {
       if (navigator.share) {
         await navigator.share({
-          text: fullText,
+          text,
           title,
         });
       } else {
