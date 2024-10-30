@@ -114,7 +114,7 @@ const Index = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F5F8FA]">
+      <div className="min-h-screen flex items-center justify-center bg-[#97BED9]">
         <Card className="w-[90vw] max-w-md">
           <CardHeader>
             <CardTitle className="text-2xl text-center">Loading Word Bridge...</CardTitle>
@@ -129,8 +129,8 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F8FA]">
-      <Card className="max-w-2xl mx-auto rounded-none h-screen bg-white/80">
+    <div className="min-h-screen bg-[#97BED9]">
+      <Card className="max-w-2xl mx-auto rounded-none h-screen bg-[#F5F8FA]">
         <CardHeader className="space-y-0 pb-2">
           <CardTitle className="text-4xl text-center">Word Bridge</CardTitle>
           <CardDescription className="text-center text-lg">
