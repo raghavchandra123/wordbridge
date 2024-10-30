@@ -1,10 +1,10 @@
 import pako from 'pako';
 import { WordDictionary } from './types';
 
-const CHUNK_SIZE = 300;
 const MAX_CHUNKS = 138;
 const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000; // 1 second
+const RETRY_DELAY = 1000;
+const VECTOR_SIZE = 300;
 
 const chunkCache: { [chunkIndex: number]: WordDictionary } = {};
 
@@ -66,6 +66,69 @@ const fetchWithRetry = async (url: string, retries = MAX_RETRIES): Promise<Array
   }
 };
 
+const processCompressedData = (compressedData: ArrayBuffer): WordDictionary => {
+  const decompressed = pako.inflate(new Uint8Array(compressedData));
+  const textDecoder = new TextDecoder();
+  const jsonString = textDecoder.decode(decompressed);
+  const chunkData = JSON.parse(jsonString);
+
+  const processedChunk: WordDictionary = {};
+  
+  for (const [word, vectorBytes] of Object.entries(chunkData)) {
+    // Convert the base64 string back to bytes
+    const bytes = new Uint8Array(Buffer.from(vectorBytes as string, 'base64'));
+    
+    // Create a Float32Array view of the bytes
+    if (bytes.length !== VECTOR_SIZE * 2) { // float16 uses 2 bytes per number
+      console.error(`❌ Invalid vector size for word "${word}": ${bytes.length} bytes`);
+      continue;
+    }
+    
+    // Convert float16 to float32
+    const float32Array = new Float32Array(VECTOR_SIZE);
+    for (let i = 0; i < VECTOR_SIZE; i++) {
+      const uint16Value = (bytes[i * 2 + 1] << 8) | bytes[i * 2];
+      float32Array[i] = convertFloat16ToFloat32(uint16Value);
+    }
+    
+    processedChunk[word] = float32Array;
+  }
+
+  return processedChunk;
+};
+
+// IEEE 754 float16 to float32 conversion
+const convertFloat16ToFloat32 = (float16: number): number => {
+  const sign = (float16 >> 15) & 0x1;
+  let exponent = (float16 >> 10) & 0x1f;
+  let fraction = float16 & 0x3ff;
+
+  if (exponent === 0x1f) { // Infinity or NaN
+    exponent = 0xff;
+    if (fraction !== 0) {
+      fraction <<= 13;
+    }
+  } else if (exponent === 0) { // Subnormal or zero
+    if (fraction !== 0) {
+      while ((fraction & 0x400) === 0) {
+        fraction <<= 1;
+        exponent--;
+      }
+      fraction &= 0x3ff;
+      exponent++;
+    }
+    exponent += 127 - 15;
+  } else {
+    exponent += 127 - 15;
+  }
+
+  const float32 = (sign << 31) | (exponent << 23) | (fraction << 13);
+  const buffer = new ArrayBuffer(4);
+  const view = new DataView(buffer);
+  view.setInt32(0, float32, false);
+  return view.getFloat32(0, false);
+};
+
 export async function loadWordChunk(word: string): Promise<WordDictionary | null> {
   try {
     console.log(`\n🔄 Loading chunk for word: "${word}"`);
@@ -116,26 +179,24 @@ export async function loadWordChunk(word: string): Promise<WordDictionary | null
         console.log(`📥 Loading new chunk from: ${chunkPath}`);
         
         const compressedData = await fetchWithRetry(chunkPath);
-        console.log(`🗜️ Decompressing chunk ${mid} (${compressedData.byteLength} bytes)`);
+        console.log(`🗜️ Processing chunk ${mid} (${compressedData.byteLength} bytes)`);
         
-        const decompressedData = pako.inflate(new Uint8Array(compressedData), { to: 'string' });
-        const chunkData = JSON.parse(decompressedData);
+        const processedChunk = processCompressedData(compressedData);
+        const words = Object.keys(processedChunk);
         
-        if (!chunkData || Object.keys(chunkData).length === 0) {
+        if (!words.length) {
           console.log(`⚠️ Empty chunk ${mid}, searching lower chunks`);
           right = mid - 1;
           continue;
         }
         
-        const processedChunk = Object.fromEntries(
-          Object.entries(chunkData).map(([key, vector]) => [
-            key,
-            new Float32Array(new Uint8Array(vector as any).buffer)
-          ])
-        );
-        
-        const words = Object.keys(processedChunk);
         console.log(`📦 Processed chunk ${mid}: ${words.length} words (${words[0]} to ${words[words.length - 1]})`);
+        
+        // Verify vector dimensions
+        const sampleVector = processedChunk[words[0]];
+        if (sampleVector.length !== VECTOR_SIZE) {
+          throw new Error(`Invalid vector dimension in chunk ${mid}: ${sampleVector.length}`);
+        }
         
         chunkCache[mid] = processedChunk;
         
