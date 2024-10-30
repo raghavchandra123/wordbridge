@@ -11,7 +11,6 @@ import GameBoard from "@/components/GameBoard";
 import { saveGameProgress } from "@/lib/storage/gameStorage";
 import { TARGET_WORD_MIN_SIMILARITY } from "@/lib/constants";
 import { calculateProgress } from "@/lib/embeddings/utils";
-import { Share } from "lucide-react";
 
 const Index = () => {
   const { toast } = useToast();
@@ -149,25 +148,6 @@ const Index = () => {
             onWordClick={setEditingIndex}
             progress={progress}
           />
-          
-          {game.isComplete && (
-            <div className="mt-8 space-y-4">
-              <div className="text-center text-2xl font-semibold">
-                Score: {game.score} steps
-              </div>
-              <Button onClick={handleNewGame} className="w-full text-lg">
-                New Game
-              </Button>
-              <Button 
-                onClick={() => setShowEndGame(true)} 
-                variant="outline"
-                className="w-full text-lg"
-              >
-                <Share className="mr-2 h-4 w-4" />
-                Share Result
-              </Button>
-            </div>
-          )}
         </CardContent>
       </Card>
 

@@ -8,6 +8,8 @@ import { GameContainer } from "./game/layout/GameContainer";
 import { THEME_COLORS } from "@/lib/constants";
 import { Share } from "lucide-react";
 import { GameBoardProps } from "./game/GameBoardTypes";
+import { generateShareText } from "@/lib/utils/share";
+import { toast } from "./ui/use-toast";
 
 const GameBoard = ({
   game,
@@ -21,7 +23,6 @@ const GameBoard = ({
   progress,
 }: GameBoardProps) => {
   const [containerRef, setContainerRef] = useState<HTMLDivElement | null>(null);
-  const [showEndGame, setShowEndGame] = useState(false);
   const [visualViewport, setVisualViewport] = useState<{ height: number; width: number }>({
     height: window.innerHeight,
     width: window.innerWidth,
@@ -105,6 +106,28 @@ const GameBoard = ({
     setTimeout(() => inputRef.current?.focus(), 0);
   };
 
+  const handleShare = async () => {
+    const shareText = generateShareText(game);
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          text: shareText,
+        });
+      } else {
+        await navigator.clipboard.writeText(shareText);
+        toast({
+          description: "Copied to clipboard!",
+        });
+      }
+    } catch (err) {
+      console.error('Share failed:', err);
+      toast({
+        description: "Sharing failed. Please try again",
+        variant: "destructive",
+      });
+    }
+  };
+
   const headerHeight = 120;
   const inputSectionHeight = game.isComplete ? 0 : 60;
   const completionButtonsHeight = game.isComplete ? 120 : 0;
@@ -181,7 +204,7 @@ const GameBoard = ({
             Retry
           </Button>
           <Button 
-            onClick={() => setShowEndGame(true)}
+            onClick={handleShare}
             variant="outline"
             className="w-full"
           >
