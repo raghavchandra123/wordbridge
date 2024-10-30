@@ -31,6 +31,7 @@ const GameBoard = ({
   progress,
 }: GameBoardProps) => {
   const [containerRef, setContainerRef] = useState<HTMLDivElement | null>(null);
+  const [showEndGame, setShowEndGame] = useState(false);
   const [visualViewport, setVisualViewport] = useState<{ height: number; width: number }>({
     height: window.innerHeight,
     width: window.innerWidth,
