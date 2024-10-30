@@ -29,7 +29,7 @@ export const generateShareText = (game: GameState): string => {
   }
   
   shareText += `${game.targetWord.toUpperCase()}\n\n`;
-  shareText += "Try it here: https://word-bridge.gptengineer.run/";
+  shareText += "You can try it here: https://wordbridge.gptengineer.run/";
   
   return shareText;
 };
