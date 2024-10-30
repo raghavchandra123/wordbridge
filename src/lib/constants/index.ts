@@ -1,3 +1,7 @@
+// Game Settings
+export const SIMILARITY_THRESHOLD = 0.3;
+
+// Theme Colors
 export const THEME_COLORS = {
   START: "#f55c7a",    // Pink - Starting word color
   END: "#f6bc66",      // Yellow - Target word color
@@ -19,11 +23,10 @@ export const THEME_COLORS = {
   }
 } as const;
 
+// Progress Colors for Word Chain
 export const PROGRESS_COLORS = {
-  LOW: `bg-[${THEME_COLORS.START}]/70 hover:bg-[${THEME_COLORS.START}]/80 text-[${THEME_COLORS.TEXT.PRIMARY}]`,
-  MEDIUM: `bg-[${THEME_COLORS.GRADIENT.MID2}]/70 hover:bg-[${THEME_COLORS.GRADIENT.MID2}]/80 text-[${THEME_COLORS.TEXT.PRIMARY}]`,
-  HIGH: `bg-[${THEME_COLORS.GRADIENT.MID3}]/70 hover:bg-[${THEME_COLORS.GRADIENT.MID3}]/80 text-[${THEME_COLORS.TEXT.PRIMARY}]`,
-  COMPLETE: `bg-[${THEME_COLORS.END}]/70 hover:bg-[${THEME_COLORS.END}]/80 text-[${THEME_COLORS.TEXT.PRIMARY}]`,
+  LOW: "bg-blue-100/70 hover:bg-blue-200/70 text-blue-700",
+  MEDIUM: "bg-violet-100/70 hover:bg-violet-200/70 text-violet-700",
+  HIGH: "bg-rose-100/70 hover:bg-rose-200/70 text-rose-700",
+  COMPLETE: "bg-emerald-100/70 hover:bg-emerald-200/70 text-emerald-700",
 } as const;
-
-export const SIMILARITY_THRESHOLD = 0.3;

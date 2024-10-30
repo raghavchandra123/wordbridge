@@ -1,4 +1,4 @@
-import { THEME_COLORS } from "@/lib/constants/colors";
+import { THEME_COLORS } from "@/lib/constants";
 
 interface LetterSquareProps {
   letter: string;

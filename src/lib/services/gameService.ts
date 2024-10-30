@@ -1,7 +1,7 @@
 import { getWordList } from '../embeddings/loader';
 import { cosineSimilarity } from '../embeddings';
 import { GameState } from '../types';
-import { SIMILARITY_THRESHOLD } from '../constants/colors';
+import { SIMILARITY_THRESHOLD } from '../constants';
 import { checkConceptNetRelation } from '../conceptnet';
 
 const getDateSeed = () => {
@@ -57,11 +57,9 @@ export const validateWordForChain = async (
 ): Promise<{ isValid: boolean; similarityToTarget: number; message?: string }> => {
   console.log(`🔍 Validating word "${word}" in chain...`);
   
-  // Check similarity with previous word
   const similarityToPrevious = await cosineSimilarity(previousWord, word);
   console.log(`📊 Similarity to previous word: ${similarityToPrevious}`);
   
-  // If similarity is below threshold, check ConceptNet
   if (similarityToPrevious < SIMILARITY_THRESHOLD) {
     const hasRelation = await checkConceptNetRelation(previousWord, word);
     console.log(`🔗 ConceptNet relation check: ${hasRelation ? "Found" : "Not found"}`);
@@ -75,7 +73,6 @@ export const validateWordForChain = async (
     }
   }
   
-  // Calculate similarity to target for progress tracking only
   const similarityToTarget = await cosineSimilarity(word, targetWord);
   
   return { 

@@ -1,7 +1,5 @@
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
-import { cosineSimilarity } from "@/lib/embeddings";
-import { calculateProgress } from "@/lib/embeddings/utils";
 import { PROGRESS_COLORS } from "@/lib/constants";
 
 interface WordChainProps {
