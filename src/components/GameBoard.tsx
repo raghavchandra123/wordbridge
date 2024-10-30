@@ -45,10 +45,10 @@ const GameBoard = ({
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-12rem)] space-y-4" ref={setContainerRef}>
-      {/* Fixed header section with start and target words */}
-      <div className="flex-none space-y-4">
-        <div className="flex flex-col items-center gap-2">
+    <div className="flex flex-col h-[calc(100vh-8rem)] max-h-[550px] space-y-2" ref={setContainerRef}>
+      {/* Fixed header section - made more compact */}
+      <div className="flex-none space-y-2">
+        <div className="flex flex-col items-center gap-1">
           <div className="w-full">
             <WordDisplay 
               word={game.startWord} 
@@ -56,7 +56,7 @@ const GameBoard = ({
               containerWidth={containerWidth} 
             />
           </div>
-          <ArrowDown style={{ color: THEME_COLORS.GRADIENT.MID2 }} size={20} />
+          <ArrowDown style={{ color: THEME_COLORS.GRADIENT.MID2 }} size={16} />
           <div className="w-full">
             <WordDisplay 
               word={game.targetWord} 
@@ -66,7 +66,7 @@ const GameBoard = ({
           </div>
         </div>
 
-        <div className="relative w-full h-2 rounded-full overflow-hidden" 
+        <div className="relative w-full h-1.5 rounded-full overflow-hidden" 
           style={{ backgroundColor: `${THEME_COLORS.GRADIENT.MID2}33` }}
         >
           <div 
@@ -79,14 +79,14 @@ const GameBoard = ({
         </div>
       </div>
 
-      {/* Scrollable word chain area */}
-      <ScrollArea className="flex-grow min-h-0 rounded-md border">
-        <div className="space-y-1 p-4">
+      {/* Scrollable word chain area - reduced height */}
+      <ScrollArea className="flex-grow min-h-0 max-h-[35vh] rounded-md border">
+        <div className="space-y-1 p-2">
           {game.currentChain.map((word, index) => (
             <Button
               key={index}
               variant="ghost"
-              className="w-full py-2 text-center font-medium transition-colors hover:bg-opacity-10"
+              className="w-full py-1.5 text-center font-medium transition-colors hover:bg-opacity-10"
               onClick={() => onWordClick(index === editingIndex ? null : index)}
               disabled={index === 0 || game.isComplete}
               style={{ 
@@ -105,25 +105,26 @@ const GameBoard = ({
         </div>
       </ScrollArea>
 
-      {/* Fixed input section at bottom */}
+      {/* Fixed input section at bottom - more compact */}
       {!game.isComplete && (
-        <form onSubmit={onWordSubmit} className="flex-none space-y-2">
+        <form onSubmit={onWordSubmit} className="flex-none space-y-1.5">
           <Input
             ref={inputRef}
             value={currentWord}
             onChange={(e) => onWordChange(e.target.value.toLowerCase())}
             placeholder={editingIndex !== null ? `Change word #${editingIndex + 1}` : "Enter a word..."}
-            className="text-center text-lg"
+            className="text-center text-lg h-10"
             style={{ 
               backgroundColor: `${THEME_COLORS.GRADIENT.MID2}33`,
               borderColor: THEME_COLORS.GRADIENT.MID2
             }}
-            disabled={isChecking}
+            readOnly={isChecking}
+            inputMode="text"
           />
-          <div className="flex gap-2">
+          <div className="flex gap-1.5">
             <Button 
               type="submit" 
-              className="flex-1 text-lg text-white hover:opacity-90"
+              className="flex-1 h-10 text-white hover:opacity-90"
               style={{ backgroundColor: THEME_COLORS.GRADIENT.MID2 }}
               disabled={isChecking}
             >
@@ -133,7 +134,7 @@ const GameBoard = ({
               <Button 
                 type="button" 
                 variant="outline"
-                className="text-lg hover:opacity-90"
+                className="h-10 hover:opacity-90"
                 style={{ borderColor: THEME_COLORS.GRADIENT.MID2, color: THEME_COLORS.GRADIENT.MID2 }}
                 disabled={isChecking}
                 onClick={() => onWordClick(null)}
