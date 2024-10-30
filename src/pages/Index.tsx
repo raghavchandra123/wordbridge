@@ -140,6 +140,7 @@ const Index = () => {
         <CardContent>
           <GameBoard
             game={game}
+            setGame={setGame}
             currentWord={currentWord}
             editingIndex={editingIndex}
             isChecking={isChecking}

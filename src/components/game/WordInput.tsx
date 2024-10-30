@@ -28,8 +28,12 @@ const WordInput = ({
         type="button" 
         variant="outline"
         size="icon"
-        className="h-10 w-10 shrink-0 border-2"
-        style={{ borderColor: "#FF8B8B", color: "#FF8B8B" }}
+        className="h-10 w-10 shrink-0 border-2 transition-colors"
+        style={{ 
+          borderColor: THEME_COLORS.START,
+          color: THEME_COLORS.START,
+          backgroundColor: `${THEME_COLORS.START}10`
+        }}
         disabled={isChecking}
         onClick={onEditCancel}
       >
@@ -58,8 +62,12 @@ const WordInput = ({
         type="submit" 
         variant="outline"
         size="icon"
-        className="h-10 w-10 shrink-0 border-2"
-        style={{ borderColor: "#B5DABE", color: "#B5DABE" }}
+        className="h-10 w-10 shrink-0 border-2 transition-colors"
+        style={{ 
+          borderColor: THEME_COLORS.END,
+          color: THEME_COLORS.END,
+          backgroundColor: `${THEME_COLORS.END}10`
+        }}
         disabled={isChecking}
       >
         <ArrowRight className="h-4 w-4" />
