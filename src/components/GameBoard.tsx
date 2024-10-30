@@ -56,9 +56,12 @@ const GameBoard = ({
   useEffect(() => {
     const handleResize = () => {
       if (window.visualViewport) {
+        const newHeight = window.visualViewport.height;
+        const newWidth = window.visualViewport.width;
+        console.log('VIEW: Viewport size changed:', { height: newHeight, width: newWidth });
         setVisualViewport({
-          height: window.visualViewport.height,
-          width: window.visualViewport.width,
+          height: newHeight,
+          width: newWidth,
         });
       }
     };
@@ -76,15 +79,15 @@ const GameBoard = ({
   }, []);
 
   useEffect(() => {
-    const timeoutId = setTimeout(scrollToBottom, 100);
-    return () => clearTimeout(timeoutId);
-  }, [game.currentChain.length]);
-
-  useEffect(() => {
     if (inputRef.current && !game.isComplete) {
       inputRef.current.focus();
     }
   }, [currentWord, isChecking, game.isComplete, editingIndex]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(scrollToBottom, 100);
+    return () => clearTimeout(timeoutId);
+  }, [game.currentChain.length]);
 
   const getWordProgress = (index: number) => {
     if (index === 0) return 0;
@@ -92,13 +95,34 @@ const GameBoard = ({
     return game.wordProgresses[index - 1] || 0;
   };
 
+  // Calculate component heights
   const safeAreaInsets = 'env(safe-area-inset-bottom)';
-  const totalMargins = 32;
+  const totalMargins = 32; // 2rem (32px) total padding from root container
   const mainHeight = visualViewport.height - totalMargins;
-  const headerHeight = 60;
-  const inputSectionHeight = 70;
-  const availableScrollHeight = mainHeight - headerHeight - inputSectionHeight;
-  const maxScrollHeight = Math.min(availableScrollHeight, visualViewport.height * 0.3);
+  
+  // Component heights
+  const headerHeight = 60; // Fixed height for header section
+  const inputSectionHeight = 70; // Fixed height for input section
+  const cardPadding = 24; // 1.5rem padding from Card component
+  const cardHeaderHeight = 100; // Estimated height for card title and description
+  
+  // Calculate available height for scroll area
+  const availableScrollHeight = mainHeight - headerHeight - inputSectionHeight - cardPadding - cardHeaderHeight;
+  const maxScrollHeight = Math.min(availableScrollHeight, visualViewport.height * 0.25);
+
+  // Debug logging
+  console.log('VIEW: Size calculations:', {
+    visualViewportHeight: visualViewport.height,
+    totalMargins,
+    mainHeight,
+    headerHeight,
+    inputSectionHeight,
+    cardPadding,
+    cardHeaderHeight,
+    availableScrollHeight,
+    maxScrollHeight,
+    containerWidth
+  });
 
   return (
     <div 
