@@ -7,8 +7,6 @@ interface LetterSquareProps {
 }
 
 const LetterSquare = ({ letter, progress, size }: LetterSquareProps) => {
-  console.log(`SQUARE CHECK: LetterSquare rendering "${letter}" with progress ${progress}`);
-  
   const getColorForProgress = (progress: number) => {
     if (progress <= 33) {
       const ratio = progress / 33;
@@ -35,7 +33,6 @@ const LetterSquare = ({ letter, progress, size }: LetterSquareProps) => {
   };
   
   const color = getColorForProgress(progress);
-  console.log(`SQUARE CHECK: Color interpolation for "${letter}":`, color);
   
   return (
     <div 
