@@ -1,7 +1,11 @@
 import { getWordList } from '../embeddings/loader';
 import { cosineSimilarity } from '../embeddings';
 import { GameState } from '../types';
-import { WORD_CHAIN_MIN_SIMILARITY, WORD_PAIR_MIN_SIMILARITY } from '../constants';
+import { 
+  WORD_PAIR_MIN_SIMILARITY, 
+  ADJACENT_WORD_MIN_SIMILARITY,
+  TARGET_WORD_MIN_SIMILARITY 
+} from '../constants';
 import { checkConceptNetRelation } from '../conceptnet';
 import { calculateProgress } from '../embeddings/utils';
 
@@ -60,8 +64,8 @@ export const validateWordForChain = async (
   const similarityToPrevious = await cosineSimilarity(previousWord, word);
   console.log(`📊 Similarity to previous word: ${similarityToPrevious}`);
   
-  if (similarityToPrevious < WORD_CHAIN_MIN_SIMILARITY) {
-    console.log(`⚠️ Similarity below threshold. Checking ConceptNet relation...`);
+  if (similarityToPrevious < ADJACENT_WORD_MIN_SIMILARITY) {
+    console.log(`⚠️ Similarity below threshold (${ADJACENT_WORD_MIN_SIMILARITY}). Checking ConceptNet relation...`);
     const hasRelation = await checkConceptNetRelation(previousWord, word);
     
     if (!hasRelation) {
@@ -74,11 +78,14 @@ export const validateWordForChain = async (
     }
     console.log(`✅ ConceptNet relation found. Word "${word}" is valid.`);
   } else {
-    console.log(`✅ Similarity above threshold. Word "${word}" is valid.`);
+    console.log(`✅ Similarity above threshold (${ADJACENT_WORD_MIN_SIMILARITY}). Word "${word}" is valid.`);
   }
   
   const similarityToTarget = await cosineSimilarity(word, targetWord);
   console.log(`📊 Similarity to target word: ${similarityToTarget}`);
+  
+  const isCloseEnoughToTarget = similarityToTarget >= TARGET_WORD_MIN_SIMILARITY;
+  console.log(`${isCloseEnoughToTarget ? '✅' : '⚠️'} Target similarity ${similarityToTarget} is ${isCloseEnoughToTarget ? '>=' : '<'} threshold (${TARGET_WORD_MIN_SIMILARITY})`);
   
   return { 
     isValid: true, 
