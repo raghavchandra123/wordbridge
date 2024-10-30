@@ -39,6 +39,7 @@ export const findDailyWordPair = async (): Promise<[string, string]> => {
       wordList[word1Index],
       wordList[word2Index]
     );
+    console.log(`📊 Word pair similarity check: ${similarity}`);
     
     if (similarity < SIMILARITY_THRESHOLD) {
       return [wordList[word1Index], wordList[word2Index]];
@@ -55,25 +56,27 @@ export const validateWordForChain = async (
   previousWord: string,
   targetWord: string
 ): Promise<{ isValid: boolean; similarityToTarget: number; message?: string }> => {
-  console.log(`🔍 Validating word "${word}" in chain...`);
+  console.log(`🔍 Validating word "${word}" after "${previousWord}"`);
   
   const similarityToPrevious = await cosineSimilarity(previousWord, word);
   console.log(`📊 Similarity to previous word: ${similarityToPrevious}`);
   
   if (similarityToPrevious < SIMILARITY_THRESHOLD) {
+    console.log(`🌐 Checking ConceptNet relation between "${previousWord}" and "${word}"`);
     const hasRelation = await checkConceptNetRelation(previousWord, word);
-    console.log(`🔗 ConceptNet relation check: ${hasRelation ? "Found" : "Not found"}`);
+    console.log(`🔗 ConceptNet relation found: ${hasRelation}`);
     
     if (!hasRelation) {
       return {
         isValid: false,
         similarityToTarget: 0,
-        message: `Try a word that's more closely related to "${previousWord}"`
+        message: `Try a word more similar to "${previousWord}"`
       };
     }
   }
   
   const similarityToTarget = await cosineSimilarity(word, targetWord);
+  console.log(`📊 Similarity to target word: ${similarityToTarget}`);
   
   return { 
     isValid: true, 

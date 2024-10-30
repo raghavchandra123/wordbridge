@@ -50,7 +50,7 @@ const GameBoard = ({
         </div>
       </div>
 
-      <div className="relative w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: `${THEME_COLORS.START}20` }}>
+      <div className="relative w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: THEME_COLORS.START }}>
         <div 
           className="h-full transition-all"
           style={{ 
@@ -65,7 +65,8 @@ const GameBoard = ({
           <Button
             key={index}
             variant="ghost"
-            className="w-full p-3 text-center font-medium transition-colors hover:bg-transparent"
+            className="w-full p-3 text-center font-medium transition-colors"
+            style={{ backgroundColor: index === 0 ? THEME_COLORS.START : undefined }}
             onClick={() => onWordClick(index === editingIndex ? null : index)}
             disabled={index === 0 || game.isComplete}
           >
@@ -86,15 +87,16 @@ const GameBoard = ({
             placeholder={editingIndex !== null ? `Change word #${editingIndex + 1}` : "Enter a word..."}
             className="text-center text-lg"
             style={{ 
-              backgroundColor: `${THEME_COLORS.START}10`,
-              borderColor: `${THEME_COLORS.BORDER.LIGHT}20`
+              backgroundColor: THEME_COLORS.START,
+              borderColor: THEME_COLORS.BORDER.LIGHT
             }}
             disabled={isChecking}
           />
           <div className="flex gap-2">
             <Button 
               type="submit" 
-              className={`flex-1 text-lg text-white bg-[${THEME_COLORS.END}] hover:bg-[${THEME_COLORS.END}]/90`}
+              className="flex-1 text-lg text-white"
+              style={{ backgroundColor: THEME_COLORS.END }}
               disabled={isChecking}
             >
               {isChecking ? "Checking..." : (editingIndex !== null ? "Update Word" : "Submit Word")}
@@ -103,7 +105,8 @@ const GameBoard = ({
               <Button 
                 type="button" 
                 variant="outline"
-                className={`text-lg border-[${THEME_COLORS.BORDER.LIGHT}] text-[${THEME_COLORS.BORDER.LIGHT}] hover:bg-[${THEME_COLORS.BORDER.LIGHT}]/10`}
+                className="text-lg"
+                style={{ borderColor: THEME_COLORS.BORDER.LIGHT, color: THEME_COLORS.BORDER.LIGHT }}
                 disabled={isChecking}
                 onClick={() => onWordClick(null)}
               >
