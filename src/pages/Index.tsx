@@ -49,17 +49,23 @@ const Index = () => {
         return;
       }
 
+      const newProgress = calculateProgress(validation.similarityToTarget);
+      const newWordProgresses = editingIndex !== null
+        ? [...game.wordProgresses.slice(0, editingIndex - 1), newProgress]
+        : [...game.wordProgresses, newProgress];
+      
       const newChain = editingIndex !== null
         ? [...game.currentChain.slice(0, editingIndex), currentWord]
         : [...game.currentChain, currentWord];
       
-      setProgress(calculateProgress(validation.similarityToTarget));
+      setProgress(newProgress);
       
       const isComplete = validation.similarityToTarget >= SIMILARITY_THRESHOLD;
       
       const newGame = {
         ...game,
         currentChain: newChain,
+        wordProgresses: newWordProgresses,
         score: newChain.length - 1,
         isComplete
       };

@@ -38,13 +38,6 @@ const GameBoard = ({
   }, [currentWord, game.currentChain.length]);
 
   const getWordProgress = (index: number) => {
-    console.log(`SQUARE CHECK: Word at index ${index}:`, {
-      word: game.currentChain[index],
-      progress: index === 0 ? 0 : 
-               index === game.currentChain.length - 1 ? progress : 
-               game.wordProgresses[index - 1]
-    });
-    
     if (index === 0) return 0;
     if (index === game.currentChain.length - 1) return progress;
     return game.wordProgresses[index - 1] || 0;
@@ -77,7 +70,7 @@ const GameBoard = ({
           className="h-full transition-all"
           style={{ 
             width: `${progress}%`,
-            background: `linear-gradient(to right, ${THEME_COLORS.START}, ${THEME_COLORS.END})`
+            background: `linear-gradient(to right, ${THEME_COLORS.START}, ${THEME_COLORS.GRADIENT.MID1}, ${THEME_COLORS.GRADIENT.MID2}, ${THEME_COLORS.END})`
           }}
         />
       </div>
@@ -108,6 +101,7 @@ const GameBoard = ({
       {!game.isComplete && (
         <form onSubmit={onWordSubmit} className="space-y-2">
           <Input
+            ref={inputRef}
             value={currentWord}
             onChange={(e) => onWordChange(e.target.value.toLowerCase())}
             placeholder={editingIndex !== null ? `Change word #${editingIndex + 1}` : "Enter a word..."}
