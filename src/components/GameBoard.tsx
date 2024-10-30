@@ -31,7 +31,11 @@ const GameBoard = ({
   const containerWidth = containerRef?.offsetWidth ?? 300;
 
   return (
-    <div className="space-y-8 bg-white/20 rounded-lg p-6" ref={setContainerRef}>
+    <div 
+      className="space-y-8 rounded-lg p-6" 
+      style={{ backgroundColor: `${THEME_COLORS.GRADIENT.MID1}33` }}
+      ref={setContainerRef}
+    >
       <div className="flex flex-col items-center gap-4">
         <div className="p-4 w-full">
           <WordDisplay 
@@ -50,7 +54,9 @@ const GameBoard = ({
         </div>
       </div>
 
-      <div className="relative w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: `${THEME_COLORS.MID2}33` }}>
+      <div className="relative w-full h-2 rounded-full overflow-hidden" 
+        style={{ backgroundColor: `${THEME_COLORS.GRADIENT.MID2}33` }}
+      >
         <div 
           className="h-full transition-all"
           style={{ 
@@ -90,7 +96,7 @@ const GameBoard = ({
             placeholder={editingIndex !== null ? `Change word #${editingIndex + 1}` : "Enter a word..."}
             className="text-center text-lg"
             style={{ 
-              backgroundColor: `${THEME_COLORS.MID3}33`,
+              backgroundColor: `${THEME_COLORS.GRADIENT.MID3}33`,
               borderColor: THEME_COLORS.BORDER.LIGHT
             }}
             disabled={isChecking}
