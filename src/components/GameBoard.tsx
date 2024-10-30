@@ -65,9 +65,13 @@ const GameBoard = ({
           <Button
             key={index}
             variant="ghost"
-            className="w-full p-3 text-center font-medium transition-colors hover:bg-opacity-10"
+            className={`w-full p-3 text-center font-medium transition-colors hover:bg-opacity-10 ${index === 0 ? 'opacity-100' : ''}`}
             onClick={() => onWordClick(index === editingIndex ? null : index)}
             disabled={index === 0 || game.isComplete}
+            style={{ 
+              opacity: index === 0 ? 1 : undefined,
+              pointerEvents: index === 0 ? 'none' : undefined
+            }}
           >
             <WordDisplay 
               word={word} 
@@ -94,7 +98,7 @@ const GameBoard = ({
           <div className="flex gap-2">
             <Button 
               type="submit" 
-              className="flex-1 text-lg text-white"
+              className="flex-1 text-lg text-white hover:opacity-90"
               style={{ backgroundColor: THEME_COLORS.END }}
               disabled={isChecking}
             >
@@ -104,7 +108,7 @@ const GameBoard = ({
               <Button 
                 type="button" 
                 variant="outline"
-                className="text-lg"
+                className="text-lg hover:opacity-90"
                 style={{ borderColor: THEME_COLORS.BORDER.LIGHT, color: THEME_COLORS.BORDER.LIGHT }}
                 disabled={isChecking}
                 onClick={() => onWordClick(null)}
