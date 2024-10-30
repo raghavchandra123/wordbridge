@@ -11,6 +11,7 @@ import GameBoard from "@/components/GameBoard";
 import { saveGameProgress } from "@/lib/storage/gameStorage";
 import { SIMILARITY_THRESHOLD } from "@/lib/constants";
 import { calculateProgress } from "@/lib/embeddings/utils";
+import { Share } from "lucide-react";
 
 const Index = () => {
   const { toast } = useToast();
@@ -53,13 +54,11 @@ const Index = () => {
       
       let newWordProgresses;
       if (editingIndex !== null) {
-        // When editing, only update the progress for the edited word
         newWordProgresses = [...game.wordProgresses];
         if (editingIndex > 0) {
           newWordProgresses[editingIndex - 1] = newProgress;
         }
       } else {
-        // When adding a new word, append its progress
         newWordProgresses = [...game.wordProgresses, newProgress];
       }
 
@@ -163,6 +162,7 @@ const Index = () => {
                 variant="outline"
                 className="w-full text-lg"
               >
+                <Share className="mr-2 h-4 w-4" />
                 Share Result
               </Button>
             </div>

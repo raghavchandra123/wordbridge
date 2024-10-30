@@ -6,10 +6,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { GameState } from "@/lib/types";
-import { generateShareText, generateShareImage } from "@/lib/utils/share";
-import { useState, useEffect } from "react";
+import { generateShareText } from "@/lib/utils/share";
 import { toast } from "@/components/ui/use-toast";
-import WordDisplay from "./WordDisplay";
 import { Share } from "lucide-react";
 
 interface EndGameDialogProps {
@@ -19,7 +17,6 @@ interface EndGameDialogProps {
 }
 
 const EndGameDialog = ({ game, open, onClose }: EndGameDialogProps) => {
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const nextPuzzleTime = new Date();
   nextPuzzleTime.setHours(24, 0, 0, 0);
   
@@ -27,39 +24,17 @@ const EndGameDialog = ({ game, open, onClose }: EndGameDialogProps) => {
   const hoursUntilNext = Math.floor(timeUntilNext / (1000 * 60 * 60));
   const minutesUntilNext = Math.floor((timeUntilNext % (1000 * 60 * 60)) / (1000 * 60));
 
-  useEffect(() => {
-    if (open) {
-      generateShareImage(game).then(dataUrl => {
-        setImageUrl(dataUrl);
-      });
-    }
-  }, [open, game]);
-
   const handleShare = async () => {
     const text = generateShareText(game);
     
     try {
-      if (navigator.share && imageUrl) {
-        const response = await fetch(imageUrl);
-        const blob = await response.blob();
-        const file = new File([blob], 'wordbridge.png', { type: 'image/png' });
-        
+      if (navigator.share) {
         await navigator.share({
           text,
-          files: [file],
           title: 'Word Bridge',
         });
       } else {
         await navigator.clipboard.writeText(text);
-        if (imageUrl) {
-          const response = await fetch(imageUrl);
-          const blob = await response.blob();
-          await navigator.clipboard.write([
-            new ClipboardItem({
-              [blob.type]: blob
-            })
-          ]);
-        }
         toast({
           title: "Copied to clipboard!",
           description: "Share your result with friends",
@@ -88,20 +63,11 @@ const EndGameDialog = ({ game, open, onClose }: EndGameDialogProps) => {
             You connected {game.startWord} to {game.targetWord} in {game.score} steps!
           </p>
           
-          {imageUrl && (
-            <div className="relative w-full aspect-[4/3] bg-gray-100 rounded-lg overflow-hidden">
-              <img 
-                src={imageUrl} 
-                alt="Game result" 
-                className="w-full h-full object-contain"
-              />
-            </div>
-          )}
-
           <Button 
             onClick={handleShare}
             className="w-full bg-[#FF8B8B] hover:bg-[#FF8B8B]/90 text-white"
           >
+            <Share className="mr-2 h-4 w-4" />
             Share Result
           </Button>
           
