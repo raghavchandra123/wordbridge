@@ -1,7 +1,7 @@
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { THEME_COLORS } from "@/lib/constants";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 
 interface WordInputProps {
   currentWord: string;
@@ -26,10 +26,10 @@ const WordInput = ({
     <div className="flex gap-2 items-center">
       <Button 
         type="button" 
-        variant="ghost"
+        variant="outline"
         size="icon"
-        className="h-10 w-10 shrink-0"
-        style={{ color: THEME_COLORS.GRADIENT.MID2 }}
+        className="h-10 w-10 shrink-0 border-2"
+        style={{ borderColor: "#FF8B8B", color: "#FF8B8B" }}
         disabled={isChecking}
         onClick={onEditCancel}
       >
@@ -56,13 +56,13 @@ const WordInput = ({
 
       <Button 
         type="submit" 
-        variant="ghost"
+        variant="outline"
         size="icon"
-        className="h-10 w-10 shrink-0"
-        style={{ color: THEME_COLORS.GRADIENT.MID2 }}
+        className="h-10 w-10 shrink-0 border-2"
+        style={{ borderColor: "#B5DABE", color: "#B5DABE" }}
         disabled={isChecking}
       >
-        <Send className="h-4 w-4" />
+        <ArrowRight className="h-4 w-4" />
       </Button>
     </div>
   </form>

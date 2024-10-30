@@ -6,22 +6,12 @@ import HeaderSection from "./game/HeaderSection";
 import WordInput from "./game/WordInput";
 import { GameContainer } from "./game/layout/GameContainer";
 import { THEME_COLORS } from "@/lib/constants";
-import { GameState } from "@/lib/types";
 import { Share } from "lucide-react";
-
-interface GameBoardProps {
-  game: GameState;
-  currentWord: string;
-  editingIndex: number | null;
-  isChecking: boolean;
-  onWordSubmit: (e: React.FormEvent) => void;
-  onWordChange: (word: string) => void;
-  onWordClick: (index: number | null) => void;
-  progress: number;
-}
+import { GameBoardProps } from "./game/GameBoardTypes";
 
 const GameBoard = ({
   game,
+  setGame,
   currentWord,
   editingIndex,
   isChecking,
@@ -101,10 +91,8 @@ const GameBoard = ({
     if (editingIndex !== null) {
       onWordClick(null);
     } else {
-      // Remove the last word from the chain
       const newChain = [...game.currentChain];
       newChain.pop();
-      // Update the game state
       setGame({
         ...game,
         currentChain: newChain,
@@ -115,7 +103,7 @@ const GameBoard = ({
   };
 
   const headerHeight = 120;
-  const inputSectionHeight = game.isComplete ? 0 : 60; // Reduced height since we have a more compact input section
+  const inputSectionHeight = game.isComplete ? 0 : 60;
   const completionButtonsHeight = game.isComplete ? 120 : 0;
   const cardPadding = 16;
   const cardHeaderHeight = 60;
