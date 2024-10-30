@@ -3,6 +3,8 @@ import { WordDictionary } from './types';
 
 const CHUNK_SIZE = 300;
 const MAX_CHUNKS = 138;
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1 second
 
 // Cache for loaded chunks
 const chunkCache: { [chunkIndex: number]: WordDictionary } = {};
@@ -15,11 +17,9 @@ const findClosestWordsInCache = (targetWord: string): {
   let beforeWord: { word: string; chunkIndex: number } | undefined;
   let afterWord: { word: string; chunkIndex: number } | undefined;
 
-  // Scan through all loaded chunks
   Object.entries(chunkCache).forEach(([chunkIndex, chunk]) => {
     const words = Object.keys(chunk).sort();
     
-    // Find closest word before target
     const beforeIndex = words.findIndex(word => word > targetWord) - 1;
     if (beforeIndex >= 0) {
       const word = words[beforeIndex];
@@ -28,7 +28,6 @@ const findClosestWordsInCache = (targetWord: string): {
       }
     }
     
-    // Find closest word after target
     const afterIndex = words.findIndex(word => word >= targetWord);
     if (afterIndex !== -1) {
       const word = words[afterIndex];
@@ -39,6 +38,25 @@ const findClosestWordsInCache = (targetWord: string): {
   });
 
   return { beforeWord, afterWord };
+};
+
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const fetchWithRetry = async (url: string, retries = MAX_RETRIES): Promise<ArrayBuffer> => {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.arrayBuffer();
+  } catch (error) {
+    if (retries > 0) {
+      console.log(`Retrying fetch for ${url}, ${retries} attempts remaining...`);
+      await delay(RETRY_DELAY);
+      return fetchWithRetry(url, retries - 1);
+    }
+    throw error;
+  }
 };
 
 export async function loadWordChunk(word: string): Promise<WordDictionary | null> {
@@ -80,12 +98,7 @@ export async function loadWordChunk(word: string): Promise<WordDictionary | null
         const chunkPath = `/data/chunks/embeddings_chunk_${mid}.gz`;
         console.log(`Loading chunk from: ${chunkPath}`);
         
-        const response = await fetch(chunkPath);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const compressedData = await response.arrayBuffer();
+        const compressedData = await fetchWithRetry(chunkPath);
         const decompressedData = pako.inflate(new Uint8Array(compressedData), { to: 'string' });
         const chunkData = JSON.parse(decompressedData);
         
@@ -115,6 +128,7 @@ export async function loadWordChunk(word: string): Promise<WordDictionary | null
         }
       } catch (error) {
         console.error(`Error loading chunk ${mid}:`, error);
+        // If we fail to load a chunk, try the next one
         right = mid - 1;
       }
     }
