@@ -2,9 +2,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export const GameCard = ({ children }: { children: React.ReactNode }) => (
   <Card className="max-w-2xl mx-auto">
-    <CardHeader className="py-2">
-      <CardTitle className="text-2xl text-center mb-0">Word Bridge</CardTitle>
-      <CardDescription className="text-center text-sm">
+    <CardHeader className="py-1 space-y-0.5">
+      <CardTitle className="text-xl text-center mb-0">Word Bridge</CardTitle>
+      <CardDescription className="text-center text-xs">
         Connect the words using similar words
       </CardDescription>
     </CardHeader>
