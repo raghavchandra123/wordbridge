@@ -33,7 +33,7 @@ const GameBoard = ({
   return (
     <div className="space-y-8" ref={setContainerRef}>
       <div className="flex flex-col items-center gap-4">
-        <div className="p-4 rounded-lg w-full">
+        <div className="p-4 w-full">
           <WordDisplay 
             word={game.startWord} 
             progress={0}
@@ -41,7 +41,7 @@ const GameBoard = ({
           />
         </div>
         <ArrowDown style={{ color: THEME_COLORS.BORDER.LIGHT }} size={24} />
-        <div className="p-4 rounded-lg w-full">
+        <div className="p-4 w-full">
           <WordDisplay 
             word={game.targetWord} 
             progress={100}
@@ -50,7 +50,7 @@ const GameBoard = ({
         </div>
       </div>
 
-      <div className="relative w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: THEME_COLORS.START }}>
+      <div className="relative w-full h-2 rounded-full overflow-hidden bg-opacity-20" style={{ backgroundColor: THEME_COLORS.START }}>
         <div 
           className="h-full transition-all"
           style={{ 
@@ -65,8 +65,7 @@ const GameBoard = ({
           <Button
             key={index}
             variant="ghost"
-            className="w-full p-3 text-center font-medium transition-colors"
-            style={{ backgroundColor: index === 0 ? THEME_COLORS.START : undefined }}
+            className="w-full p-3 text-center font-medium transition-colors hover:bg-opacity-10"
             onClick={() => onWordClick(index === editingIndex ? null : index)}
             disabled={index === 0 || game.isComplete}
           >
@@ -85,11 +84,7 @@ const GameBoard = ({
             value={currentWord}
             onChange={(e) => onWordChange(e.target.value.toLowerCase())}
             placeholder={editingIndex !== null ? `Change word #${editingIndex + 1}` : "Enter a word..."}
-            className="text-center text-lg"
-            style={{ 
-              backgroundColor: THEME_COLORS.START,
-              borderColor: THEME_COLORS.BORDER.LIGHT
-            }}
+            className="text-center text-lg bg-opacity-20"
             disabled={isChecking}
           />
           <div className="flex gap-2">
