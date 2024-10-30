@@ -5,6 +5,7 @@ import { GameState } from "@/lib/types";
 import { ArrowDown } from "lucide-react";
 import { THEME_COLORS } from "@/lib/constants";
 import { Button } from "./ui/button";
+import { ScrollArea } from "./ui/scroll-area";
 
 interface GameBoardProps {
   game: GameState;
@@ -44,62 +45,69 @@ const GameBoard = ({
   };
 
   return (
-    <div className="space-y-4" ref={setContainerRef}>
-      <div className="flex flex-col items-center gap-2">
-        <div className="w-full">
-          <WordDisplay 
-            word={game.startWord} 
-            progress={0}
-            containerWidth={containerWidth} 
-          />
-        </div>
-        <ArrowDown style={{ color: THEME_COLORS.GRADIENT.MID2 }} size={20} />
-        <div className="w-full">
-          <WordDisplay 
-            word={game.targetWord} 
-            progress={100}
-            containerWidth={containerWidth} 
-          />
-        </div>
-      </div>
-
-      <div className="relative w-full h-2 rounded-full overflow-hidden my-2" 
-        style={{ backgroundColor: `${THEME_COLORS.GRADIENT.MID2}33` }}
-      >
-        <div 
-          className="h-full transition-all"
-          style={{ 
-            width: `${progress}%`,
-            background: `linear-gradient(to right, ${THEME_COLORS.START}, ${THEME_COLORS.GRADIENT.MID1}, ${THEME_COLORS.GRADIENT.MID2}, ${THEME_COLORS.END})`
-          }}
-        />
-      </div>
-
-      <div className="space-y-1">
-        {game.currentChain.map((word, index) => (
-          <Button
-            key={index}
-            variant="ghost"
-            className="w-full py-2 text-center font-medium transition-colors hover:bg-opacity-10"
-            onClick={() => onWordClick(index === editingIndex ? null : index)}
-            disabled={index === 0 || game.isComplete}
-            style={{ 
-              opacity: index === 0 ? 1 : undefined,
-              pointerEvents: index === 0 ? 'none' : undefined,
-              color: THEME_COLORS.TEXT.PRIMARY
-            }}
-          >
+    <div className="flex flex-col h-[calc(100vh-12rem)] space-y-4" ref={setContainerRef}>
+      {/* Fixed header section with start and target words */}
+      <div className="flex-none space-y-4">
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-full">
             <WordDisplay 
-              word={word} 
-              progress={getWordProgress(index)}
+              word={game.startWord} 
+              progress={0}
               containerWidth={containerWidth} 
             />
-          </Button>
-        ))}
+          </div>
+          <ArrowDown style={{ color: THEME_COLORS.GRADIENT.MID2 }} size={20} />
+          <div className="w-full">
+            <WordDisplay 
+              word={game.targetWord} 
+              progress={100}
+              containerWidth={containerWidth} 
+            />
+          </div>
+        </div>
+
+        <div className="relative w-full h-2 rounded-full overflow-hidden" 
+          style={{ backgroundColor: `${THEME_COLORS.GRADIENT.MID2}33` }}
+        >
+          <div 
+            className="h-full transition-all"
+            style={{ 
+              width: `${progress}%`,
+              background: `linear-gradient(to right, ${THEME_COLORS.START}, ${THEME_COLORS.GRADIENT.MID1}, ${THEME_COLORS.GRADIENT.MID2}, ${THEME_COLORS.END})`
+            }}
+          />
+        </div>
       </div>
 
+      {/* Scrollable word chain area */}
+      <ScrollArea className="flex-grow min-h-0 rounded-md border">
+        <div className="space-y-1 p-4">
+          {game.currentChain.map((word, index) => (
+            <Button
+              key={index}
+              variant="ghost"
+              className="w-full py-2 text-center font-medium transition-colors hover:bg-opacity-10"
+              onClick={() => onWordClick(index === editingIndex ? null : index)}
+              disabled={index === 0 || game.isComplete}
+              style={{ 
+                opacity: index === 0 ? 1 : undefined,
+                pointerEvents: index === 0 ? 'none' : undefined,
+                color: THEME_COLORS.TEXT.PRIMARY
+              }}
+            >
+              <WordDisplay 
+                word={word} 
+                progress={getWordProgress(index)}
+                containerWidth={containerWidth} 
+              />
+            </Button>
+          ))}
+        </div>
+      </ScrollArea>
+
+      {/* Fixed input section at bottom */}
       {!game.isComplete && (
-        <form onSubmit={onWordSubmit} className="space-y-2">
+        <form onSubmit={onWordSubmit} className="flex-none space-y-2">
           <Input
             ref={inputRef}
             value={currentWord}
