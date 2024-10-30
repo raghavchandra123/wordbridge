@@ -12,7 +12,7 @@ export const THEME_COLORS = {
     MID3: "#f6ac69",   // Gradient step 3
     END: "#f6bc66",    // Yellow - Bottom of gradient
   },
-  BACKGROUND: "#fff5eb", // Main background color
+  BACKGROUND: "#f57c73", // Main background color
   TEXT: {
     PRIMARY: "#333333",
     SECONDARY: "#666666",
