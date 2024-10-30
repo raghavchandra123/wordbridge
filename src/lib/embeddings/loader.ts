@@ -36,7 +36,6 @@ export const loadEmbeddings = async () => {
   }
 };
 
-// Get the vector for a specific word
 export const getWordVector = async (word: string): Promise<Float32Array | null> => {
   console.log(`🔤 Getting vector for word: "${word}"`);
   if (!wordBaseformMap) {
@@ -56,7 +55,6 @@ export const getWordVector = async (word: string): Promise<Float32Array | null> 
   return chunkData?.[baseform] || null;
 };
 
-// Calculate cosine similarity between two words
 export const cosineSimilarity = async (word1: string, word2: string): Promise<number> => {
   console.log(`📊 Calculating similarity between "${word1}" and "${word2}"`);
   
@@ -65,7 +63,7 @@ export const cosineSimilarity = async (word1: string, word2: string): Promise<nu
   
   if (!vec1 || !vec2) {
     console.log(`❌ Could not find vectors for both words`);
-    return 0;
+    return 1; // Return high similarity to reject this pair
   }
   
   let dotProduct = 0;
@@ -79,6 +77,13 @@ export const cosineSimilarity = async (word1: string, word2: string): Promise<nu
   }
   
   const similarity = dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+  
+  // Handle NaN case
+  if (isNaN(similarity)) {
+    console.log(`⚠️ Similarity calculation returned NaN, defaulting to 1`);
+    return 1; // Return high similarity to reject this pair
+  }
+  
   console.log(`✅ Similarity between "${word1}" and "${word2}": ${similarity}`);
   return similarity;
 };
