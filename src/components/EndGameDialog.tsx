@@ -31,20 +31,17 @@ const EndGameDialog = ({ game, open, onClose }: EndGameDialogProps) => {
       if (navigator.share) {
         await navigator.share({
           text,
-          title: 'WordBridge',
         });
       } else {
         await navigator.clipboard.writeText(text);
         toast({
-          title: "Copied to clipboard!",
-          description: "Share your result with friends",
+          description: "Copied to clipboard!",
         });
       }
     } catch (err) {
       console.error('Share failed:', err);
       toast({
-        title: "Sharing failed",
-        description: "Please try again",
+        description: "Sharing failed. Please try again",
         variant: "destructive",
       });
     }
