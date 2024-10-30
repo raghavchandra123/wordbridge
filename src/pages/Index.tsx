@@ -10,6 +10,7 @@ import EndGameDialog from "@/components/EndGameDialog";
 import GameBoard from "@/components/GameBoard";
 import { saveGameProgress } from "@/lib/storage/gameStorage";
 import { CHAIN_SIMILARITY_THRESHOLD } from "@/lib/constants";
+import { calculateProgress } from "@/lib/embeddings/utils";
 import { Share } from "lucide-react";
 
 const Index = () => {
