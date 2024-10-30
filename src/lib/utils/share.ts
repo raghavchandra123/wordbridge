@@ -1,8 +1,43 @@
 import { GameState } from "@/lib/types";
 import { THEME_COLORS } from "@/lib/constants";
 
+const getColorEmoji = (progress: number): string => {
+  if (progress <= 25) {
+    return "🟦"; // Blue
+  } else if (progress <= 50) {
+    return "🟩"; // Green
+  } else if (progress <= 75) {
+    return "🟨"; // Yellow
+  } else {
+    return "🟥"; // Red
+  }
+};
+
+const generateWordEmojis = (word: string, progress: number): string => {
+  return Array(word.length).fill(getColorEmoji(progress)).join("");
+};
+
 export const generateShareText = (game: GameState): string => {
-  return `Word Bridge: Connected ${game.startWord} to ${game.targetWord} in ${game.score} steps! Try it at https://wordbridge.example.com`;
+  const chainLength = game.currentChain.length - 1; // -1 because we don't count the start word
+  let shareText = `Connected ${game.startWord} to ${game.targetWord} in ${chainLength} words!\n\n`;
+  
+  // Add start word
+  shareText += `${game.startWord}\n`;
+  
+  // Add emojis for each word in the chain (except start word)
+  for (let i = 1; i < game.currentChain.length; i++) {
+    const word = game.currentChain[i];
+    const progress = i === game.currentChain.length - 1 ? 100 : game.wordProgresses[i - 1];
+    shareText += generateWordEmojis(word, progress) + "\n";
+  }
+  
+  // Add target word
+  shareText += `${game.targetWord}\n\n`;
+  
+  // Add link
+  shareText += "Try it out at https://wordbridge.example.com";
+  
+  return shareText;
 };
 
 const drawWord = (
