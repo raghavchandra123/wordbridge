@@ -18,9 +18,9 @@ const generateWordEmojis = (word: string, progress: number): string => {
 
 export const generateShareText = (game: GameState): string => {
   const chainLength = game.currentChain.length - 1;
-  let shareText = `Connected ${game.startWord} to ${game.targetWord} in ${chainLength} words!\n\n`;
+  let shareText = `Connected ${game.startWord.toUpperCase()} to ${game.targetWord.toUpperCase()} in ${chainLength} words!\n\n`;
   
-  shareText += `${game.startWord}\n`;
+  shareText += `${game.startWord.toUpperCase()}\n`;
   
   for (let i = 1; i < game.currentChain.length; i++) {
     const word = game.currentChain[i];
@@ -28,8 +28,8 @@ export const generateShareText = (game: GameState): string => {
     shareText += generateWordEmojis(word, progress) + "\n";
   }
   
-  shareText += `${game.targetWord}\n\n`;
-  shareText += "Try it out at https://wordbridge.example.com";
+  shareText += `${game.targetWord.toUpperCase()}\n\n`;
+  shareText += "Try out Word Bridge: https://wordbridge.example.com";
   
   return shareText;
 };
