@@ -1,4 +1,4 @@
-import { getWordList } from '../embeddings/loader';
+import { getWordList } from './loader';
 import { cosineSimilarity } from '../embeddings';
 import { GameState } from '../types';
 import { CHAIN_SIMILARITY_THRESHOLD, PROGRESS_MIN_SIMILARITY } from '../constants';
@@ -25,33 +25,30 @@ export const findDailyWordPair = async (): Promise<[string, string]> => {
   console.log("🎲 Finding daily word pair...");
   const wordList = getWordList();
   const seed = getDateSeed();
-  const random = seededRandom(seed);
   
-  const word1Index = Math.floor(random * wordList.length);
-  let word2Index;
-  let attempts = 0;
-  const maxAttempts = 100;
+  // Generate two different random indices using different seed modifications
+  const startWordIndex = Math.floor(seededRandom(seed + "start") * wordList.length);
+  const endWordIndex = Math.floor(seededRandom(seed + "end") * wordList.length);
   
-  do {
-    word2Index = Math.floor(seededRandom(seed + attempts) * wordList.length);
-    if (word1Index === word2Index) continue;
-    
-    const word1 = wordList[word1Index];
-    const word2 = wordList[word2Index];
-    console.log(`📊 Testing word pair: ${word1} -> ${word2}`);
-    
-    const similarity = await cosineSimilarity(word1, word2);
-    console.log(`📊 Word pair similarity: ${similarity}`);
-    
-    if (similarity < PROGRESS_MIN_SIMILARITY) {
-      console.log(`✅ Found suitable word pair: ${word1} -> ${word2}`);
-      return [word1, word2];
-    }
-    
-    attempts++;
-  } while (attempts < maxAttempts);
+  if (startWordIndex === endWordIndex) {
+    // In the unlikely case they're the same, adjust the end index
+    return [wordList[startWordIndex], wordList[(endWordIndex + 1) % wordList.length]];
+  }
   
-  throw new Error('Failed to find suitable word pair');
+  const startWord = wordList[startWordIndex];
+  const endWord = wordList[endWordIndex];
+  
+  console.log(`📊 Testing word pair: ${startWord} -> ${endWord}`);
+  const similarity = await cosineSimilarity(startWord, endWord);
+  console.log(`📊 Word pair similarity: ${similarity}`);
+  
+  if (similarity < PROGRESS_MIN_SIMILARITY) {
+    console.log(`✅ Found suitable word pair: ${startWord} -> ${endWord}`);
+    return [startWord, endWord];
+  }
+  
+  // If similarity is too high, shift the end word
+  return [startWord, wordList[(endWordIndex + 1) % wordList.length]];
 };
 
 export const validateWordForChain = async (
