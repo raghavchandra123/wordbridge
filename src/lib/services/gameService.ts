@@ -61,11 +61,13 @@ export const validateWordForChain = async (
   targetWord: string
 ): Promise<{ isValid: boolean; similarityToTarget: number; message?: string }> => {
   console.log(`🔍 Validating word "${word}" for chain (previous: "${previousWord}", target: "${targetWord}")`);
+  
+  // Check similarity with previous word
   const similarityToPrevious = await cosineSimilarity(previousWord, word);
   console.log(`📊 Similarity to previous word: ${similarityToPrevious}`);
   
   if (similarityToPrevious < ADJACENT_WORD_MIN_SIMILARITY) {
-    console.log(`⚠️ Similarity below threshold (${ADJACENT_WORD_MIN_SIMILARITY}). Checking ConceptNet relation...`);
+    console.log(`⚠️ Similarity with previous word below threshold (${ADJACENT_WORD_MIN_SIMILARITY}). Checking ConceptNet relation...`);
     const hasRelation = await checkConceptNetRelation(previousWord, word);
     
     if (!hasRelation) {
@@ -76,16 +78,19 @@ export const validateWordForChain = async (
         message: `Try a word more similar to "${previousWord}"`
       };
     }
-    console.log(`✅ ConceptNet relation found. Word "${word}" is valid.`);
-  } else {
-    console.log(`✅ Similarity above threshold (${ADJACENT_WORD_MIN_SIMILARITY}). Word "${word}" is valid.`);
+    console.log(`✅ ConceptNet relation found with previous word. Continuing validation.`);
   }
   
+  // Check similarity with target word
   const similarityToTarget = await cosineSimilarity(word, targetWord);
   console.log(`📊 Similarity to target word: ${similarityToTarget}`);
   
-  const isCloseEnoughToTarget = similarityToTarget >= TARGET_WORD_MIN_SIMILARITY;
-  console.log(`${isCloseEnoughToTarget ? '✅' : '⚠️'} Target similarity ${similarityToTarget} is ${isCloseEnoughToTarget ? '>=' : '<'} threshold (${TARGET_WORD_MIN_SIMILARITY})`);
+  // If similarity to target is below threshold, check ConceptNet
+  if (similarityToTarget < TARGET_WORD_MIN_SIMILARITY) {
+    console.log(`⚠️ Similarity with target word below threshold (${TARGET_WORD_MIN_SIMILARITY}). Checking ConceptNet relation...`);
+    const hasTargetRelation = await checkConceptNetRelation(word, targetWord);
+    console.log(`${hasTargetRelation ? '✅' : '❌'} ConceptNet relation with target word: ${hasTargetRelation ? 'found' : 'not found'}`);
+  }
   
   return { 
     isValid: true, 
