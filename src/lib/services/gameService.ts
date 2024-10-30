@@ -56,21 +56,29 @@ export const validateWordForChain = async (
   previousWord: string,
   targetWord: string
 ): Promise<{ isValid: boolean; similarityToTarget: number; message?: string }> => {
+  console.log(`🔍 Validating word "${word}" for chain (previous: "${previousWord}", target: "${targetWord}")`);
   const similarityToPrevious = await cosineSimilarity(previousWord, word);
+  console.log(`📊 Similarity to previous word: ${similarityToPrevious}`);
   
   if (similarityToPrevious < WORD_CHAIN_MIN_SIMILARITY) {
+    console.log(`⚠️ Similarity below threshold. Checking ConceptNet relation...`);
     const hasRelation = await checkConceptNetRelation(previousWord, word);
     
     if (!hasRelation) {
+      console.log(`❌ No ConceptNet relation found. Word "${word}" is invalid.`);
       return {
         isValid: false,
         similarityToTarget: 0,
         message: `Try a word more similar to "${previousWord}"`
       };
     }
+    console.log(`✅ ConceptNet relation found. Word "${word}" is valid.`);
+  } else {
+    console.log(`✅ Similarity above threshold. Word "${word}" is valid.`);
   }
   
   const similarityToTarget = await cosineSimilarity(word, targetWord);
+  console.log(`📊 Similarity to target word: ${similarityToTarget}`);
   
   return { 
     isValid: true, 
