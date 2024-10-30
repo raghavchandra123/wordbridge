@@ -55,17 +55,19 @@ const Index = () => {
       
       setProgress(calculateProgress(validation.similarityToTarget));
       
+      const isComplete = validation.similarityToTarget >= SIMILARITY_THRESHOLD;
+      
       const newGame = {
         ...game,
         currentChain: newChain,
         score: newChain.length - 1,
-        isComplete: validation.similarityToTarget >= SIMILARITY_THRESHOLD
+        isComplete
       };
 
       setGame(newGame);
       saveGameProgress(newGame);
       
-      if (newGame.isComplete) {
+      if (isComplete) {
         handleGameComplete(newGame);
       }
       

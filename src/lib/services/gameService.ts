@@ -1,7 +1,7 @@
 import { getWordList } from '../embeddings/loader';
 import { cosineSimilarity } from '../embeddings';
 import { GameState } from '../types';
-import { SIMILARITY_THRESHOLD } from '../constants';
+import { SIMILARITY_THRESHOLD, MIN_SIMILARITY } from '../constants';
 import { checkConceptNetRelation } from '../conceptnet';
 import { calculateProgress } from '../embeddings/utils';
 
@@ -42,7 +42,7 @@ export const findDailyWordPair = async (): Promise<[string, string]> => {
     );
     console.log(`📊 Word pair similarity check: ${similarity}`);
     
-    if (similarity < SIMILARITY_THRESHOLD) {
+    if (similarity < MIN_SIMILARITY) {
       return [wordList[word1Index], wordList[word2Index]];
     }
     
@@ -79,11 +79,9 @@ export const validateWordForChain = async (
   const similarityToTarget = await cosineSimilarity(word, targetWord);
   console.log(`📊 Similarity to target word: ${similarityToTarget}`);
   
-  const progress = calculateProgress(similarityToTarget);
-  
   return { 
     isValid: true, 
-    similarityToTarget: progress / 100 // Convert progress (0-100) to similarity (0-1)
+    similarityToTarget
   };
 };
 

@@ -1,5 +1,4 @@
-const MIN_SIMILARITY = -0.1;
-const MAX_SIMILARITY = 0.3;
+import { MIN_SIMILARITY, MAX_SIMILARITY } from '@/lib/constants';
 
 export const calculateProgress = (similarity: number): number => {
   // Return 0 if similarity is less than or equal to MIN_SIMILARITY

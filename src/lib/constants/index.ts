@@ -1,5 +1,7 @@
 // Game Settings
 export const SIMILARITY_THRESHOLD = 0.3;
+export const MIN_SIMILARITY = -0.1;
+export const MAX_SIMILARITY = 0.3;
 
 // Theme Colors
 export const THEME_COLORS = {
