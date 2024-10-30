@@ -6,6 +6,8 @@ let wordBaseformMap: { [key: string]: string } | null = null;
 let commonWords: string[] = [];
 let wordList: string[] = [];
 
+const EXPECTED_VECTOR_DIMENSION = 300;
+
 export const loadEmbeddings = async () => {
   console.log("🔄 Loading initial embeddings data...");
   
@@ -40,13 +42,13 @@ export const getWordVector = async (word: string): Promise<Float32Array | null> 
   console.log(`🔤 Getting vector for word: "${word}"`);
   if (!wordBaseformMap) {
     console.error('❌ Word baseform map not initialized - loadEmbeddings() must be called first');
-    return null;
+    throw new Error('Word baseform map not initialized');
   }
   
   const baseform = wordBaseformMap[word];
   if (!baseform) {
     console.error(`❌ No baseform found for word: "${word}" in wordBaseformMap`);
-    return null;
+    throw new Error(`No baseform found for word: "${word}"`);
   }
   
   console.log(`📝 Using baseform: "${baseform}" for word: "${word}"`);
@@ -54,16 +56,21 @@ export const getWordVector = async (word: string): Promise<Float32Array | null> 
   const chunkData = await loadWordChunk(baseform);
   if (!chunkData) {
     console.error(`❌ No chunk data found containing baseform: "${baseform}"`);
-    return null;
+    throw new Error(`No chunk data found for baseform: "${baseform}"`);
   }
 
   const vector = chunkData[baseform];
   if (!vector) {
     console.error(`❌ Vector not found in chunk for baseform: "${baseform}"`);
-    return null;
+    throw new Error(`Vector not found for baseform: "${baseform}"`);
   }
 
-  console.log(`✅ Successfully loaded vector for word: "${word}" (baseform: "${baseform}")`);
+  if (vector.length !== EXPECTED_VECTOR_DIMENSION) {
+    console.error(`❌ Invalid vector dimensionality for "${word}": got ${vector.length}, expected ${EXPECTED_VECTOR_DIMENSION}`);
+    throw new Error(`Invalid vector dimensionality for "${word}"`);
+  }
+
+  console.log(`✅ Successfully loaded vector for word: "${word}" (baseform: "${baseform}", dimensions: ${vector.length})`);
   return vector;
 };
 
@@ -73,14 +80,8 @@ export const cosineSimilarity = async (word1: string, word2: string): Promise<nu
   const vec1 = await getWordVector(word1);
   const vec2 = await getWordVector(word2);
   
-  if (!vec1) {
-    console.error(`❌ Could not find vector for word1: "${word1}"`);
-    return 0;
-  }
-  
-  if (!vec2) {
-    console.error(`❌ Could not find vector for word2: "${word2}"`);
-    return 0;
+  if (!vec1 || !vec2) {
+    throw new Error('Failed to get vectors for similarity calculation');
   }
   
   console.log(`✅ Found vectors for both words:
@@ -101,7 +102,7 @@ export const cosineSimilarity = async (word1: string, word2: string): Promise<nu
     console.error(`❌ Zero magnitude vector detected:
       - ${word1} magnitude: ${Math.sqrt(normA)}
       - ${word2} magnitude: ${Math.sqrt(normB)}`);
-    return 0;
+    throw new Error('Zero magnitude vector detected');
   }
   
   const similarity = dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
@@ -112,7 +113,7 @@ export const cosineSimilarity = async (word1: string, word2: string): Promise<nu
       - Norm A: ${normA}
       - Norm B: ${normB}
       - Calculation: ${dotProduct} / (${Math.sqrt(normA)} * ${Math.sqrt(normB)})`);
-    return 0;
+    throw new Error('NaN similarity detected');
   }
   
   console.log(`✅ Similarity calculation successful:
