@@ -80,12 +80,43 @@ export const validateWordForChain = async (
   
   const similarityToTarget = await cosineSimilarity(word, targetWord);
   console.log(`SQUARE CHECK: Similarity to target word: ${similarityToTarget}`);
-  console.log(`SQUARE CHECK: Calculated progress: ${calculateProgress(similarityToTarget)}%`);
   
   return { 
     isValid: true, 
     similarityToTarget
   };
+};
+
+export const updateGameWithNewWord = (
+  game: GameState,
+  word: string,
+  similarityToTarget: number,
+  editingIndex: number | null
+): GameState => {
+  const progress = calculateProgress(similarityToTarget);
+  
+  if (editingIndex !== null) {
+    // When editing an existing word
+    const newChain = [...game.currentChain.slice(0, editingIndex), word];
+    const newProgresses = [...game.wordProgresses];
+    if (editingIndex > 0) {
+      newProgresses[editingIndex - 1] = progress;
+    }
+    return {
+      ...game,
+      currentChain: newChain,
+      wordProgresses: newProgresses,
+      score: newChain.length - 1
+    };
+  } else {
+    // When adding a new word
+    return {
+      ...game,
+      currentChain: [...game.currentChain, word],
+      wordProgresses: [...game.wordProgresses, progress],
+      score: game.currentChain.length
+    };
+  }
 };
 
 export const initializeGame = async (): Promise<GameState> => {
@@ -96,7 +127,7 @@ export const initializeGame = async (): Promise<GameState> => {
     startWord,
     targetWord,
     currentChain: [startWord],
-    wordProgresses: [0],
+    wordProgresses: [],
     isComplete: false,
     score: 0
   };
