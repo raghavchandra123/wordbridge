@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Input } from "./ui/input";
 import WordDisplay from "./WordDisplay";
 import { GameState } from "@/lib/types";
@@ -28,12 +28,26 @@ const GameBoard = ({
   progress,
 }: GameBoardProps) => {
   const [containerRef, setContainerRef] = useState<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const containerWidth = containerRef?.offsetWidth ?? 300;
 
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [currentWord, game.currentChain.length]);
+
   const getWordProgress = (index: number) => {
+    console.log(`SQUARE CHECK: Word at index ${index}:`, {
+      word: game.currentChain[index],
+      progress: index === 0 ? 0 : 
+               index === game.currentChain.length - 1 ? progress : 
+               game.wordProgresses[index - 1]
+    });
+    
     if (index === 0) return 0;
     if (index === game.currentChain.length - 1) return progress;
-    return game.wordProgresses[index] || 0;
+    return game.wordProgresses[index - 1] || 0;
   };
 
   return (

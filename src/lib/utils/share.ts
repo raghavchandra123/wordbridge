@@ -2,42 +2,51 @@ import { GameState } from "@/lib/types";
 import { THEME_COLORS } from "@/lib/constants";
 
 export const generateShareText = (game: GameState): string => {
-  const steps = game.currentChain.length - 1;
-  return `I connected ${game.startWord} to ${game.targetWord} in ${steps} steps! Try it out here: https://wordbridge.example.com`;
+  return `Word Bridge: Connected ${game.startWord} to ${game.targetWord} in ${game.score} steps! Try it at https://wordbridge.example.com`;
 };
 
 export const generateShareImage = async (game: GameState): Promise<Blob> => {
+  console.log('SQUARE CHECK: Generating share image with game state:', game);
+  
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d')!;
   
-  const maxWordLength = Math.max(...game.currentChain.map(w => w.length));
-  const squareSize = 50;
-  const padding = 20;
+  const squareSize = 60;
   const gap = 10;
+  const padding = 40;
+  const wordHeight = squareSize + gap;
+  
+  const maxWordLength = Math.max(
+    game.startWord.length,
+    game.targetWord.length,
+    ...game.currentChain.map(w => w.length)
+  );
   
   canvas.width = maxWordLength * (squareSize + gap) + padding * 2;
-  canvas.height = game.currentChain.length * (squareSize + gap) + padding * 2;
+  canvas.height = (game.currentChain.length + 1) * wordHeight + padding * 2;
   
   // Draw background
-  ctx.fillStyle = THEME_COLORS.BACKGROUND;
+  ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   
+  // Draw title
+  ctx.fillStyle = THEME_COLORS.TEXT.PRIMARY;
+  ctx.font = 'bold 24px system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillText(`Word Bridge - ${game.score} steps`, canvas.width / 2, padding);
+  
   // Draw words
-  game.currentChain.forEach((word, wordIndex) => {
-    const showLetters = wordIndex === 0 || wordIndex === game.currentChain.length - 1;
-    const progress = wordIndex === 0 ? 0 : 
-                    wordIndex === game.currentChain.length - 1 ? game.wordProgresses[wordIndex] : 
-                    game.wordProgresses[wordIndex];
+  const drawWord = (word: string, y: number, progress: number) => {
+    console.log(`SQUARE CHECK: Drawing word "${word}" with progress ${progress}`);
     
     const startRGB = hexToRgb(THEME_COLORS.START);
     const endRGB = hexToRgb(THEME_COLORS.END);
+    const color = interpolateColor(startRGB, endRGB, progress / 100);
     
-    word.split('').forEach((letter, letterIndex) => {
-      const x = letterIndex * (squareSize + gap) + padding;
-      const y = wordIndex * (squareSize + gap) + padding;
+    word.split('').forEach((letter, i) => {
+      const x = (canvas.width - word.length * (squareSize + gap)) / 2 + i * (squareSize + gap);
       
-      // Draw square background
-      const color = interpolateColor(startRGB, endRGB, progress / 100);
+      // Draw square
       ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, 0.5)`;
       ctx.strokeStyle = THEME_COLORS.GRADIENT.MID2;
       ctx.lineWidth = 2;
@@ -47,19 +56,20 @@ export const generateShareImage = async (game: GameState): Promise<Blob> => {
       ctx.fill();
       ctx.stroke();
       
-      if (showLetters) {
-        ctx.fillStyle = THEME_COLORS.TEXT.PRIMARY;
-        ctx.font = 'bold 24px system-ui';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(
-          letter.toUpperCase(),
-          x + squareSize / 2,
-          y + squareSize / 2
-        );
-      }
+      // Draw letter
+      ctx.fillStyle = THEME_COLORS.TEXT.PRIMARY;
+      ctx.font = 'bold 24px system-ui';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(letter.toUpperCase(), x + squareSize / 2, y + squareSize / 2);
     });
-  });
+  };
+  
+  // Draw start word
+  drawWord(game.startWord, padding + wordHeight, 0);
+  
+  // Draw target word
+  drawWord(game.targetWord, canvas.height - padding - squareSize, 100);
   
   return new Promise((resolve) => {
     canvas.toBlob((blob) => {
@@ -87,27 +97,4 @@ const interpolateColor = (
     g: Math.round(start.g + (end.g - start.g) * progress),
     b: Math.round(start.b + (end.b - start.b) * progress)
   };
-};
-
-export const shareGame = async (game: GameState) => {
-  const text = generateShareText(game);
-  const imageBlob = await generateShareImage(game);
-  
-  if (navigator.share) {
-    try {
-      await navigator.share({
-        text,
-        files: [new File([imageBlob], 'wordbridge.png', { type: 'image/png' })]
-      });
-    } catch (err) {
-      console.error('Share failed:', err);
-      copyToClipboard(text);
-    }
-  } else {
-    copyToClipboard(text);
-  }
-};
-
-const copyToClipboard = async (text: string) => {
-  await navigator.clipboard.writeText(text);
 };
