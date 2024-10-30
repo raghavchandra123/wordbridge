@@ -129,10 +129,10 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen p-4">
-      <Card className="max-w-2xl mx-auto">
-        <CardHeader>
-          <CardTitle className="text-4xl text-center mb-2">Word Bridge</CardTitle>
+    <div className="min-h-screen">
+      <Card className="max-w-2xl mx-auto rounded-none h-screen">
+        <CardHeader className="space-y-0 pb-2">
+          <CardTitle className="text-4xl text-center">Word Bridge</CardTitle>
           <CardDescription className="text-center text-lg">
             Connect the words using similar words
           </CardDescription>

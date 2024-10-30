@@ -1,7 +1,7 @@
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { THEME_COLORS } from "@/lib/constants";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 
 interface WordInputProps {
   currentWord: string;
@@ -22,7 +22,7 @@ const WordInput = ({
   onEditCancel,
   inputRef 
 }: WordInputProps) => (
-  <form onSubmit={onWordSubmit} className="flex-none space-y-1">
+  <form onSubmit={onWordSubmit} className="flex-none">
     <div className="flex gap-2 items-center">
       <Button 
         type="button" 
@@ -70,7 +70,11 @@ const WordInput = ({
         }}
         disabled={isChecking}
       >
-        <ArrowRight className="h-4 w-4" />
+        {isChecking ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <ArrowRight className="h-4 w-4" />
+        )}
       </Button>
     </div>
   </form>

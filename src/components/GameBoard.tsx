@@ -90,13 +90,16 @@ const GameBoard = ({
   const handleBackButton = () => {
     if (editingIndex !== null) {
       onWordClick(null);
-    } else {
+    } else if (game.currentChain.length > 1) {
       const newChain = [...game.currentChain];
       newChain.pop();
+      const newProgresses = [...game.wordProgresses];
+      newProgresses.pop();
       setGame({
         ...game,
         currentChain: newChain,
-        wordProgresses: game.wordProgresses.slice(0, -1)
+        wordProgresses: newProgresses,
+        score: newChain.length - 1
       });
     }
     setTimeout(() => inputRef.current?.focus(), 0);
