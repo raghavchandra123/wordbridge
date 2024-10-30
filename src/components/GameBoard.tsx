@@ -32,19 +32,19 @@ const GameBoard = ({
 
   return (
     <div 
-      className="space-y-8 rounded-lg p-6" 
+      className="space-y-4" 
       ref={setContainerRef}
     >
-      <div className="flex flex-col items-center gap-4">
-        <div className="p-4 w-full">
+      <div className="flex flex-col items-center gap-2">
+        <div className="w-full">
           <WordDisplay 
             word={game.startWord} 
             progress={0}
             containerWidth={containerWidth} 
           />
         </div>
-        <ArrowDown style={{ color: THEME_COLORS.GRADIENT.MID2 }} size={24} />
-        <div className="p-4 w-full">
+        <ArrowDown style={{ color: THEME_COLORS.GRADIENT.MID2 }} size={20} />
+        <div className="w-full">
           <WordDisplay 
             word={game.targetWord} 
             progress={100}
@@ -53,7 +53,7 @@ const GameBoard = ({
         </div>
       </div>
 
-      <div className="relative w-full h-2 rounded-full overflow-hidden" 
+      <div className="relative w-full h-2 rounded-full overflow-hidden my-2" 
         style={{ backgroundColor: `${THEME_COLORS.GRADIENT.MID2}33` }}
       >
         <div 
@@ -65,12 +65,12 @@ const GameBoard = ({
         />
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-1">
         {game.currentChain.map((word, index) => (
           <Button
             key={index}
             variant="ghost"
-            className={`w-full p-3 text-center font-medium transition-colors hover:bg-opacity-10 ${
+            className={`w-full py-2 text-center font-medium transition-colors hover:bg-opacity-10 ${
               index === 0 ? 'opacity-100' : ''
             }`}
             onClick={() => onWordClick(index === editingIndex ? null : index)}
@@ -78,7 +78,6 @@ const GameBoard = ({
             style={{ 
               opacity: index === 0 ? 1 : undefined,
               pointerEvents: index === 0 ? 'none' : undefined,
-              backgroundColor: `${THEME_COLORS.GRADIENT.MID1}33`,
               color: THEME_COLORS.TEXT.PRIMARY
             }}
           >
@@ -92,7 +91,7 @@ const GameBoard = ({
       </div>
 
       {!game.isComplete && (
-        <form onSubmit={onWordSubmit} className="space-y-4">
+        <form onSubmit={onWordSubmit} className="space-y-2">
           <Input
             value={currentWord}
             onChange={(e) => onWordChange(e.target.value.toLowerCase())}
