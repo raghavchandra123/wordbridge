@@ -23,7 +23,7 @@ const LetterSquare = ({ letter, progress, size }: LetterSquareProps) => {
         width: `${size}px`,
         height: `${size}px`,
         border: `2px solid ${borderColor}`,
-        backgroundColor: `rgba(${interpolatedColor.r}, ${interpolatedColor.g}, ${interpolatedColor.b}, 1.0)`,
+        backgroundColor: `rgba(${interpolatedColor.r}, ${interpolatedColor.g}, ${interpolatedColor.b}, 0.5)`,
         color: THEME_COLORS.TEXT.PRIMARY,
         fontSize: `${Math.max(size * 0.4, 12)}px`,
       }}

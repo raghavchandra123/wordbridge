@@ -33,7 +33,6 @@ const GameBoard = ({
   return (
     <div 
       className="space-y-8 rounded-lg p-6" 
-      style={{ backgroundColor: `${THEME_COLORS.GRADIENT.MID1}33` }}
       ref={setContainerRef}
     >
       <div className="flex flex-col items-center gap-4">
@@ -44,7 +43,7 @@ const GameBoard = ({
             containerWidth={containerWidth} 
           />
         </div>
-        <ArrowDown style={{ color: THEME_COLORS.BORDER.LIGHT }} size={24} />
+        <ArrowDown style={{ color: THEME_COLORS.GRADIENT.MID2 }} size={24} />
         <div className="p-4 w-full">
           <WordDisplay 
             word={game.targetWord} 
@@ -97,7 +96,7 @@ const GameBoard = ({
             className="text-center text-lg"
             style={{ 
               backgroundColor: `${THEME_COLORS.GRADIENT.MID3}33`,
-              borderColor: THEME_COLORS.BORDER.LIGHT
+              borderColor: THEME_COLORS.GRADIENT.MID2
             }}
             disabled={isChecking}
           />
@@ -105,7 +104,7 @@ const GameBoard = ({
             <Button 
               type="submit" 
               className="flex-1 text-lg text-white hover:opacity-90"
-              style={{ backgroundColor: THEME_COLORS.END }}
+              style={{ backgroundColor: THEME_COLORS.GRADIENT.MID3 }}
               disabled={isChecking}
             >
               {isChecking ? "Checking..." : (editingIndex !== null ? "Update Word" : "Submit Word")}
@@ -115,7 +114,7 @@ const GameBoard = ({
                 type="button" 
                 variant="outline"
                 className="text-lg hover:opacity-90"
-                style={{ borderColor: THEME_COLORS.BORDER.LIGHT, color: THEME_COLORS.BORDER.LIGHT }}
+                style={{ borderColor: THEME_COLORS.GRADIENT.MID2, color: THEME_COLORS.GRADIENT.MID2 }}
                 disabled={isChecking}
                 onClick={() => onWordClick(null)}
               >
