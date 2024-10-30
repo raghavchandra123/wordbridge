@@ -50,7 +50,7 @@ const GameBoard = ({
         </div>
       </div>
 
-      <div className="relative w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: `${THEME_COLORS.START}33` }}>
+      <div className="relative w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: `${THEME_COLORS.MID2}33` }}>
         <div 
           className="h-full transition-all"
           style={{ 
