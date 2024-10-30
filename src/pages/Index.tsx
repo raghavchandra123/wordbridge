@@ -9,6 +9,7 @@ import { validateWordForChain, initializeGame } from "@/lib/services/gameService
 import EndGameDialog from "@/components/EndGameDialog";
 import GameBoard from "@/components/GameBoard";
 import { saveGameProgress } from "@/lib/storage/gameStorage";
+import { SIMILARITY_THRESHOLD } from "@/lib/constants";
 
 const Index = () => {
   const { toast } = useToast();
@@ -57,7 +58,7 @@ const Index = () => {
         ...game,
         currentChain: newChain,
         score: newChain.length - 1,
-        isComplete: validation.similarityToTarget >= 0.3
+        isComplete: validation.similarityToTarget >= SIMILARITY_THRESHOLD
       };
 
       setGame(newGame);
