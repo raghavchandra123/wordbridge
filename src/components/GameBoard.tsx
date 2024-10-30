@@ -36,7 +36,7 @@ const GameBoard = ({
         <div className="p-4 rounded-lg w-full">
           <WordDisplay 
             word={game.startWord} 
-            progress={100}
+            progress={0}
             containerWidth={containerWidth} 
           />
         </div>
@@ -44,7 +44,7 @@ const GameBoard = ({
         <div className="p-4 rounded-lg w-full">
           <WordDisplay 
             word={game.targetWord} 
-            progress={0}
+            progress={100}
             containerWidth={containerWidth} 
           />
         </div>
