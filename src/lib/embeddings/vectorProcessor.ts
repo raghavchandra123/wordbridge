@@ -1,3 +1,4 @@
+import pako from 'pako';
 import { VECTOR_SIZE } from './constants';
 import { convertFloat16ToFloat32 } from './float16Converter';
 import { WordDictionary } from './types';
