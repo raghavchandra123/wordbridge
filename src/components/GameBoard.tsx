@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import WordDisplay from "./WordDisplay";
 import { GameState } from "@/lib/types";
 import { ArrowDown } from "lucide-react";
 import { THEME_COLORS } from "@/lib/constants/colors";
+import { Button } from "./ui/button";
 
 interface GameBoardProps {
   game: GameState;
@@ -94,11 +94,7 @@ const GameBoard = ({
           <div className="flex gap-2">
             <Button 
               type="submit" 
-              className="flex-1 text-lg text-white"
-              style={{ 
-                backgroundColor: THEME_COLORS.END,
-                ":hover": { backgroundColor: `${THEME_COLORS.END}90` }
-              }}
+              className={`flex-1 text-lg text-white bg-[${THEME_COLORS.END}] hover:bg-[${THEME_COLORS.END}]/90`}
               disabled={isChecking}
             >
               {isChecking ? "Checking..." : (editingIndex !== null ? "Update Word" : "Submit Word")}
@@ -107,11 +103,7 @@ const GameBoard = ({
               <Button 
                 type="button" 
                 variant="outline"
-                className="text-lg"
-                style={{ 
-                  borderColor: THEME_COLORS.BORDER.LIGHT,
-                  color: THEME_COLORS.BORDER.LIGHT
-                }}
+                className={`text-lg border-[${THEME_COLORS.BORDER.LIGHT}] text-[${THEME_COLORS.BORDER.LIGHT}] hover:bg-[${THEME_COLORS.BORDER.LIGHT}]/10`}
                 disabled={isChecking}
                 onClick={() => onWordClick(null)}
               >
