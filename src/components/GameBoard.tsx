@@ -71,7 +71,7 @@ const GameBoard = ({
           >
             <WordDisplay 
               word={word} 
-              progress={index === 0 ? 100 : progress}
+              progress={index === 0 ? 0 : progress}
               containerWidth={containerWidth} 
             />
           </Button>
