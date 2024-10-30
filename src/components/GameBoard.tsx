@@ -36,7 +36,6 @@ const GameBoard = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<number>();
-  const containerWidth = containerRef?.offsetWidth ?? 300;
 
   const scrollToBottom = () => {
     if (scrollTimeoutRef.current) {
@@ -100,15 +99,16 @@ const GameBoard = ({
   const totalMargins = 32; // 2rem (32px) total padding from root container
   const mainHeight = visualViewport.height - totalMargins;
   
-  // Component heights
-  const headerHeight = 60; // Fixed height for header section
-  const inputSectionHeight = 70; // Fixed height for input section
+  // Component heights (updated with more accurate measurements)
+  const headerHeight = 150; // Increased to account for start/end words, arrow, progress bar
+  const inputSectionHeight = 120; // Increased to account for input field, buttons
   const cardPadding = 24; // 1.5rem padding from Card component
-  const cardHeaderHeight = 100; // Estimated height for card title and description
+  const cardHeaderHeight = 80; // Reduced since we only need title + description
+  const containerWidth = containerRef?.offsetWidth ?? 300;
   
   // Calculate available height for scroll area
   const availableScrollHeight = mainHeight - headerHeight - inputSectionHeight - cardPadding - cardHeaderHeight;
-  const maxScrollHeight = Math.min(availableScrollHeight, visualViewport.height * 0.25);
+  const maxScrollHeight = Math.min(availableScrollHeight, visualViewport.height * 0.2); // Reduced to 20% of viewport
 
   // Debug logging
   console.log('VIEW: Size calculations:', {
@@ -121,7 +121,13 @@ const GameBoard = ({
     cardHeaderHeight,
     availableScrollHeight,
     maxScrollHeight,
-    containerWidth
+    containerWidth,
+    actualComponentHeights: {
+      header: headerHeight,
+      input: inputSectionHeight,
+      scroll: maxScrollHeight,
+      total: headerHeight + inputSectionHeight + maxScrollHeight + cardPadding + cardHeaderHeight
+    }
   });
 
   return (
@@ -146,7 +152,8 @@ const GameBoard = ({
         className="flex-grow min-h-0 rounded-md border"
         style={{ 
           height: `${maxScrollHeight}px`,
-          minHeight: '60px'
+          minHeight: '60px',
+          maxHeight: `${maxScrollHeight}px`
         }}
       >
         <div className="space-y-1 p-2">
