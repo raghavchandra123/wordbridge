@@ -3,7 +3,7 @@ import { Input } from "./ui/input";
 import WordDisplay from "./WordDisplay";
 import { GameState } from "@/lib/types";
 import { ArrowDown } from "lucide-react";
-import { THEME_COLORS } from "@/lib/constants/colors";
+import { THEME_COLORS } from "@/lib/constants";
 import { Button } from "./ui/button";
 
 interface GameBoardProps {

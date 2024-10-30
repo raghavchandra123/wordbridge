@@ -1,4 +1,4 @@
-import { SIMILARITY_THRESHOLDS } from "@/lib/constants";
+import { SIMILARITY_THRESHOLD } from "@/lib/constants";
 
 const MIN_SIMILARITY = -0.1;
 const MAX_SIMILARITY = 0.3;
