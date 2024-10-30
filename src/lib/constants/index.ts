@@ -1,8 +1,7 @@
 // Game Settings
-export const PAIR_SIMILARITY_THRESHOLD = 0.05;  // Maximum similarity for initial word pairs
-export const PROGRESS_MIN_SIMILARITY = -0.2;    // Minimum similarity for progress calculation
-export const PROGRESS_MAX_SIMILARITY = 0.3;     // Maximum similarity for progress calculation
-export const CHAIN_SIMILARITY_THRESHOLD = 0.3;  // Minimum similarity between consecutive words
+export const SIMILARITY_THRESHOLD = 0.3;
+export const MIN_SIMILARITY = -0.2;
+export const MAX_SIMILARITY = 0.3;
 
 // Theme Colors
 export const THEME_COLORS = {
