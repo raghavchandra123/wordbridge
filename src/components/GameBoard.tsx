@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from "react";
-import { Input } from "./ui/input";
-import WordDisplay from "./WordDisplay";
-import { GameState } from "@/lib/types";
-import { ArrowDown } from "lucide-react";
-import { THEME_COLORS } from "@/lib/constants";
-import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
+import { Button } from "./ui/button";
+import WordDisplay from "./WordDisplay";
+import HeaderSection from "./game/HeaderSection";
+import WordInput from "./game/WordInput";
+import { THEME_COLORS } from "@/lib/constants";
+import { GameState } from "@/lib/types";
 
 interface GameBoardProps {
   game: GameState;
@@ -38,14 +38,14 @@ const GameBoard = ({
   const containerWidth = containerRef?.offsetWidth ?? 300;
 
   const scrollToBottom = () => {
-    if (scrollAreaRef.current) {
-      const scrollElement = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (scrollElement) {
-        setTimeout(() => {
+    requestAnimationFrame(() => {
+      if (scrollAreaRef.current) {
+        const scrollElement = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+        if (scrollElement) {
           scrollElement.scrollTop = scrollElement.scrollHeight;
-        }, 50);
+        }
       }
-    }
+    });
   };
 
   useEffect(() => {
@@ -71,19 +71,13 @@ const GameBoard = ({
     scrollToBottom();
   }, [game.currentChain.length]);
 
-  // Keep focus on input and keyboard open
   useEffect(() => {
     const focusInput = () => {
       if (inputRef.current && !game.isComplete) {
         inputRef.current.focus();
       }
     };
-
     focusInput();
-    // Reapply focus after a short delay to handle mobile keyboard
-    const focusInterval = setInterval(focusInput, 300);
-
-    return () => clearInterval(focusInterval);
   }, [currentWord, isChecking, game.isComplete]);
 
   const getWordProgress = (index: number) => {
@@ -92,58 +86,37 @@ const GameBoard = ({
     return game.wordProgresses[index - 1] || 0;
   };
 
-  // Calculate heights considering all margins and padding
-  const totalMargins = 48; // 24px top + 24px bottom
+  // Calculate heights considering all margins, padding, and safe areas
+  const safeAreaInsets = 'env(safe-area-inset-bottom)';
+  const totalMargins = 32; // 16px top + 16px bottom
   const mainHeight = visualViewport.height - totalMargins;
-  const headerHeight = 100; // Reduced from 120
-  const inputSectionHeight = 90; // Reduced from 100
+  const headerHeight = 80;
+  const inputSectionHeight = 80;
   const availableScrollHeight = mainHeight - headerHeight - inputSectionHeight;
 
   return (
     <div 
-      className="flex flex-col space-y-2 mx-4" 
-      style={{ height: mainHeight + 'px', maxHeight: '100%' }}
+      className="flex flex-col space-y-2 mx-4 pb-safe" 
+      style={{ 
+        height: mainHeight + 'px',
+        maxHeight: '100%',
+        paddingBottom: `calc(${safeAreaInsets} + 1rem)`
+      }}
       ref={setContainerRef}
     >
-      <div className="flex-none space-y-1">
-        <div className="flex flex-col items-center gap-1">
-          <div className="w-full">
-            <WordDisplay 
-              word={game.startWord} 
-              progress={0}
-              containerWidth={containerWidth} 
-            />
-          </div>
-          <ArrowDown style={{ color: THEME_COLORS.GRADIENT.MID2 }} size={16} />
-          <div className="w-full">
-            <WordDisplay 
-              word={game.targetWord} 
-              progress={100}
-              containerWidth={containerWidth} 
-            />
-          </div>
-        </div>
-
-        <div className="relative w-full h-1.5 rounded-full overflow-hidden" 
-          style={{ backgroundColor: `${THEME_COLORS.GRADIENT.MID2}33` }}
-        >
-          <div 
-            className="h-full transition-all"
-            style={{ 
-              width: `${progress}%`,
-              background: `linear-gradient(to right, ${THEME_COLORS.START}, ${THEME_COLORS.GRADIENT.MID1}, ${THEME_COLORS.GRADIENT.MID2}, ${THEME_COLORS.END})`
-            }}
-          />
-        </div>
-      </div>
+      <HeaderSection 
+        startWord={game.startWord}
+        targetWord={game.targetWord}
+        progress={progress}
+        containerWidth={containerWidth}
+      />
 
       <ScrollArea 
         ref={scrollAreaRef}
         className="flex-grow min-h-0 rounded-md border"
         style={{ 
-          height: `${Math.max(availableScrollHeight, 100)}px`,
-          minHeight: '100px',
-          maxHeight: `${availableScrollHeight}px`
+          height: `${Math.min(availableScrollHeight, visualViewport.height * 0.4)}px`,
+          minHeight: '80px'
         }}
       >
         <div className="space-y-1 p-2">
@@ -171,47 +144,15 @@ const GameBoard = ({
       </ScrollArea>
 
       {!game.isComplete && (
-        <form onSubmit={onWordSubmit} className="flex-none space-y-1">
-          <Input
-            ref={inputRef}
-            value={currentWord}
-            onChange={(e) => onWordChange(e.target.value.toLowerCase())}
-            placeholder={editingIndex !== null ? `Change word #${editingIndex + 1}` : "Enter a word..."}
-            className="text-center text-lg h-10"
-            style={{ 
-              backgroundColor: `${THEME_COLORS.GRADIENT.MID2}33`,
-              borderColor: THEME_COLORS.GRADIENT.MID2
-            }}
-            readOnly={isChecking}
-            inputMode="text"
-            autoComplete="off"
-            autoCapitalize="off"
-            autoCorrect="off"
-            spellCheck="false"
-          />
-          <div className="flex gap-1.5">
-            <Button 
-              type="submit" 
-              className="flex-1 h-10 text-white hover:opacity-90"
-              style={{ backgroundColor: THEME_COLORS.GRADIENT.MID2 }}
-              disabled={isChecking}
-            >
-              {isChecking ? "Checking..." : (editingIndex !== null ? "Update Word" : "Submit Word")}
-            </Button>
-            {editingIndex !== null && (
-              <Button 
-                type="button" 
-                variant="outline"
-                className="h-10 hover:opacity-90"
-                style={{ borderColor: THEME_COLORS.GRADIENT.MID2, color: THEME_COLORS.GRADIENT.MID2 }}
-                disabled={isChecking}
-                onClick={() => onWordClick(null)}
-              >
-                Add New Word
-              </Button>
-            )}
-          </div>
-        </form>
+        <WordInput
+          currentWord={currentWord}
+          onWordChange={onWordChange}
+          onWordSubmit={onWordSubmit}
+          editingIndex={editingIndex}
+          isChecking={isChecking}
+          onEditCancel={() => onWordClick(null)}
+          inputRef={inputRef}
+        />
       )}
     </div>
   );
