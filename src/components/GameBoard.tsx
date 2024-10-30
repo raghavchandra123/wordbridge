@@ -49,9 +49,9 @@ const GameBoard = ({
         </div>
       </div>
 
-      <div className="relative w-full h-2 bg-[#f6bc66]/20 rounded-full overflow-hidden">
+      <div className="relative w-full h-2 bg-[#f55c7a]/20 rounded-full overflow-hidden">
         <div 
-          className="h-full bg-gradient-to-r from-[#f6bc66] to-[#f55c7a] transition-all"
+          className="h-full bg-gradient-to-r from-[#f55c7a] to-[#f6bc66] transition-all"
           style={{ width: `${progress}%` }}
         />
       </div>

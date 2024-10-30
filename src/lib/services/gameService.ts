@@ -1,7 +1,7 @@
 import { getWordList } from '../embeddings/loader';
 import { cosineSimilarity } from '../embeddings';
 import { GameState } from '../types';
-import { SIMILARITY_THRESHOLD } from '../constants';
+import { SIMILARITY_THRESHOLD } from '../constants/colors';
 import { checkConceptNetRelation } from '../conceptnet';
 
 const getDateSeed = () => {
