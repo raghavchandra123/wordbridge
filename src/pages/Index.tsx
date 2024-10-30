@@ -158,6 +158,13 @@ const Index = () => {
               <Button onClick={handleNewGame} className="w-full text-lg">
                 New Game
               </Button>
+              <Button 
+                onClick={() => setShowEndGame(true)} 
+                variant="outline"
+                className="w-full text-lg"
+              >
+                Share Result
+              </Button>
             </div>
           )}
         </CardContent>

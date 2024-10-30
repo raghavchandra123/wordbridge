@@ -10,6 +10,7 @@ import { generateShareText, generateShareImage } from "@/lib/utils/share";
 import { useState, useEffect } from "react";
 import { toast } from "@/components/ui/use-toast";
 import WordDisplay from "./WordDisplay";
+import { Share } from "lucide-react";
 
 interface EndGameDialogProps {
   game: GameState;
@@ -38,9 +39,14 @@ const EndGameDialog = ({ game, open, onClose }: EndGameDialogProps) => {
     const text = generateShareText(game);
     
     try {
-      if (navigator.share) {
+      if (navigator.share && imageUrl) {
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        const file = new File([blob], 'wordbridge.png', { type: 'image/png' });
+        
         await navigator.share({
           text,
+          files: [file],
           title: 'Word Bridge',
         });
       } else {
@@ -96,7 +102,7 @@ const EndGameDialog = ({ game, open, onClose }: EndGameDialogProps) => {
             onClick={handleShare}
             className="w-full bg-[#FF8B8B] hover:bg-[#FF8B8B]/90 text-white"
           >
-            Share
+            Share Result
           </Button>
           
           <p className="text-sm text-center text-muted-foreground">

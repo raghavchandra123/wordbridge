@@ -12,7 +12,8 @@ const drawWord = (
   progress: number,
   squareSize: number,
   gap: number,
-  canvasWidth: number
+  canvasWidth: number,
+  showLetters: boolean = true
 ) => {
   const wordWidth = word.length * (squareSize + gap) - gap;
   let x = (canvasWidth - wordWidth) / 2;
@@ -39,12 +40,14 @@ const drawWord = (
     ctx.fill();
     ctx.stroke();
 
-    // Draw letter
-    ctx.fillStyle = THEME_COLORS.TEXT.PRIMARY;
-    ctx.font = 'bold 24px system-ui';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(letter.toUpperCase(), x + squareSize / 2, y + squareSize / 2);
+    // Draw letter only if showLetters is true
+    if (showLetters) {
+      ctx.fillStyle = THEME_COLORS.TEXT.PRIMARY;
+      ctx.font = 'bold 24px system-ui';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(letter.toUpperCase(), x + squareSize / 2, y + squareSize / 2);
+    }
 
     x += squareSize + gap;
   });
@@ -84,6 +87,9 @@ export const generateShareImage = async (game: GameState): Promise<string> => {
                     index === game.currentChain.length - 1 ? 100 : 
                     game.wordProgresses[index - 1];
     
+    // Show letters only for start and end words
+    const showLetters = index === 0 || index === game.currentChain.length - 1;
+    
     drawWord(
       ctx,
       word,
@@ -91,7 +97,8 @@ export const generateShareImage = async (game: GameState): Promise<string> => {
       progress,
       squareSize,
       gap,
-      canvas.width
+      canvas.width,
+      showLetters
     );
   });
 
