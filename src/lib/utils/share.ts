@@ -2,13 +2,13 @@ import { GameState } from "@/lib/types";
 
 const getColorEmoji = (progress: number): string => {
   if (progress <= 25) {
-    return "🟦"; // Blue
+    return "🟦";
   } else if (progress <= 50) {
-    return "🟩"; // Green
+    return "🟩";
   } else if (progress <= 75) {
-    return "🟨"; // Yellow
+    return "🟨";
   } else {
-    return "🟥"; // Red
+    return "🟥";
   }
 };
 
@@ -18,7 +18,7 @@ const generateWordEmojis = (word: string, progress: number): string => {
 
 export const generateShareText = (game: GameState): string => {
   const chainLength = game.currentChain.length - 1;
-  let shareText = `Connected ${game.startWord.toUpperCase()} to ${game.targetWord.toUpperCase()} in ${chainLength} words!\n\n`;
+  let shareText = `I Connected ${game.startWord.toUpperCase()} to ${game.targetWord.toUpperCase()} in ${chainLength} words!\n\n`;
   
   shareText += `${game.startWord.toUpperCase()}\n`;
   
@@ -29,7 +29,7 @@ export const generateShareText = (game: GameState): string => {
   }
   
   shareText += `${game.targetWord.toUpperCase()}\n\n`;
-  shareText += "Try out Word Bridge: https://wordbridge.example.com";
+  shareText += "Try it here: https://word-bridge.gptengineer.run/";
   
   return shareText;
 };

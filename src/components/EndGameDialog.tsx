@@ -31,7 +31,7 @@ const EndGameDialog = ({ game, open, onClose }: EndGameDialogProps) => {
       if (navigator.share) {
         await navigator.share({
           text,
-          title: 'Word Bridge',
+          title: 'WordBridge',
         });
       } else {
         await navigator.clipboard.writeText(text);
