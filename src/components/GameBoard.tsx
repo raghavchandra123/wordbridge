@@ -5,9 +5,9 @@ import WordDisplay from "./WordDisplay";
 import HeaderSection from "./game/HeaderSection";
 import WordInput from "./game/WordInput";
 import { GameContainer } from "./game/layout/GameContainer";
-import { GameCard } from "./game/layout/GameCard";
 import { THEME_COLORS } from "@/lib/constants";
 import { GameState } from "@/lib/types";
+import { Share } from "lucide-react";
 
 interface GameBoardProps {
   game: GameState;
@@ -96,40 +96,18 @@ const GameBoard = ({
     return game.wordProgresses[index - 1] || 0;
   };
 
-  // Calculate component heights with reduced spacing
-  const totalMargins = 16; // Reduced from 32px to 16px
-  const mainHeight = visualViewport.height - totalMargins;
-  
-  const headerHeight = 120; // Reduced from 150px
-  const inputSectionHeight = 100; // Reduced from 120px
-  const cardPadding = 16; // Reduced from 24px
-  const cardHeaderHeight = 60; // Reduced from 80px
+  const headerHeight = 120;
+  const inputSectionHeight = game.isComplete ? 0 : 100;
+  const completionButtonsHeight = game.isComplete ? 120 : 0;
+  const cardPadding = 16;
+  const cardHeaderHeight = 60;
   const containerWidth = containerRef?.offsetWidth ?? 300;
   
-  const availableScrollHeight = mainHeight - headerHeight - inputSectionHeight - cardPadding - cardHeaderHeight;
-  const maxScrollHeight = Math.min(availableScrollHeight, visualViewport.height * 0.3); // Increased to 30% of viewport
-
-  console.log('VIEW: Size calculations:', {
-    visualViewportHeight: visualViewport.height,
-    totalMargins,
-    mainHeight,
-    headerHeight,
-    inputSectionHeight,
-    cardPadding,
-    cardHeaderHeight,
-    availableScrollHeight,
-    maxScrollHeight,
-    containerWidth,
-    actualComponentHeights: {
-      header: headerHeight,
-      input: inputSectionHeight,
-      scroll: maxScrollHeight,
-      total: headerHeight + inputSectionHeight + maxScrollHeight + cardPadding + cardHeaderHeight
-    }
-  });
+  const availableScrollHeight = visualViewport.height - headerHeight - inputSectionHeight - cardPadding - cardHeaderHeight - completionButtonsHeight;
+  const maxScrollHeight = Math.min(availableScrollHeight, visualViewport.height * 0.4);
 
   return (
-    <GameContainer mainHeight={mainHeight} ref={setContainerRef}>
+    <GameContainer mainHeight={visualViewport.height} ref={setContainerRef}>
       <HeaderSection 
         startWord={game.startWord}
         targetWord={game.targetWord}
@@ -186,6 +164,25 @@ const GameBoard = ({
           }}
           inputRef={inputRef}
         />
+      )}
+
+      {game.isComplete && (
+        <div className="flex flex-col gap-2 mt-2">
+          <Button 
+            onClick={() => window.location.reload()}
+            className="w-full bg-[#FF8B8B] hover:bg-[#FF8B8B]/90 text-white"
+          >
+            Retry
+          </Button>
+          <Button 
+            onClick={() => setShowEndGame(true)}
+            variant="outline"
+            className="w-full"
+          >
+            <Share className="mr-2 h-4 w-4" />
+            Share Result
+          </Button>
+        </div>
       )}
     </GameContainer>
   );
