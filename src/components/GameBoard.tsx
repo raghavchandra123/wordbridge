@@ -31,7 +31,7 @@ const GameBoard = ({
   const containerWidth = containerRef?.offsetWidth ?? 300;
 
   return (
-    <div className="space-y-8" ref={setContainerRef}>
+    <div className="space-y-8 bg-white/20 rounded-lg p-6" ref={setContainerRef}>
       <div className="flex flex-col items-center gap-4">
         <div className="p-4 w-full">
           <WordDisplay 
