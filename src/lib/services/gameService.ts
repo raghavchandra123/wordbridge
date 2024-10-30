@@ -93,6 +93,7 @@ export const initializeGame = async (): Promise<GameState> => {
     startWord,
     targetWord,
     currentChain: [startWord],
+    wordProgresses: [0],
     isComplete: false,
     score: 0
   };

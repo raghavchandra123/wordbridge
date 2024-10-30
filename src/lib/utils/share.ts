@@ -1,4 +1,5 @@
 import { GameState } from "@/lib/types";
+import { THEME_COLORS } from "@/lib/constants";
 
 export const generateShareText = (game: GameState): string => {
   const steps = game.currentChain.length - 1;
@@ -9,36 +10,52 @@ export const generateShareImage = async (game: GameState): Promise<Blob> => {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d')!;
   
-  // Set canvas size based on longest word
-  const maxLength = Math.max(...game.currentChain.map(w => w.length));
-  canvas.width = maxLength * 60 + 40;
-  canvas.height = game.currentChain.length * 60 + 40;
+  const maxWordLength = Math.max(...game.currentChain.map(w => w.length));
+  const squareSize = 50;
+  const padding = 20;
+  const gap = 10;
+  
+  canvas.width = maxWordLength * (squareSize + gap) + padding * 2;
+  canvas.height = game.currentChain.length * (squareSize + gap) + padding * 2;
   
   // Draw background
-  ctx.fillStyle = '#FFFFFF';
+  ctx.fillStyle = THEME_COLORS.BACKGROUND;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   
-  // Draw squares for each word
+  // Draw words
   game.currentChain.forEach((word, wordIndex) => {
     const showLetters = wordIndex === 0 || wordIndex === game.currentChain.length - 1;
+    const progress = wordIndex === 0 ? 0 : 
+                    wordIndex === game.currentChain.length - 1 ? game.wordProgresses[wordIndex] : 
+                    game.wordProgresses[wordIndex];
+    
+    const startRGB = hexToRgb(THEME_COLORS.START);
+    const endRGB = hexToRgb(THEME_COLORS.END);
     
     word.split('').forEach((letter, letterIndex) => {
-      ctx.strokeStyle = '#333333';
+      const x = letterIndex * (squareSize + gap) + padding;
+      const y = wordIndex * (squareSize + gap) + padding;
+      
+      // Draw square background
+      const color = interpolateColor(startRGB, endRGB, progress / 100);
+      ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, 0.5)`;
+      ctx.strokeStyle = THEME_COLORS.GRADIENT.MID2;
       ctx.lineWidth = 2;
-      ctx.strokeRect(
-        letterIndex * 60 + 20,
-        wordIndex * 60 + 20,
-        50,
-        50
-      );
+      
+      ctx.beginPath();
+      ctx.roundRect(x, y, squareSize, squareSize, 8);
+      ctx.fill();
+      ctx.stroke();
       
       if (showLetters) {
-        ctx.fillStyle = '#333333';
-        ctx.font = 'bold 24px Arial';
+        ctx.fillStyle = THEME_COLORS.TEXT.PRIMARY;
+        ctx.font = 'bold 24px system-ui';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
         ctx.fillText(
           letter.toUpperCase(),
-          letterIndex * 60 + 35,
-          wordIndex * 60 + 55
+          x + squareSize / 2,
+          y + squareSize / 2
         );
       }
     });
@@ -49,6 +66,27 @@ export const generateShareImage = async (game: GameState): Promise<Blob> => {
       resolve(blob!);
     });
   });
+};
+
+const hexToRgb = (hex: string) => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : { r: 0, g: 0, b: 0 };
+};
+
+const interpolateColor = (
+  start: { r: number, g: number, b: number },
+  end: { r: number, g: number, b: number },
+  progress: number
+) => {
+  return {
+    r: Math.round(start.r + (end.r - start.r) * progress),
+    g: Math.round(start.g + (end.g - start.g) * progress),
+    b: Math.round(start.b + (end.b - start.b) * progress)
+  };
 };
 
 export const shareGame = async (game: GameState) => {
@@ -63,7 +101,6 @@ export const shareGame = async (game: GameState) => {
       });
     } catch (err) {
       console.error('Share failed:', err);
-      // Fallback to clipboard
       copyToClipboard(text);
     }
   } else {

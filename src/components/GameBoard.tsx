@@ -31,10 +31,7 @@ const GameBoard = ({
   const containerWidth = containerRef?.offsetWidth ?? 300;
 
   return (
-    <div 
-      className="space-y-4" 
-      ref={setContainerRef}
-    >
+    <div className="space-y-4" ref={setContainerRef}>
       <div className="flex flex-col items-center gap-2">
         <div className="w-full">
           <WordDisplay 
@@ -83,7 +80,7 @@ const GameBoard = ({
           >
             <WordDisplay 
               word={word} 
-              progress={index === 0 ? 0 : progress}
+              progress={index === 0 ? 0 : index === game.currentChain.length - 1 ? progress : game.wordProgresses[index]}
               containerWidth={containerWidth} 
             />
           </Button>
