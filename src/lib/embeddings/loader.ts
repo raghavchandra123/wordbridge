@@ -39,32 +39,53 @@ export const loadEmbeddings = async () => {
 export const getWordVector = async (word: string): Promise<Float32Array | null> => {
   console.log(`🔤 Getting vector for word: "${word}"`);
   if (!wordBaseformMap) {
-    console.log('❌ Word baseform map not initialized');
+    console.error('❌ Word baseform map not initialized - loadEmbeddings() must be called first');
     return null;
   }
   
   const baseform = wordBaseformMap[word];
   if (!baseform) {
-    console.log(`❌ No baseform found for word: "${word}"`);
+    console.error(`❌ No baseform found for word: "${word}" in wordBaseformMap`);
     return null;
   }
   
   console.log(`📝 Using baseform: "${baseform}" for word: "${word}"`);
   
   const chunkData = await loadWordChunk(baseform);
-  return chunkData?.[baseform] || null;
+  if (!chunkData) {
+    console.error(`❌ No chunk data found containing baseform: "${baseform}"`);
+    return null;
+  }
+
+  const vector = chunkData[baseform];
+  if (!vector) {
+    console.error(`❌ Vector not found in chunk for baseform: "${baseform}"`);
+    return null;
+  }
+
+  console.log(`✅ Successfully loaded vector for word: "${word}" (baseform: "${baseform}")`);
+  return vector;
 };
 
 export const cosineSimilarity = async (word1: string, word2: string): Promise<number> => {
-  console.log(`📊 Calculating similarity between "${word1}" and "${word2}"`);
+  console.log(`\n📊 Calculating similarity between "${word1}" and "${word2}"`);
   
   const vec1 = await getWordVector(word1);
   const vec2 = await getWordVector(word2);
   
-  if (!vec1 || !vec2) {
-    console.log(`❌ Could not find vectors for both words`);
-    return 1; // Return high similarity to reject this pair
+  if (!vec1) {
+    console.error(`❌ Could not find vector for word1: "${word1}"`);
+    return 0;
   }
+  
+  if (!vec2) {
+    console.error(`❌ Could not find vector for word2: "${word2}"`);
+    return 0;
+  }
+  
+  console.log(`✅ Found vectors for both words:
+    - ${word1}: ${vec1.length} dimensions
+    - ${word2}: ${vec2.length} dimensions`);
   
   let dotProduct = 0;
   let normA = 0;
@@ -76,15 +97,30 @@ export const cosineSimilarity = async (word1: string, word2: string): Promise<nu
     normB += vec2[i] * vec2[i];
   }
   
-  const similarity = dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
-  
-  // Handle NaN case
-  if (isNaN(similarity)) {
-    console.log(`⚠️ Similarity calculation returned NaN, defaulting to 1`);
-    return 1; // Return high similarity to reject this pair
+  if (normA === 0 || normB === 0) {
+    console.error(`❌ Zero magnitude vector detected:
+      - ${word1} magnitude: ${Math.sqrt(normA)}
+      - ${word2} magnitude: ${Math.sqrt(normB)}`);
+    return 0;
   }
   
-  console.log(`✅ Similarity between "${word1}" and "${word2}": ${similarity}`);
+  const similarity = dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+  
+  if (isNaN(similarity)) {
+    console.error(`❌ NaN similarity detected:
+      - Dot product: ${dotProduct}
+      - Norm A: ${normA}
+      - Norm B: ${normB}
+      - Calculation: ${dotProduct} / (${Math.sqrt(normA)} * ${Math.sqrt(normB)})`);
+    return 0;
+  }
+  
+  console.log(`✅ Similarity calculation successful:
+    - Dot product: ${dotProduct}
+    - Norm A: ${Math.sqrt(normA)}
+    - Norm B: ${Math.sqrt(normB)}
+    - Final similarity: ${similarity}`);
+  
   return similarity;
 };
 
