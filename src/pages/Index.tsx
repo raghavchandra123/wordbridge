@@ -10,6 +10,7 @@ import EndGameDialog from "@/components/EndGameDialog";
 import GameBoard from "@/components/GameBoard";
 import { saveGameProgress } from "@/lib/storage/gameStorage";
 import { SIMILARITY_THRESHOLD } from "@/lib/constants";
+import { calculateProgress } from "@/lib/embeddings/utils";
 
 const Index = () => {
   const { toast } = useToast();
@@ -52,7 +53,7 @@ const Index = () => {
         ? [...game.currentChain.slice(0, editingIndex), currentWord]
         : [...game.currentChain, currentWord];
       
-      setProgress(validation.similarityToTarget * 100);
+      setProgress(calculateProgress(validation.similarityToTarget));
       
       const newGame = {
         ...game,
