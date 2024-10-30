@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { GameState } from "@/lib/types";
 import { generateShareText, generateShareImage } from "@/lib/utils/share";
 import { useState, useEffect } from "react";
+import { toast } from "@/components/ui/use-toast";
 import WordDisplay from "./WordDisplay";
 
 interface EndGameDialogProps {
@@ -27,37 +28,44 @@ const EndGameDialog = ({ game, open, onClose }: EndGameDialogProps) => {
 
   useEffect(() => {
     if (open) {
-      generateShareImage(game).then(blob => {
-        setImageUrl(URL.createObjectURL(blob));
+      generateShareImage(game).then(dataUrl => {
+        setImageUrl(dataUrl);
       });
     }
   }, [open, game]);
 
   const handleShare = async () => {
     const text = generateShareText(game);
-    if (navigator.share && /mobile|android|iphone/i.test(navigator.userAgent)) {
-      try {
-        const blob = await generateShareImage(game);
+    
+    try {
+      if (navigator.share) {
         await navigator.share({
           text,
-          files: [new File([blob], 'wordbridge.png', { type: 'image/png' })]
+          title: 'Word Bridge',
         });
-      } catch (err) {
-        console.error('Share failed:', err);
-        handleDownload();
+      } else {
+        await navigator.clipboard.writeText(text);
+        if (imageUrl) {
+          const response = await fetch(imageUrl);
+          const blob = await response.blob();
+          await navigator.clipboard.write([
+            new ClipboardItem({
+              [blob.type]: blob
+            })
+          ]);
+        }
+        toast({
+          title: "Copied to clipboard!",
+          description: "Share your result with friends",
+        });
       }
-    } else {
-      handleDownload();
-      await navigator.clipboard.writeText(text);
-    }
-  };
-
-  const handleDownload = () => {
-    if (imageUrl) {
-      const link = document.createElement('a');
-      link.href = imageUrl;
-      link.download = 'wordbridge.png';
-      link.click();
+    } catch (err) {
+      console.error('Share failed:', err);
+      toast({
+        title: "Sharing failed",
+        description: "Please try again",
+        variant: "destructive",
+      });
     }
   };
 
@@ -80,7 +88,6 @@ const EndGameDialog = ({ game, open, onClose }: EndGameDialogProps) => {
                 src={imageUrl} 
                 alt="Game result" 
                 className="w-full h-full object-contain"
-                onClick={handleDownload}
               />
             </div>
           )}

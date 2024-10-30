@@ -50,10 +50,19 @@ const Index = () => {
       }
 
       const newProgress = calculateProgress(validation.similarityToTarget);
-      const newWordProgresses = editingIndex !== null
-        ? [...game.wordProgresses.slice(0, editingIndex - 1), newProgress]
-        : [...game.wordProgresses, newProgress];
       
+      let newWordProgresses;
+      if (editingIndex !== null) {
+        // When editing, only update the progress for the edited word
+        newWordProgresses = [...game.wordProgresses];
+        if (editingIndex > 0) {
+          newWordProgresses[editingIndex - 1] = newProgress;
+        }
+      } else {
+        // When adding a new word, append its progress
+        newWordProgresses = [...game.wordProgresses, newProgress];
+      }
+
       const newChain = editingIndex !== null
         ? [...game.currentChain.slice(0, editingIndex), currentWord]
         : [...game.currentChain, currentWord];
