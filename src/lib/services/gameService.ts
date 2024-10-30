@@ -1,7 +1,7 @@
 import { getWordList } from '../embeddings/loader';
 import { cosineSimilarity } from '../embeddings';
 import { GameState } from '../types';
-import { SIMILARITY_THRESHOLD, MIN_SIMILARITY } from '../constants';
+import { WORD_CHAIN_MIN_SIMILARITY, WORD_PAIR_MIN_SIMILARITY } from '../constants';
 import { checkConceptNetRelation } from '../conceptnet';
 import { calculateProgress } from '../embeddings/utils';
 
@@ -40,9 +40,8 @@ export const findDailyWordPair = async (): Promise<[string, string]> => {
       wordList[word1Index],
       wordList[word2Index]
     );
-    console.log(`📊 Word pair similarity check: ${similarity}`);
     
-    if (similarity < MIN_SIMILARITY) {
+    if (similarity < WORD_PAIR_MIN_SIMILARITY) {
       return [wordList[word1Index], wordList[word2Index]];
     }
     
@@ -57,29 +56,21 @@ export const validateWordForChain = async (
   previousWord: string,
   targetWord: string
 ): Promise<{ isValid: boolean; similarityToTarget: number; message?: string }> => {
-  console.log(`SQUARE CHECK: Validating word "${word}" after "${previousWord}"`);
-  
   const similarityToPrevious = await cosineSimilarity(previousWord, word);
-  console.log(`SQUARE CHECK: Similarity to previous word: ${similarityToPrevious}`);
   
-  if (similarityToPrevious < SIMILARITY_THRESHOLD) {
-    console.log(`SQUARE CHECK: Checking ConceptNet relation between "${previousWord}" and "${word}"`);
+  if (similarityToPrevious < WORD_CHAIN_MIN_SIMILARITY) {
     const hasRelation = await checkConceptNetRelation(previousWord, word);
-    console.log(`SQUARE CHECK: ConceptNet relation found: ${hasRelation}`);
     
     if (!hasRelation) {
-      console.log(`SQUARE CHECK: Word rejected - no similarity or ConceptNet relation`);
       return {
         isValid: false,
         similarityToTarget: 0,
         message: `Try a word more similar to "${previousWord}"`
       };
     }
-    console.log(`SQUARE CHECK: Word accepted via ConceptNet relation`);
   }
   
   const similarityToTarget = await cosineSimilarity(word, targetWord);
-  console.log(`SQUARE CHECK: Similarity to target word: ${similarityToTarget}`);
   
   return { 
     isValid: true, 
