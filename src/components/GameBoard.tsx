@@ -29,8 +29,41 @@ const GameBoard = ({
   progress,
 }: GameBoardProps) => {
   const [containerRef, setContainerRef] = useState<HTMLDivElement | null>(null);
+  const [visualViewport, setVisualViewport] = useState<{ height: number; width: number }>({
+    height: window.innerHeight,
+    width: window.innerWidth,
+  });
   const inputRef = useRef<HTMLInputElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const containerWidth = containerRef?.offsetWidth ?? 300;
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.visualViewport) {
+        setVisualViewport({
+          height: window.visualViewport.height,
+          width: window.visualViewport.width,
+        });
+      }
+    };
+
+    window.visualViewport?.addEventListener('resize', handleResize);
+    window.visualViewport?.addEventListener('scroll', handleResize);
+
+    return () => {
+      window.visualViewport?.removeEventListener('resize', handleResize);
+      window.visualViewport?.removeEventListener('scroll', handleResize);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      const scrollElement = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollElement) {
+        scrollElement.scrollTop = scrollElement.scrollHeight;
+      }
+    }
+  }, [game.currentChain.length]);
 
   useEffect(() => {
     if (inputRef.current) {
@@ -44,9 +77,17 @@ const GameBoard = ({
     return game.wordProgresses[index - 1] || 0;
   };
 
+  const mainHeight = visualViewport.height - 32; // Account for padding
+  const headerHeight = 120; // Approximate height for title and progress sections
+  const inputSectionHeight = 100; // Height for input and buttons
+  const availableScrollHeight = mainHeight - headerHeight - inputSectionHeight;
+
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] max-h-[550px] space-y-2" ref={setContainerRef}>
-      {/* Fixed header section - made more compact */}
+    <div 
+      className="flex flex-col space-y-2" 
+      style={{ height: mainHeight + 'px' }}
+      ref={setContainerRef}
+    >
       <div className="flex-none space-y-2">
         <div className="flex flex-col items-center gap-1">
           <div className="w-full">
@@ -79,8 +120,11 @@ const GameBoard = ({
         </div>
       </div>
 
-      {/* Scrollable word chain area - reduced height */}
-      <ScrollArea className="flex-grow min-h-0 max-h-[35vh] rounded-md border">
+      <ScrollArea 
+        ref={scrollAreaRef}
+        className="flex-grow min-h-0 rounded-md border"
+        style={{ height: `${availableScrollHeight}px` }}
+      >
         <div className="space-y-1 p-2">
           {game.currentChain.map((word, index) => (
             <Button
@@ -105,7 +149,6 @@ const GameBoard = ({
         </div>
       </ScrollArea>
 
-      {/* Fixed input section at bottom - more compact */}
       {!game.isComplete && (
         <form onSubmit={onWordSubmit} className="flex-none space-y-1.5">
           <Input
