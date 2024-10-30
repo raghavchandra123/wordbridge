@@ -1,9 +1,8 @@
-import { getWordList } from './loader';
+import { getWordList } from '../embeddings/loader';
 import { cosineSimilarity } from '../embeddings';
 import { GameState } from '../types';
 import { CHAIN_SIMILARITY_THRESHOLD, PROGRESS_MIN_SIMILARITY } from '../constants';
 import { checkConceptNetRelation } from '../conceptnet';
-import { calculateProgress } from '../embeddings/utils';
 
 const getDateSeed = () => {
   const today = new Date();
