@@ -90,7 +90,7 @@ const GameBoard = ({
             placeholder={editingIndex !== null ? `Change word #${editingIndex + 1}` : "Enter a word..."}
             className="text-center text-lg"
             style={{ 
-              backgroundColor: `${THEME_COLORS.START}33`,
+              backgroundColor: `${THEME_COLORS.MID3}33`,
               borderColor: THEME_COLORS.BORDER.LIGHT
             }}
             disabled={isChecking}
