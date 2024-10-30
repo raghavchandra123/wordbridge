@@ -8,7 +8,7 @@ export const GameCard = ({ children }: { children: React.ReactNode }) => (
         Connect the words using similar words
       </CardDescription>
     </CardHeader>
-    <CardContent>
+    <CardContent className="p-0">
       {children}
     </CardContent>
   </Card>
