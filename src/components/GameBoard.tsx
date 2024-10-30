@@ -84,7 +84,7 @@ const GameBoard = ({
     if (inputRef.current && !game.isComplete) {
       inputRef.current.focus();
     }
-  }, [currentWord, isChecking, game.isComplete]);
+  }, [currentWord, isChecking, game.isComplete, editingIndex]);
 
   const getWordProgress = (index: number) => {
     if (index === 0) return 0;
@@ -95,10 +95,10 @@ const GameBoard = ({
   const safeAreaInsets = 'env(safe-area-inset-bottom)';
   const totalMargins = 32;
   const mainHeight = visualViewport.height - totalMargins;
-  const headerHeight = 80;
-  const inputSectionHeight = 80;
+  const headerHeight = 60;
+  const inputSectionHeight = 70;
   const availableScrollHeight = mainHeight - headerHeight - inputSectionHeight;
-  const maxScrollHeight = Math.min(availableScrollHeight, visualViewport.height * 0.4);
+  const maxScrollHeight = Math.min(availableScrollHeight, visualViewport.height * 0.3);
 
   return (
     <div 
@@ -122,7 +122,7 @@ const GameBoard = ({
         className="flex-grow min-h-0 rounded-md border"
         style={{ 
           height: `${maxScrollHeight}px`,
-          minHeight: '80px'
+          minHeight: '60px'
         }}
       >
         <div className="space-y-1 p-2">
@@ -130,8 +130,11 @@ const GameBoard = ({
             <Button
               key={`${word}-${index}`}
               variant="ghost"
-              className="w-full py-1.5 text-center font-medium transition-colors hover:bg-opacity-10"
-              onClick={() => onWordClick(index === editingIndex ? null : index)}
+              className="w-full py-1 text-center font-medium transition-colors hover:bg-opacity-10"
+              onClick={() => {
+                onWordClick(index === editingIndex ? null : index);
+                setTimeout(() => inputRef.current?.focus(), 0);
+              }}
               disabled={index === 0 || game.isComplete}
               style={{ 
                 opacity: index === 0 ? 1 : undefined,
@@ -156,7 +159,10 @@ const GameBoard = ({
           onWordSubmit={onWordSubmit}
           editingIndex={editingIndex}
           isChecking={isChecking}
-          onEditCancel={() => onWordClick(null)}
+          onEditCancel={() => {
+            onWordClick(null);
+            setTimeout(() => inputRef.current?.focus(), 0);
+          }}
           inputRef={inputRef}
         />
       )}
