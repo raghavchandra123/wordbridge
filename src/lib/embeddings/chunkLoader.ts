@@ -1,10 +1,7 @@
 import pako from 'pako';
 import { WordDictionary } from './types';
-
-const MAX_CHUNKS = 138;
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000;
-const VECTOR_SIZE = 300;
+import { MAX_CHUNKS, MAX_RETRIES, RETRY_DELAY, VECTOR_SIZE } from './constants';
+import { processCompressedData } from './vectorProcessor';
 
 const chunkCache: { [chunkIndex: number]: WordDictionary } = {};
 
@@ -18,7 +15,6 @@ const findClosestWordsInCache = (targetWord: string): {
 
   Object.entries(chunkCache).forEach(([chunkIndex, chunk]) => {
     const words = Object.keys(chunk).sort();
-    console.log(`📦 Checking chunk ${chunkIndex} with ${words.length} words`);
     
     const beforeIndex = words.findIndex(word => word > targetWord) - 1;
     if (beforeIndex >= 0) {
@@ -64,69 +60,6 @@ const fetchWithRetry = async (url: string, retries = MAX_RETRIES): Promise<Array
     }
     throw error;
   }
-};
-
-const processCompressedData = (compressedData: ArrayBuffer): WordDictionary => {
-  const decompressed = pako.inflate(new Uint8Array(compressedData));
-  const textDecoder = new TextDecoder();
-  const jsonString = textDecoder.decode(decompressed);
-  const chunkData = JSON.parse(jsonString);
-
-  const processedChunk: WordDictionary = {};
-  
-  for (const [word, vectorBytes] of Object.entries(chunkData)) {
-    // Convert the base64 string back to bytes
-    const bytes = new Uint8Array(Buffer.from(vectorBytes as string, 'base64'));
-    
-    // Create a Float32Array view of the bytes
-    if (bytes.length !== VECTOR_SIZE * 2) { // float16 uses 2 bytes per number
-      console.error(`❌ Invalid vector size for word "${word}": ${bytes.length} bytes`);
-      continue;
-    }
-    
-    // Convert float16 to float32
-    const float32Array = new Float32Array(VECTOR_SIZE);
-    for (let i = 0; i < VECTOR_SIZE; i++) {
-      const uint16Value = (bytes[i * 2 + 1] << 8) | bytes[i * 2];
-      float32Array[i] = convertFloat16ToFloat32(uint16Value);
-    }
-    
-    processedChunk[word] = float32Array;
-  }
-
-  return processedChunk;
-};
-
-// IEEE 754 float16 to float32 conversion
-const convertFloat16ToFloat32 = (float16: number): number => {
-  const sign = (float16 >> 15) & 0x1;
-  let exponent = (float16 >> 10) & 0x1f;
-  let fraction = float16 & 0x3ff;
-
-  if (exponent === 0x1f) { // Infinity or NaN
-    exponent = 0xff;
-    if (fraction !== 0) {
-      fraction <<= 13;
-    }
-  } else if (exponent === 0) { // Subnormal or zero
-    if (fraction !== 0) {
-      while ((fraction & 0x400) === 0) {
-        fraction <<= 1;
-        exponent--;
-      }
-      fraction &= 0x3ff;
-      exponent++;
-    }
-    exponent += 127 - 15;
-  } else {
-    exponent += 127 - 15;
-  }
-
-  const float32 = (sign << 31) | (exponent << 23) | (fraction << 13);
-  const buffer = new ArrayBuffer(4);
-  const view = new DataView(buffer);
-  view.setInt32(0, float32, false);
-  return view.getFloat32(0, false);
 };
 
 export async function loadWordChunk(word: string): Promise<WordDictionary | null> {
