@@ -6,12 +6,13 @@ export const MAX_SIMILARITY = 0.3;
 // Theme Colors
 export const THEME_COLORS = {
   START: "#8C9EDE",    // Pastel Blue
+  INTERMEDIATE_1: "#97BED9", // First intermediate - Pastel Blue-Green
+  INTERMEDIATE_2: "#B5DABE", // Second intermediate - Pastel Light Green
   END: "#E8B7D4",      // Pastel Pink
   GRADIENT: {
     START: "#8C9EDE",  // Pastel Blue
     MID1: "#97BED9",   // Pastel Blue-Green
-    MID2: "#A2CEC5",   // Pastel Mint
-    MID3: "#B5DABE",   // Pastel Light Green
+    MID2: "#B5DABE",   // Pastel Light Green
     END: "#E8B7D4",    // Pastel Pink
   },
   BACKGROUND: "#97BED9", // Pastel Blue-Green
@@ -19,10 +20,7 @@ export const THEME_COLORS = {
     PRIMARY: "#4A5568",
     SECONDARY: "#718096",
   },
-  BORDER: {
-    LIGHT: "#A2CEC5",  // Pastel Mint
-    DARK: "#8C9EDE"    // Pastel Blue
-  }
+  BORDER: "#E8B7D4",  // Using END color for border
 } as const;
 
 // Progress Colors for Word Chain

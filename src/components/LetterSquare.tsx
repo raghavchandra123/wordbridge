@@ -9,16 +9,33 @@ interface LetterSquareProps {
 const LetterSquare = ({ letter, progress, size }: LetterSquareProps) => {
   console.log(`SQUARE CHECK: LetterSquare rendering "${letter}" with progress ${progress}`);
   
-  const startColor = THEME_COLORS.START;
-  const endColor = THEME_COLORS.END;
+  const getColorForProgress = (progress: number) => {
+    if (progress <= 33) {
+      const ratio = progress / 33;
+      return interpolateColor(
+        hexToRgb(THEME_COLORS.START),
+        hexToRgb(THEME_COLORS.INTERMEDIATE_1),
+        ratio
+      );
+    } else if (progress <= 66) {
+      const ratio = (progress - 33) / 33;
+      return interpolateColor(
+        hexToRgb(THEME_COLORS.INTERMEDIATE_1),
+        hexToRgb(THEME_COLORS.INTERMEDIATE_2),
+        ratio
+      );
+    } else {
+      const ratio = (progress - 66) / 34;
+      return interpolateColor(
+        hexToRgb(THEME_COLORS.INTERMEDIATE_2),
+        hexToRgb(THEME_COLORS.END),
+        ratio
+      );
+    }
+  };
   
-  const startRGB = hexToRgb(startColor);
-  const endRGB = hexToRgb(endColor);
-  
-  const interpolatedColor = interpolateColor(startRGB, endRGB, progress / 100);
-  console.log(`SQUARE CHECK: Interpolated color for "${letter}":`, interpolatedColor);
-  
-  const borderColor = THEME_COLORS.GRADIENT.MID2;
+  const color = getColorForProgress(progress);
+  console.log(`SQUARE CHECK: Color interpolation for "${letter}":`, color);
   
   return (
     <div 
@@ -26,8 +43,8 @@ const LetterSquare = ({ letter, progress, size }: LetterSquareProps) => {
       style={{
         width: `${size}px`,
         height: `${size}px`,
-        border: `2px solid ${borderColor}`,
-        backgroundColor: `rgba(${interpolatedColor.r}, ${interpolatedColor.g}, ${interpolatedColor.b}, 0.5)`,
+        border: `2px solid ${THEME_COLORS.BORDER}`,
+        backgroundColor: `rgba(${color.r}, ${color.g}, ${color.b}, 0.5)`,
         color: THEME_COLORS.TEXT.PRIMARY,
         fontSize: `${Math.max(size * 0.4, 12)}px`,
       }}
