@@ -17,6 +17,7 @@ const generateWordEmojis = (word: string, progress: number): string => {
 };
 
 export const generateShareText = (game: GameState): string => {
+  const chainLength = game.currentChain.length - 1;
   let shareText = `I Connected ${game.startWord.toUpperCase()} to ${game.targetWord.toUpperCase()} in ${chainLength} words!\n\n`;
   
   for (let i = 1; i < game.currentChain.length; i++) {
