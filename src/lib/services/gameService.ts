@@ -3,6 +3,7 @@ import { cosineSimilarity } from '../embeddings';
 import { GameState } from '../types';
 import { SIMILARITY_THRESHOLD } from '../constants';
 import { checkConceptNetRelation } from '../conceptnet';
+import { calculateProgress } from '../embeddings/utils';
 
 const getDateSeed = () => {
   const today = new Date();
@@ -80,7 +81,7 @@ export const validateWordForChain = async (
   
   return { 
     isValid: true, 
-    similarityToTarget 
+    similarityToTarget: calculateProgress(similarityToTarget) / 100 // Convert progress (0-100) back to similarity (0-1)
   };
 };
 
