@@ -7,6 +7,8 @@ interface LetterSquareProps {
 }
 
 const LetterSquare = ({ letter, progress, size }: LetterSquareProps) => {
+  console.log(`SQUARE CHECK: LetterSquare rendering "${letter}" with progress ${progress}`);
+  
   const startColor = THEME_COLORS.START;
   const endColor = THEME_COLORS.END;
   
@@ -14,6 +16,8 @@ const LetterSquare = ({ letter, progress, size }: LetterSquareProps) => {
   const endRGB = hexToRgb(endColor);
   
   const interpolatedColor = interpolateColor(startRGB, endRGB, progress / 100);
+  console.log(`SQUARE CHECK: Interpolated color for "${letter}":`, interpolatedColor);
+  
   const borderColor = THEME_COLORS.GRADIENT.MID2;
   
   return (

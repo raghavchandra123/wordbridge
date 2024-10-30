@@ -63,16 +63,24 @@ export const validateWordForChain = async (
   console.log(`SQUARE CHECK: Similarity to previous word: ${similarityToPrevious}`);
   
   if (similarityToPrevious < SIMILARITY_THRESHOLD) {
-    console.log(`SQUARE CHECK: Word "${word}" not similar enough to "${previousWord}"`);
-    return {
-      isValid: false,
-      similarityToTarget: 0,
-      message: `Try a word more similar to "${previousWord}"`
-    };
+    console.log(`SQUARE CHECK: Checking ConceptNet relation between "${previousWord}" and "${word}"`);
+    const hasRelation = await checkConceptNetRelation(previousWord, word);
+    console.log(`SQUARE CHECK: ConceptNet relation found: ${hasRelation}`);
+    
+    if (!hasRelation) {
+      console.log(`SQUARE CHECK: Word rejected - no similarity or ConceptNet relation`);
+      return {
+        isValid: false,
+        similarityToTarget: 0,
+        message: `Try a word more similar to "${previousWord}"`
+      };
+    }
+    console.log(`SQUARE CHECK: Word accepted via ConceptNet relation`);
   }
   
   const similarityToTarget = await cosineSimilarity(word, targetWord);
   console.log(`SQUARE CHECK: Similarity to target word: ${similarityToTarget}`);
+  console.log(`SQUARE CHECK: Calculated progress: ${calculateProgress(similarityToTarget)}%`);
   
   return { 
     isValid: true, 
