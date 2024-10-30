@@ -97,8 +97,25 @@ const GameBoard = ({
     return game.wordProgresses[index - 1] || 0;
   };
 
+  const handleBackButton = () => {
+    if (editingIndex !== null) {
+      onWordClick(null);
+    } else {
+      // Remove the last word from the chain
+      const newChain = [...game.currentChain];
+      newChain.pop();
+      // Update the game state
+      setGame({
+        ...game,
+        currentChain: newChain,
+        wordProgresses: game.wordProgresses.slice(0, -1)
+      });
+    }
+    setTimeout(() => inputRef.current?.focus(), 0);
+  };
+
   const headerHeight = 120;
-  const inputSectionHeight = game.isComplete ? 0 : 100;
+  const inputSectionHeight = game.isComplete ? 0 : 60; // Reduced height since we have a more compact input section
   const completionButtonsHeight = game.isComplete ? 120 : 0;
   const cardPadding = 16;
   const cardHeaderHeight = 60;
@@ -159,16 +176,13 @@ const GameBoard = ({
           onWordSubmit={onWordSubmit}
           editingIndex={editingIndex}
           isChecking={isChecking}
-          onEditCancel={() => {
-            onWordClick(null);
-            setTimeout(() => inputRef.current?.focus(), 0);
-          }}
+          onEditCancel={handleBackButton}
           inputRef={inputRef}
         />
       )}
 
       {game.isComplete && (
-        <div className="flex flex-col gap-2 mt-2">
+        <div className="flex flex-col gap-2">
           <Button 
             onClick={() => window.location.reload()}
             className="w-full bg-[#FF8B8B] hover:bg-[#FF8B8B]/90 text-white"
