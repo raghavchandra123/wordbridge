@@ -25,19 +25,15 @@ const EndGameDialog = ({ game, open, onClose }: EndGameDialogProps) => {
   const minutesUntilNext = Math.floor((timeUntilNext % (1000 * 60 * 60)) / (1000 * 60));
 
   const handleShare = async () => {
-    const fullText = generateShareText(game);
-    const lines = fullText.split('\n');
-    const title = lines[0];
-    const text = lines.slice(1).join('\n').trim();
+    const shareText = generateShareText(game);
     
     try {
       if (navigator.share) {
         await navigator.share({
-          text,
-          title,
+          text: shareText,
         });
       } else {
-        await navigator.clipboard.writeText(fullText);
+        await navigator.clipboard.writeText(shareText);
         toast({
           description: "Copied to clipboard!",
         });

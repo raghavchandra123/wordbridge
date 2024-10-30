@@ -26,7 +26,7 @@ export const generateShareText = (game: GameState): string => {
     shareText += generateWordEmojis(word, progress) + "\n";
   }
   
-  shareText += "\nhttps://wordbridge.gptengineer.run/";
+  shareText += "\nYou can try it here: https://wordbridge.gptengineer.run/";
   
   return shareText;
 };
