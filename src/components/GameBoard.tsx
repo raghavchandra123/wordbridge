@@ -35,10 +35,15 @@ const GameBoard = ({
   });
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const scrollTimeoutRef = useRef<number>();
   const containerWidth = containerRef?.offsetWidth ?? 300;
 
   const scrollToBottom = () => {
-    requestAnimationFrame(() => {
+    if (scrollTimeoutRef.current) {
+      window.cancelAnimationFrame(scrollTimeoutRef.current);
+    }
+
+    scrollTimeoutRef.current = window.requestAnimationFrame(() => {
       if (scrollAreaRef.current) {
         const scrollElement = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
         if (scrollElement) {
@@ -64,20 +69,21 @@ const GameBoard = ({
     return () => {
       window.visualViewport?.removeEventListener('resize', handleResize);
       window.visualViewport?.removeEventListener('scroll', handleResize);
+      if (scrollTimeoutRef.current) {
+        window.cancelAnimationFrame(scrollTimeoutRef.current);
+      }
     };
   }, []);
 
   useEffect(() => {
-    scrollToBottom();
+    const timeoutId = setTimeout(scrollToBottom, 100);
+    return () => clearTimeout(timeoutId);
   }, [game.currentChain.length]);
 
   useEffect(() => {
-    const focusInput = () => {
-      if (inputRef.current && !game.isComplete) {
-        inputRef.current.focus();
-      }
-    };
-    focusInput();
+    if (inputRef.current && !game.isComplete) {
+      inputRef.current.focus();
+    }
   }, [currentWord, isChecking, game.isComplete]);
 
   const getWordProgress = (index: number) => {
@@ -86,13 +92,13 @@ const GameBoard = ({
     return game.wordProgresses[index - 1] || 0;
   };
 
-  // Calculate heights considering all margins, padding, and safe areas
   const safeAreaInsets = 'env(safe-area-inset-bottom)';
-  const totalMargins = 32; // 16px top + 16px bottom
+  const totalMargins = 32;
   const mainHeight = visualViewport.height - totalMargins;
   const headerHeight = 80;
   const inputSectionHeight = 80;
   const availableScrollHeight = mainHeight - headerHeight - inputSectionHeight;
+  const maxScrollHeight = Math.min(availableScrollHeight, visualViewport.height * 0.4);
 
   return (
     <div 
@@ -115,14 +121,14 @@ const GameBoard = ({
         ref={scrollAreaRef}
         className="flex-grow min-h-0 rounded-md border"
         style={{ 
-          height: `${Math.min(availableScrollHeight, visualViewport.height * 0.4)}px`,
+          height: `${maxScrollHeight}px`,
           minHeight: '80px'
         }}
       >
         <div className="space-y-1 p-2">
           {game.currentChain.map((word, index) => (
             <Button
-              key={index}
+              key={`${word}-${index}`}
               variant="ghost"
               className="w-full py-1.5 text-center font-medium transition-colors hover:bg-opacity-10"
               onClick={() => onWordClick(index === editingIndex ? null : index)}
