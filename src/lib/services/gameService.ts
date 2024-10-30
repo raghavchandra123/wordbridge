@@ -79,9 +79,11 @@ export const validateWordForChain = async (
   const similarityToTarget = await cosineSimilarity(word, targetWord);
   console.log(`📊 Similarity to target word: ${similarityToTarget}`);
   
+  const progress = calculateProgress(similarityToTarget);
+  
   return { 
     isValid: true, 
-    similarityToTarget: calculateProgress(similarityToTarget) / 100 // Convert progress (0-100) back to similarity (0-1)
+    similarityToTarget: progress / 100 // Convert progress (0-100) to similarity (0-1)
   };
 };
 
