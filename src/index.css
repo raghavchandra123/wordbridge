@@ -43,6 +43,5 @@
   body {
     @apply bg-background text-foreground;
     background: #fff5eb;
-    min-height: 100vh;
   }
 }
