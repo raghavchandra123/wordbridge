@@ -50,7 +50,7 @@ const GameBoard = ({
         </div>
       </div>
 
-      <div className="relative w-full h-2 rounded-full overflow-hidden bg-opacity-20" style={{ backgroundColor: THEME_COLORS.START }}>
+      <div className="relative w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: `${THEME_COLORS.START}33` }}>
         <div 
           className="h-full transition-all"
           style={{ 
@@ -84,7 +84,11 @@ const GameBoard = ({
             value={currentWord}
             onChange={(e) => onWordChange(e.target.value.toLowerCase())}
             placeholder={editingIndex !== null ? `Change word #${editingIndex + 1}` : "Enter a word..."}
-            className="text-center text-lg bg-opacity-20"
+            className="text-center text-lg"
+            style={{ 
+              backgroundColor: `${THEME_COLORS.START}33`,
+              borderColor: THEME_COLORS.BORDER.LIGHT
+            }}
             disabled={isChecking}
           />
           <div className="flex gap-2">
