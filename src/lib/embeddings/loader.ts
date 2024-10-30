@@ -4,11 +4,7 @@ import { WordDictionary } from './types';
 let wordBaseformMap: { [key: string]: string } | null = null;
 let commonWords: string[] = [];
 let wordList: string[] = [];
-
-// Cache for loaded chunks
 const chunkCache: { [chunkIndex: number]: WordDictionary } = {};
-
-// Cache for the currently active chunk
 let cachedChunk: { 
   words: WordDictionary; 
   firstWord: string; 
@@ -16,34 +12,22 @@ let cachedChunk: {
   chunkIndex: number;
 } | null = null;
 
-// Load and decompress a chunk file
 async function loadCompressedChunk(chunkIndex: number): Promise<WordDictionary | null> {
-  console.log(`📦 Checking cache for chunk ${chunkIndex}...`);
-  
-  // Check if chunk is already cached
   if (chunkCache[chunkIndex]) {
-    console.log(`✨ Cache hit! Using cached chunk ${chunkIndex}`);
     return chunkCache[chunkIndex];
   }
 
-  console.log(`📦 Cache miss. Loading and decompressing chunk ${chunkIndex}...`);
   try {
     const response = await fetch(`/data/chunks/embeddings_chunk_${chunkIndex}.gz`);
     if (!response.ok) {
-      console.log(`❌ Failed to fetch chunk ${chunkIndex}: ${response.status} ${response.statusText}`);
+      console.error(`Failed to fetch chunk ${chunkIndex}: ${response.status}`);
       return null;
     }
 
-    console.log(`📥 Fetched chunk ${chunkIndex}, getting ArrayBuffer...`);
     const compressedData = await response.arrayBuffer();
-    
-    console.log(`🔄 Decompressing chunk ${chunkIndex} data...`);
     const decompressedData = pako.inflate(new Uint8Array(compressedData), { to: 'string' });
-    
-    console.log(`📋 Parsing JSON data for chunk ${chunkIndex}...`);
     const chunkData = JSON.parse(decompressedData);
     
-    console.log(`✨ Converting vectors to Float32Arrays for chunk ${chunkIndex}...`);
     const processedData = Object.fromEntries(
       Object.entries(chunkData).map(([key, vectorBytes]) => [
         key,
@@ -51,19 +35,14 @@ async function loadCompressedChunk(chunkIndex: number): Promise<WordDictionary |
       ])
     );
     
-    // Store in cache
     chunkCache[chunkIndex] = processedData;
-    console.log(`💾 Cached chunk ${chunkIndex} for future use`);
-    
-    console.log(`✅ Successfully loaded chunk ${chunkIndex}`);
     return processedData;
   } catch (error) {
-    console.error(`❌ Error processing chunk ${chunkIndex}:`, error);
+    console.error(`Error loading chunk ${chunkIndex}:`, error);
     return null;
   }
 }
 
-// Initialize the word embeddings system
 export const loadEmbeddings = async () => {
   console.log("🔄 Loading initial embeddings data...");
   

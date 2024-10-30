@@ -8,6 +8,7 @@ export const useGameInitialization = () => {
     startWord: '',
     targetWord: '',
     currentChain: [],
+    wordProgresses: [],
     isComplete: false,
     score: 0,
   });
