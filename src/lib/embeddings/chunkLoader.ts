@@ -1,3 +1,4 @@
+import pako from 'pako';
 import { WordDictionary } from './types';
 
 const CHUNK_SIZE = 300; // Updated chunk size
