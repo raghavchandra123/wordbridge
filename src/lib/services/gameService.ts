@@ -75,22 +75,8 @@ export const validateWordForChain = async (
     }
   }
   
-  // If we get here, either similarity was good or ConceptNet found a relation
-  // Now check similarity to target
+  // Calculate similarity to target for progress tracking only
   const similarityToTarget = await cosineSimilarity(word, targetWord);
-  console.log(`📊 Similarity to target word: ${similarityToTarget}`);
-  
-  // For target word, also check ConceptNet if similarity is low
-  if (similarityToTarget < SIMILARITY_THRESHOLD) {
-    const hasTargetRelation = await checkConceptNetRelation(word, targetWord);
-    if (!hasTargetRelation) {
-      return {
-        isValid: false,
-        similarityToTarget,
-        message: `This word isn't getting closer to the target word "${targetWord}"`
-      };
-    }
-  }
   
   return { 
     isValid: true, 
