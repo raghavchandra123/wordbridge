@@ -36,14 +36,16 @@ export const findDailyWordPair = async (): Promise<[string, string]> => {
     word2Index = Math.floor(seededRandom(seed + attempts) * wordList.length);
     if (word1Index === word2Index) continue;
     
-    const similarity = await cosineSimilarity(
-      wordList[word1Index],
-      wordList[word2Index]
-    );
-    console.log(`📊 Word pair similarity check: ${similarity}`);
+    const word1 = wordList[word1Index];
+    const word2 = wordList[word2Index];
+    console.log(`📊 Testing word pair: ${word1} -> ${word2}`);
+    
+    const similarity = await cosineSimilarity(word1, word2);
+    console.log(`📊 Word pair similarity: ${similarity}`);
     
     if (similarity < PROGRESS_MIN_SIMILARITY) {
-      return [wordList[word1Index], wordList[word2Index]];
+      console.log(`✅ Found suitable word pair: ${word1} -> ${word2}`);
+      return [word1, word2];
     }
     
     attempts++;
@@ -57,66 +59,34 @@ export const validateWordForChain = async (
   previousWord: string,
   targetWord: string
 ): Promise<{ isValid: boolean; similarityToTarget: number; message?: string }> => {
-  console.log(`SQUARE CHECK: Validating word "${word}" after "${previousWord}"`);
+  console.log(`🔍 Validating word "${word}" after "${previousWord}" towards "${targetWord}"`);
   
   const similarityToPrevious = await cosineSimilarity(previousWord, word);
-  console.log(`SQUARE CHECK: Similarity to previous word: ${similarityToPrevious}`);
+  console.log(`📊 Similarity to previous word: ${similarityToPrevious}`);
   
   if (similarityToPrevious < CHAIN_SIMILARITY_THRESHOLD) {
-    console.log(`SQUARE CHECK: Checking ConceptNet relation between "${previousWord}" and "${word}"`);
+    console.log(`🔄 Checking ConceptNet relation between "${previousWord}" and "${word}"`);
     const hasRelation = await checkConceptNetRelation(previousWord, word);
-    console.log(`SQUARE CHECK: ConceptNet relation found: ${hasRelation}`);
+    console.log(`🔄 ConceptNet relation found: ${hasRelation}`);
     
     if (!hasRelation) {
-      console.log(`SQUARE CHECK: Word rejected - no similarity or ConceptNet relation`);
+      console.log(`❌ Word rejected - no similarity or ConceptNet relation`);
       return {
         isValid: false,
         similarityToTarget: 0,
         message: `Try a word more similar to "${previousWord}"`
       };
     }
-    console.log(`SQUARE CHECK: Word accepted via ConceptNet relation`);
+    console.log(`✅ Word accepted via ConceptNet relation`);
   }
   
   const similarityToTarget = await cosineSimilarity(word, targetWord);
-  console.log(`SQUARE CHECK: Similarity to target word: ${similarityToTarget}`);
+  console.log(`📊 Similarity to target word: ${similarityToTarget}`);
   
   return { 
     isValid: true, 
     similarityToTarget
   };
-};
-
-export const updateGameWithNewWord = (
-  game: GameState,
-  word: string,
-  similarityToTarget: number,
-  editingIndex: number | null
-): GameState => {
-  const progress = calculateProgress(similarityToTarget);
-  
-  if (editingIndex !== null) {
-    // When editing an existing word
-    const newChain = [...game.currentChain.slice(0, editingIndex), word];
-    const newProgresses = [...game.wordProgresses];
-    if (editingIndex > 0) {
-      newProgresses[editingIndex - 1] = progress;
-    }
-    return {
-      ...game,
-      currentChain: newChain,
-      wordProgresses: newProgresses,
-      score: newChain.length - 1
-    };
-  } else {
-    // When adding a new word
-    return {
-      ...game,
-      currentChain: [...game.currentChain, word],
-      wordProgresses: [...game.wordProgresses, progress],
-      score: game.currentChain.length
-    };
-  }
 };
 
 export const initializeGame = async (): Promise<GameState> => {
