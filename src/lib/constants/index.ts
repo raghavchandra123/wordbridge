@@ -1,8 +1,8 @@
 // Game Settings
 export const WORD_PAIR_MIN_SIMILARITY = 0.05; // Minimum similarity for random word pair generation
 export const PROGRESS_MIN_SIMILARITY = -0.2;  // Minimum similarity for progress calculation
-export const WORD_CHAIN_MIN_SIMILARITY = 0.3; // Minimum similarity required between consecutive words
-export const PROGRESS_MAX_SIMILARITY = 0.3;   // Maximum similarity for progress calculation (100%)
+export const WORD_CHAIN_MIN_SIMILARITY = 0.25; // Minimum similarity required between consecutive words
+export const PROGRESS_MAX_SIMILARITY = 0.25;   // Maximum similarity for progress calculation (100%)
 
 // Theme Colors
 export const THEME_COLORS = {
