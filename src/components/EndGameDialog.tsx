@@ -26,11 +26,14 @@ const EndGameDialog = ({ game, open, onClose }: EndGameDialogProps) => {
 
   const handleShare = async () => {
     const text = generateShareText(game);
+    const lines = text.split('\n');
+    const title = lines[0];
     
     try {
       if (navigator.share) {
         await navigator.share({
           text,
+          title,
         });
       } else {
         await navigator.clipboard.writeText(text);
