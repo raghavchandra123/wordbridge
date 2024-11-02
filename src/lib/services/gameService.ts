@@ -4,7 +4,6 @@ import { GameState } from '../types';
 import { 
   WORD_PAIR_MIN_SIMILARITY, 
   ADJACENT_WORD_MIN_SIMILARITY,
-  TARGET_WORD_MIN_SIMILARITY 
 } from '../constants';
 import { checkConceptNetRelation } from '../conceptnet';
 import { calculateProgress } from '../embeddings/utils';
@@ -79,21 +78,9 @@ export const validateWordForChain = async (
     };
   }
 
-  // For target word, we need the vector similarity for progress calculation
+  // Calculate similarity to target for progress, but don't block based on it
   const similarityToTarget = await cosineSimilarity(word, targetWord);
-  
-  // If similarity is low, check ConceptNet as a fallback
-  if (similarityToTarget < TARGET_WORD_MIN_SIMILARITY) {
-    const hasTargetRelation = await checkConceptNetRelation(word, targetWord);
-    if (!hasTargetRelation) {
-      console.log(`❌ Word "${word}" is not similar enough to target`);
-      return {
-        isValid: false,
-        similarityToTarget,
-        message: "Try a word more similar to the target word"
-      };
-    }
-  }
+  console.log(`✅ Word "${word}" is valid. Similarity to target: ${similarityToTarget}`);
   
   return { 
     isValid: true, 
