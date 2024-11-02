@@ -3,13 +3,11 @@ import { toast } from "@/components/ui/use-toast";
 const CORS_PROXY = "https://corsproxy.io/?";
 
 export const checkConceptNetRelation = async (word1: string, word2: string): Promise<boolean> => {
-  console.log(`🔍 Checking ConceptNet relation between "${word1}" and "${word2}"...`);
+  console.log(`🔍 Starting ConceptNet check for "${word1}" and "${word2}"`);
   
   try {
     const apiUrl = `https://api.conceptnet.io/query?node=/c/en/${word1}&other=/c/en/${word2}`;
     const proxyUrl = `${CORS_PROXY}${encodeURIComponent(apiUrl)}`;
-    
-    console.log(`📡 Sending request to ConceptNet API...`);
     
     // Create AbortController for timeout
     const controller = new AbortController();
@@ -26,7 +24,6 @@ export const checkConceptNetRelation = async (word1: string, word2: string): Pro
     });
     
     clearTimeout(timeoutId);
-    console.log(`✅ Response received from ConceptNet API`);
 
     if (!response.ok) {
       console.error(`❌ Response not OK: ${response.status} ${response.statusText}`);
@@ -40,11 +37,7 @@ export const checkConceptNetRelation = async (word1: string, word2: string): Pro
     const data = await response.json();
     const hasRelation = data.edges && data.edges.length > 0;
     
-    if (hasRelation) {
-      console.log(`✨ Found relation between "${word1}" and "${word2}"`);
-    } else {
-      console.log(`❌ No relation found between "${word1}" and "${word2}"`);
-    }
+    console.log(`✨ Finished ConceptNet check for "${word1}" and "${word2}": ${hasRelation ? 'Relation found!' : 'No relation found'}`);
     
     return hasRelation;
   } catch (error) {
