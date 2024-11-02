@@ -4,6 +4,7 @@ import { GameState } from '../types';
 import { 
   WORD_PAIR_MIN_SIMILARITY, 
   ADJACENT_WORD_MIN_SIMILARITY,
+  TARGET_WORD_MIN_SIMILARITY,
 } from '../constants';
 import { checkConceptNetRelation } from '../conceptnet';
 import { toast } from '@/components/ui/use-toast';
@@ -69,35 +70,20 @@ export const validateWordForChain = async (
   pauseBackgroundLoading();
   
   try {
-    // Step 1: Previous Word Validation
-    console.log(`📊 Step 1: Running checks with previous word "${previousWord}"...`);
-    
-    const [similarity, conceptNetRelation] = await Promise.all([
-      cosineSimilarity(previousWord, word),
-      checkConceptNetRelation(previousWord, word)
+    // Run both validations in parallel
+    const [previousValidation, targetValidation] = await Promise.all([
+      validateWordWithPrevious(word, previousWord),
+      validateWordWithTarget(word, targetWord)
     ]);
 
-    const similarityValid = similarity >= ADJACENT_WORD_MIN_SIMILARITY;
-    console.log(`Similarity check result: ${similarityValid ? "✅" : "❌"} (${similarity.toFixed(3)})`);
-    console.log(`ConceptNet check result: ${conceptNetRelation ? "✅" : "❌"}`);
-
-    if (!similarityValid && !conceptNetRelation) {
-      console.log(`❌ Word "${word}" failed both previous word validations`);
+    if (!previousValidation.isValid) {
+      console.log(`❌ Word "${word}" failed previous word validations`);
       return {
         isValid: false,
         similarityToTarget: 0,
         message: `Try a word more similar to "${previousWord}"`
       };
     }
-
-    // Step 2: Target Word Validation using the new service
-    console.log(`📊 Step 2: Running target word checks for "${targetWord}"...`);
-    const targetValidation = await validateWordWithTarget(word, targetWord);
-
-    console.log(`📊 Target word check results:
-      - Similarity: ${targetValidation.similarity.toFixed(3)}
-      - Progress: ${targetValidation.progress}%
-      - Complete: ${targetValidation.isComplete ? "Yes" : "No"}`);
 
     return { 
       isValid: true, 
@@ -147,12 +133,15 @@ export const initializeGame = async (): Promise<GameState> => {
   console.log("🎮 Initializing new game...");
   const [startWord, targetWord] = await findDailyWordPair();
   console.log(`✅ Game initialized with start word "${startWord}" and target word "${targetWord}"`);
+  const similarity = await cosineSimilarity(startWord, targetWord);
+  const progress = Math.max(0, Math.min(100, (similarity + 0.2) / 0.45 * 100));
   return {
     startWord,
     targetWord,
     currentChain: [startWord],
     wordProgresses: [],
     isComplete: false,
-    score: 0
+    score: 0,
+    initialProgress: progress
   };
 };
