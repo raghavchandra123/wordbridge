@@ -12,7 +12,7 @@ import { generateShareText } from "@/lib/utils/share";
 import { toast } from "./ui/use-toast";
 import { loadInitialChunks, startBackgroundLoading } from "@/lib/embeddings/backgroundLoader";
 import { useViewport } from "@/hooks/useViewport";
-import { cosineSimilarity } from "@/lib/embeddings";
+import { useProgressManager } from "./game/ProgressManager";
 
 const GameBoard = ({
   game,
@@ -30,6 +30,7 @@ const GameBoard = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<number>();
+  const { updateProgress, recalculateChainProgress } = useProgressManager(game, setGame);
 
   // Background loading effect
   useEffect(() => {
@@ -85,17 +86,10 @@ const GameBoard = ({
     } else if (game.currentChain.length > 1) {
       const newChain = [...game.currentChain];
       newChain.pop();
-      const newProgresses = [...game.wordProgresses];
       
-      // Calculate new progress for the last word in the chain
-      if (newChain.length > 1) {
-        const lastWord = newChain[newChain.length - 1];
-        const similarity = await cosineSimilarity(lastWord, game.targetWord);
-        const newProgress = Math.max(0, Math.min(100, (similarity + 0.2) / 0.45 * 100));
-        newProgresses[newChain.length - 2] = newProgress;
-      }
+      // Recalculate all progresses when removing a word
+      const newProgresses = await recalculateChainProgress(newChain);
       
-      newProgresses.pop();
       setGame({
         ...game,
         currentChain: newChain,
@@ -143,7 +137,7 @@ const GameBoard = ({
       <HeaderSection 
         startWord={game.startWord}
         targetWord={game.targetWord}
-        progress={getWordProgress(game.currentChain.length - 1)}
+        progress={game.wordProgresses[game.wordProgresses.length - 1] || 0}
         containerWidth={containerWidth}
       />
 
