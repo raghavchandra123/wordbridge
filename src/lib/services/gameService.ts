@@ -65,20 +65,39 @@ export const validateWordForChain = async (
     - Previous word: "${previousWord}"
     - Target word: "${targetWord}"`);
   
-  // Step 1: Check similarity and ConceptNet relation with previous word
-  console.log(`📊 Step 1: Checking relation with previous word "${previousWord}"...`);
-  const [conceptNetWithPrevious, similarityToPrevious] = await Promise.all([
-    checkConceptNetRelation(previousWord, word),
-    cosineSimilarity(previousWord, word)
-  ]);
-
-  console.log(`📊 Previous word check results:
-    - ConceptNet: ${conceptNetWithPrevious ? "✅ Found" : "❌ Not found"}
-    - Similarity: ${similarityToPrevious.toFixed(3)}`);
-
-  const isValidWithPrevious = conceptNetWithPrevious || similarityToPrevious >= ADJACENT_WORD_MIN_SIMILARITY;
+  // Step 1: Run previous word checks in parallel
+  console.log(`📊 Step 1: Running parallel checks with previous word "${previousWord}"...`);
   
-  if (!isValidWithPrevious) {
+  let previousWordValid = false;
+  
+  // Create a race between similarity and ConceptNet checks
+  try {
+    await Promise.race([
+      // Similarity check
+      cosineSimilarity(previousWord, word).then(similarity => {
+        if (similarity >= ADJACENT_WORD_MIN_SIMILARITY) {
+          console.log(`✅ Similarity check passed: ${similarity.toFixed(3)}`);
+          previousWordValid = true;
+          return true;
+        }
+        return false;
+      }),
+      
+      // ConceptNet check
+      checkConceptNetRelation(previousWord, word).then(hasRelation => {
+        if (hasRelation) {
+          console.log('✅ ConceptNet relation found');
+          previousWordValid = true;
+          return true;
+        }
+        return false;
+      })
+    ]);
+  } catch (error) {
+    console.error('❌ Error during previous word validation:', error);
+  }
+
+  if (!previousWordValid) {
     console.log(`❌ Word "${word}" failed previous word validation`);
     return {
       isValid: false,
@@ -87,8 +106,9 @@ export const validateWordForChain = async (
     };
   }
 
-  // Step 2: Only if previous word check passes, check target word relations
-  console.log(`📊 Step 2: Checking relation with target word "${targetWord}"...`);
+  // Step 2: Run both target word checks in parallel and wait for both to complete
+  console.log(`📊 Step 2: Running target word checks for "${targetWord}"...`);
+  
   const [conceptNetWithTarget, similarityToTarget] = await Promise.all([
     checkConceptNetRelation(word, targetWord),
     cosineSimilarity(word, targetWord)
