@@ -63,6 +63,19 @@ const fetchWithRetry = async (url: string, retries = MAX_RETRIES): Promise<Array
   }
 };
 
+export const loadChunkByIndex = async (chunkIndex: number): Promise<WordDictionary> => {
+  if (chunkCache[chunkIndex]) {
+    return chunkCache[chunkIndex];
+  }
+
+  const chunkPath = `/data/chunks/embeddings_chunk_${chunkIndex}.gz`;
+  const compressedData = await fetchWithRetry(chunkPath);
+  const processedChunk = processCompressedData(compressedData);
+  chunkCache[chunkIndex] = processedChunk;
+  markChunkAsLoaded(chunkIndex);
+  return processedChunk;
+};
+
 export async function loadWordChunk(word: string): Promise<WordDictionary | null> {
   try {
     console.log(`\n🔄 Loading chunk for word: "${word}"`);
@@ -108,14 +121,8 @@ export async function loadWordChunk(word: string): Promise<WordDictionary | null
       }
       
       try {
-        const chunkPath = `/data/chunks/embeddings_chunk_${mid}.gz`;
-        console.log(`📥 Loading new chunk from: ${chunkPath}`);
-        
-        const compressedData = await fetchWithRetry(chunkPath);
-        console.log(`🗜️ Processing chunk ${mid} (${compressedData.byteLength} bytes)`);
-        
-        const processedChunk = processCompressedData(compressedData);
-        const words = Object.keys(processedChunk);
+        const chunk = await loadChunkByIndex(mid);
+        const words = Object.keys(chunk);
         
         if (!words.length) {
           console.log(`⚠️ Empty chunk ${mid}, searching lower chunks`);
@@ -123,20 +130,9 @@ export async function loadWordChunk(word: string): Promise<WordDictionary | null
           continue;
         }
         
-        console.log(`📦 Processed chunk ${mid}: ${words.length} words (${words[0]} to ${words[words.length - 1]})`);
-        
-        // Verify vector dimensions
-        const sampleVector = processedChunk[words[0]];
-        if (sampleVector.length !== VECTOR_SIZE) {
-          throw new Error(`Invalid vector dimension in chunk ${mid}: ${sampleVector.length}`);
-        }
-        
-        chunkCache[mid] = processedChunk;
-        markChunkAsLoaded(mid);
-        
         if (word >= words[0] && (word <= words[words.length - 1] || mid === right)) {
           console.log(`✅ Found word "${word}" in newly loaded chunk ${mid}`);
-          return processedChunk;
+          return chunk;
         }
         
         if (word < words[0]) {

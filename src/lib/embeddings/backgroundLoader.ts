@@ -1,4 +1,4 @@
-import { loadWordChunk } from './chunkLoader';
+import { loadChunkByIndex } from './chunkLoader';
 import { MAX_CHUNKS } from './constants';
 
 let loadedChunks = new Set<number>();
@@ -21,8 +21,7 @@ const loadNextUnloadedChunk = async () => {
       isLoading = true;
       try {
         console.log(`🔄 Background loading chunk ${i}/${MAX_CHUNKS - 1}`);
-        const chunkPath = `/data/chunks/embeddings_chunk_${i}.gz`;
-        await loadWordChunk(chunkPath);
+        await loadChunkByIndex(i);
         loadedChunks.add(i);
         console.log(`✅ Successfully loaded chunk ${i}`);
       } catch (error) {
@@ -54,13 +53,16 @@ export const startBackgroundLoading = () => {
   return intervalId;
 };
 
-export const loadInitialChunks = async (words: string[]) => {
-  console.log("🔄 Loading chunks for initial words");
-  for (const word of words) {
-    try {
-      await loadWordChunk(word);
-    } catch (error) {
-      console.error(`❌ Failed to load chunk for word "${word}":`, error);
+export const loadInitialChunks = async (indices: number[]) => {
+  console.log("🔄 Loading initial chunks");
+  for (const index of indices) {
+    if (!loadedChunks.has(index)) {
+      try {
+        await loadChunkByIndex(index);
+        loadedChunks.add(index);
+      } catch (error) {
+        console.error(`❌ Failed to load chunk ${index}:`, error);
+      }
     }
   }
 };
