@@ -234,3 +234,5 @@ const GameBoard = ({
     </GameContainer>
   );
 };
+
+export default GameBoard;
