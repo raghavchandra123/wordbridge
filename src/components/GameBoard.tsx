@@ -34,13 +34,21 @@ const GameBoard = ({
 
   // Background loading effect
   useEffect(() => {
-    // Start background loading of all chunks
-    const intervalId = startBackgroundLoading();
+    let intervalId: number;
     
-    // Load initial chunks (0 and 1 for now, can be adjusted based on needs)
-    loadInitialChunks([0, 1]);
+    const initializeBackgroundLoading = async () => {
+      // Start background loading of all chunks
+      intervalId = await startBackgroundLoading();
+      
+      // Load initial chunks (0 and 1 for now, can be adjusted based on needs)
+      await loadInitialChunks([0, 1]);
+    };
     
-    return () => clearInterval(intervalId);
+    initializeBackgroundLoading();
+    
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
   }, []);
 
   const scrollToBottom = () => {
