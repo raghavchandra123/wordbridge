@@ -69,39 +69,21 @@ export const validateWordForChain = async (
   pauseBackgroundLoading();
   
   try {
-    // Step 1: Previous Word Validation with proper race logic
-    console.log(`📊 Step 1: Running parallel checks with previous word "${previousWord}"...`);
+    // Step 1: Previous Word Validation
+    console.log(`📊 Step 1: Running checks with previous word "${previousWord}"...`);
     
-    let similarityPromise = cosineSimilarity(previousWord, word);
-    let conceptNetPromise = checkConceptNetRelation(previousWord, word);
-    
-    // Create a function to handle the first successful check
-    const handleFirstSuccess = async (result: boolean, source: string) => {
-      if (result) {
-        console.log(`✅ ${source} check passed first - proceeding to target validation`);
-        return true;
-      }
-      // If first check failed, wait for the other one
-      try {
-        const otherResult = source === 'Similarity' 
-          ? await conceptNetPromise 
-          : await similarityPromise.then(sim => sim >= ADJACENT_WORD_MIN_SIMILARITY);
-        
-        return otherResult;
-      } catch (error) {
-        console.error(`Error in second check after ${source} failed:`, error);
-        return false;
-      }
-    };
-
-    // Race between similarity and ConceptNet checks
-    const previousWordValid = await Promise.race([
-      similarityPromise.then(sim => handleFirstSuccess(sim >= ADJACENT_WORD_MIN_SIMILARITY, 'Similarity')),
-      conceptNetPromise.then(rel => handleFirstSuccess(rel, 'ConceptNet'))
+    const [similarity, conceptNetRelation] = await Promise.all([
+      cosineSimilarity(previousWord, word),
+      checkConceptNetRelation(previousWord, word)
     ]);
 
-    if (!previousWordValid) {
-      console.log(`❌ Word "${word}" failed previous word validation`);
+    const similarityValid = similarity >= ADJACENT_WORD_MIN_SIMILARITY;
+    console.log(`Similarity check result: ${similarityValid ? "✅" : "❌"} (${similarity.toFixed(3)})`);
+    console.log(`ConceptNet check result: ${conceptNetRelation ? "✅" : "❌"}`);
+
+    // If either check passes, the word is valid
+    if (!similarityValid && !conceptNetRelation) {
+      console.log(`❌ Word "${word}" failed both previous word validations`);
       return {
         isValid: false,
         similarityToTarget: 0,
