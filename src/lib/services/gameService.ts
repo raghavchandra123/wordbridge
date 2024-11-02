@@ -61,11 +61,20 @@ export const validateWordForChain = async (
 ): Promise<{ isValid: boolean; similarityToTarget: number; message?: string }> => {
   console.log(`🔍 Validating word "${word}" for chain (previous: "${previousWord}", target: "${targetWord}")`);
   
-  // Start both checks in parallel for previous word
-  const [conceptNetResult, similarityToPrevious] = await Promise.all([
+  // Run both checks in parallel for previous word
+  const [
+    conceptNetResult,
+    similarityToPrevious,
+    similarityToTarget
+  ] = await Promise.all([
     checkConceptNetRelation(previousWord, word),
-    cosineSimilarity(previousWord, word)
+    cosineSimilarity(previousWord, word),
+    cosineSimilarity(word, targetWord)
   ]);
+
+  console.log(`📊 Previous word checks:
+    - ConceptNet relation: ${conceptNetResult ? "Found" : "Not found"}
+    - Vector similarity: ${similarityToPrevious}`);
 
   const isValidWithPrevious = conceptNetResult || similarityToPrevious >= ADJACENT_WORD_MIN_SIMILARITY;
   
@@ -78,8 +87,6 @@ export const validateWordForChain = async (
     };
   }
 
-  // Calculate similarity to target for progress, but don't block based on it
-  const similarityToTarget = await cosineSimilarity(word, targetWord);
   console.log(`✅ Word "${word}" is valid. Similarity to target: ${similarityToTarget}`);
   
   return { 
