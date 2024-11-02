@@ -68,12 +68,13 @@ const loadChunkInBackground = async (chunkIndex: number) => {
   if (chunkCache[chunkIndex] || !loadQueue.includes(chunkIndex)) return;
   
   try {
+    console.log(`🔄 Background loading chunk ${chunkIndex}...`);
     const chunkPath = `/data/chunks/embeddings_chunk_${chunkIndex}.gz`;
     const compressedData = await fetchWithRetry(chunkPath);
     const processedChunk = processCompressedData(compressedData);
     chunkCache[chunkIndex] = processedChunk;
     loadQueue = loadQueue.filter(idx => idx !== chunkIndex);
-    console.log(`✅ Background loaded chunk ${chunkIndex}`);
+    console.log(`✅ Background loaded chunk ${chunkIndex} successfully`);
   } catch (error) {
     console.error(`❌ Background loading failed for chunk ${chunkIndex}:`, error);
     loadQueue = loadQueue.filter(idx => idx !== chunkIndex);
@@ -84,6 +85,7 @@ const processBackgroundLoading = async () => {
   if (isLoading || loadQueue.length === 0) return;
   
   isLoading = true;
+  console.log(`📚 Processing background loading queue: ${loadQueue.join(', ')}`);
   await loadChunkInBackground(loadQueue[0]);
   isLoading = false;
   
@@ -94,6 +96,7 @@ const processBackgroundLoading = async () => {
 
 const queueChunkForLoading = (chunkIndex: number) => {
   if (!loadQueue.includes(chunkIndex) && !chunkCache[chunkIndex]) {
+    console.log(`➕ Queueing chunk ${chunkIndex} for background loading`);
     loadQueue.push(chunkIndex);
     processBackgroundLoading();
   }
