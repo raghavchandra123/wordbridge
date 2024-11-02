@@ -4,9 +4,11 @@ import { GameState } from '../types';
 import { 
   WORD_PAIR_MIN_SIMILARITY, 
   ADJACENT_WORD_MIN_SIMILARITY,
+  TARGET_WORD_MIN_SIMILARITY
 } from '../constants';
 import { checkConceptNetRelation } from '../conceptnet';
 import { calculateProgress } from '../embeddings/utils';
+import { toast } from '@/components/ui/use-toast';
 
 const getDateSeed = () => {
   const today = new Date();
@@ -59,9 +61,11 @@ export const validateWordForChain = async (
   previousWord: string,
   targetWord: string
 ): Promise<{ isValid: boolean; similarityToTarget: number; message?: string }> => {
-  console.log(`🔍 Validating word "${word}" for chain (previous: "${previousWord}", target: "${targetWord}")`);
+  console.log(`🔍 Starting validation for word "${word}":
+    - Previous word: "${previousWord}"
+    - Target word: "${targetWord}"`);
   
-  // Run ALL checks in parallel - both previous word and target word
+  // Run ALL checks in parallel
   const [
     conceptNetWithPrevious,
     conceptNetWithTarget,
@@ -75,12 +79,12 @@ export const validateWordForChain = async (
   ]);
 
   console.log(`📊 Validation results:
-    - Previous word:
-      * ConceptNet relation: ${conceptNetWithPrevious ? "Found" : "Not found"}
-      * Vector similarity: ${similarityToPrevious}
-    - Target word:
-      * ConceptNet relation: ${conceptNetWithTarget ? "Found" : "Not found"}
-      * Vector similarity: ${similarityToTarget}`);
+    - Previous word relation:
+      * ConceptNet: ${conceptNetWithPrevious ? "✅ Found" : "❌ Not found"}
+      * Similarity: ${similarityToPrevious.toFixed(3)}
+    - Target word relation:
+      * ConceptNet: ${conceptNetWithTarget ? "✅ Found" : "❌ Not found"}
+      * Similarity: ${similarityToTarget.toFixed(3)}`);
 
   const isValidWithPrevious = conceptNetWithPrevious || similarityToPrevious >= ADJACENT_WORD_MIN_SIMILARITY;
   
@@ -91,6 +95,13 @@ export const validateWordForChain = async (
       similarityToTarget: 0,
       message: `Try a word more similar to "${previousWord}"`
     };
+  }
+
+  // Store the ConceptNet result for the target word
+  if (conceptNetWithTarget) {
+    console.log(`✅ ConceptNet relation found between "${word}" and target "${targetWord}"`);
+  } else {
+    console.log(`ℹ️ No direct ConceptNet relation with target word, using similarity score`);
   }
 
   console.log(`✅ Word "${word}" is valid. Similarity to target: ${similarityToTarget}`);
@@ -109,8 +120,13 @@ export const updateGameWithNewWord = (
 ): GameState => {
   const progress = calculateProgress(similarityToTarget);
   
+  // Ensure we're tracking the ConceptNet check completion
+  console.log(`📝 Updating game state with word "${word}":
+    - Similarity to target: ${similarityToTarget}
+    - Progress: ${progress}
+    - Editing index: ${editingIndex}`);
+  
   if (editingIndex !== null) {
-    // When editing an existing word
     const newChain = [...game.currentChain.slice(0, editingIndex), word];
     const newProgresses = [...game.wordProgresses];
     if (editingIndex > 0) {
@@ -123,7 +139,6 @@ export const updateGameWithNewWord = (
       score: newChain.length - 1
     };
   } else {
-    // When adding a new word
     return {
       ...game,
       currentChain: [...game.currentChain, word],

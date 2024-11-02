@@ -10,6 +10,7 @@ import { Share } from "lucide-react";
 import { GameBoardProps } from "./game/GameBoardTypes";
 import { generateShareText } from "@/lib/utils/share";
 import { toast } from "./ui/use-toast";
+import { loadWordChunk } from "@/lib/embeddings";
 
 const GameBoard = ({
   game,
@@ -30,6 +31,23 @@ const GameBoard = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<number>();
+
+  // Add effect to trigger background loading for displayed words
+  useEffect(() => {
+    const triggerBackgroundLoading = async () => {
+      console.log("🔄 Triggering background loading for displayed words");
+      // Load chunks for all displayed words
+      for (const word of game.currentChain) {
+        try {
+          await loadWordChunk(word);
+        } catch (error) {
+          console.error(`Failed to load chunk for word "${word}":`, error);
+        }
+      }
+    };
+
+    triggerBackgroundLoading();
+  }, [game.currentChain]);
 
   const scrollToBottom = () => {
     if (scrollTimeoutRef.current) {
@@ -216,5 +234,3 @@ const GameBoard = ({
     </GameContainer>
   );
 };
-
-export default GameBoard;
