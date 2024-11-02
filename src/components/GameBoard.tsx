@@ -10,8 +10,7 @@ import { Share } from "lucide-react";
 import { GameBoardProps } from "./game/GameBoardTypes";
 import { generateShareText } from "@/lib/utils/share";
 import { toast } from "./ui/use-toast";
-import { loadWordChunk } from "@/lib/embeddings";
-import { MAX_CHUNKS } from "@/lib/embeddings/constants";
+import { loadInitialChunks, startBackgroundLoading } from "@/lib/embeddings/backgroundLoader";
 
 const GameBoard = ({
   game,
@@ -32,74 +31,15 @@ const GameBoard = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<number>();
-  const backgroundLoadingRef = useRef<boolean>(false);
-  const nextChunkToLoadRef = useRef<number>(0);
 
-  // Enhanced background loading effect
+  // Background loading effect
   useEffect(() => {
-    const loadNextChunkInBackground = async () => {
-      if (backgroundLoadingRef.current || nextChunkToLoadRef.current >= MAX_CHUNKS) {
-        return;
-      }
-
-      backgroundLoadingRef.current = true;
-      const chunkIndex = nextChunkToLoadRef.current;
-      
-      try {
-        console.log(`🔄 Background loading chunk ${chunkIndex}/${MAX_CHUNKS - 1}`);
-        await loadWordChunk(`chunk_${chunkIndex}`); // Using a dummy word to trigger chunk loading
-        nextChunkToLoadRef.current++;
-        console.log(`✅ Successfully loaded chunk ${chunkIndex}`);
-      } catch (error) {
-        console.error(`❌ Failed to load chunk ${chunkIndex}:`, error);
-        // Still increment to avoid getting stuck on failed chunks
-        nextChunkToLoadRef.current++;
-      } finally {
-        backgroundLoadingRef.current = false;
-      }
-    };
-
-    const scheduleNextChunkLoad = () => {
-      if ('requestIdleCallback' in window) {
-        window.requestIdleCallback(() => loadNextChunkInBackground(), { timeout: 1000 });
-      } else {
-        setTimeout(loadNextChunkInBackground, 100);
-      }
-    };
-
-    // Initial load of displayed words
-    const loadInitialChunks = async () => {
-      console.log("🔄 Loading chunks for displayed words");
-      for (const word of game.currentChain) {
-        try {
-          await loadWordChunk(word);
-        } catch (error) {
-          console.error(`❌ Failed to load chunk for word "${word}":`, error);
-        }
-      }
-
-      try {
-        await loadWordChunk(game.targetWord);
-      } catch (error) {
-        console.error(`❌ Failed to load chunk for target word:`, error);
-      }
-
-      // Start background loading of remaining chunks
-      scheduleNextChunkLoad();
-    };
-
-    loadInitialChunks();
-
-    // Set up continuous background loading
-    const intervalId = setInterval(() => {
-      if (!backgroundLoadingRef.current) {
-        scheduleNextChunkLoad();
-      }
-    }, 1000);
-
-    return () => {
-      clearInterval(intervalId);
-    };
+    // Load chunks for current words
+    loadInitialChunks([...game.currentChain, game.targetWord]);
+    
+    // Start background loading of remaining chunks
+    const intervalId = startBackgroundLoading();
+    return () => clearInterval(intervalId);
   }, [game.currentChain, game.targetWord]);
 
   const scrollToBottom = () => {

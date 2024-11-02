@@ -2,10 +2,9 @@ import pako from 'pako';
 import { WordDictionary } from './types';
 import { MAX_CHUNKS, MAX_RETRIES, RETRY_DELAY, VECTOR_SIZE } from './constants';
 import { processCompressedData } from './vectorProcessor';
+import { markChunkAsLoaded } from './backgroundLoader';
 
 const chunkCache: { [chunkIndex: number]: WordDictionary } = {};
-let loadQueue: number[] = [];
-let isLoading = false;
 
 const findClosestWordsInCache = (targetWord: string): {
   beforeWord?: { word: string; chunkIndex: number };
@@ -64,44 +63,6 @@ const fetchWithRetry = async (url: string, retries = MAX_RETRIES): Promise<Array
   }
 };
 
-const loadChunkInBackground = async (chunkIndex: number) => {
-  if (chunkCache[chunkIndex] || !loadQueue.includes(chunkIndex)) return;
-  
-  try {
-    console.log(`🔄 Background loading chunk ${chunkIndex}...`);
-    const chunkPath = `/data/chunks/embeddings_chunk_${chunkIndex}.gz`;
-    const compressedData = await fetchWithRetry(chunkPath);
-    const processedChunk = processCompressedData(compressedData);
-    chunkCache[chunkIndex] = processedChunk;
-    loadQueue = loadQueue.filter(idx => idx !== chunkIndex);
-    console.log(`✅ Background loaded chunk ${chunkIndex} successfully`);
-  } catch (error) {
-    console.error(`❌ Background loading failed for chunk ${chunkIndex}:`, error);
-    loadQueue = loadQueue.filter(idx => idx !== chunkIndex);
-  }
-};
-
-const processBackgroundLoading = async () => {
-  if (isLoading || loadQueue.length === 0) return;
-  
-  isLoading = true;
-  console.log(`📚 Processing background loading queue: ${loadQueue.join(', ')}`);
-  await loadChunkInBackground(loadQueue[0]);
-  isLoading = false;
-  
-  if (loadQueue.length > 0) {
-    setTimeout(processBackgroundLoading, 100);
-  }
-};
-
-const queueChunkForLoading = (chunkIndex: number) => {
-  if (!loadQueue.includes(chunkIndex) && !chunkCache[chunkIndex]) {
-    console.log(`➕ Queueing chunk ${chunkIndex} for background loading`);
-    loadQueue.push(chunkIndex);
-    processBackgroundLoading();
-  }
-};
-
 export async function loadWordChunk(word: string): Promise<WordDictionary | null> {
   try {
     console.log(`\n🔄 Loading chunk for word: "${word}"`);
@@ -122,13 +83,6 @@ export async function loadWordChunk(word: string): Promise<WordDictionary | null
     if (beforeWord && afterWord) {
       left = Math.min(beforeWord.chunkIndex, afterWord.chunkIndex);
       right = Math.max(beforeWord.chunkIndex, afterWord.chunkIndex);
-      
-      // Queue nearby chunks for background loading
-      for (let i = left - 1; i <= right + 1; i++) {
-        if (i >= 0 && i < MAX_CHUNKS) {
-          queueChunkForLoading(i);
-        }
-      }
     }
     
     while (left <= right) {
@@ -178,6 +132,7 @@ export async function loadWordChunk(word: string): Promise<WordDictionary | null
         }
         
         chunkCache[mid] = processedChunk;
+        markChunkAsLoaded(mid);
         
         if (word >= words[0] && (word <= words[words.length - 1] || mid === right)) {
           console.log(`✅ Found word "${word}" in newly loaded chunk ${mid}`);
