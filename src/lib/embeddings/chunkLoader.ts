@@ -4,19 +4,36 @@ import { MAX_CHUNKS, MAX_RETRIES, RETRY_DELAY } from './constants';
 import { processCompressedData } from './vectorProcessor';
 import { markChunkAsLoaded } from './backgroundLoader';
 
+const CACHE_NAME = 'word-bridge-embeddings-v1';
 const chunkCache: { [chunkIndex: number]: WordDictionary } = {};
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const fetchWithRetry = async (url: string, retries = MAX_RETRIES): Promise<ArrayBuffer> => {
   try {
+    // Try to get from cache first
+    const cache = await caches.open(CACHE_NAME);
+    const cachedResponse = await cache.match(url);
+    
+    if (cachedResponse) {
+      console.log(`📦 Using cached data for: ${url}`);
+      return await cachedResponse.arrayBuffer();
+    }
+
     console.log(`📥 Fetching: ${url}`);
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
+
+    // Clone the response before consuming it
+    const responseToCache = response.clone();
     const data = await response.arrayBuffer();
-    console.log(`✅ Successfully fetched ${url} (${data.byteLength} bytes)`);
+
+    // Cache the response for future use
+    await cache.put(url, responseToCache);
+    console.log(`✅ Successfully fetched and cached ${url} (${data.byteLength} bytes)`);
+    
     return data;
   } catch (error) {
     if (retries > 0) {
@@ -30,6 +47,7 @@ const fetchWithRetry = async (url: string, retries = MAX_RETRIES): Promise<Array
 
 export const loadChunkByIndex = async (chunkIndex: number): Promise<WordDictionary> => {
   if (chunkCache[chunkIndex]) {
+    console.log(`🗃️ Using memory cache for chunk ${chunkIndex}`);
     return chunkCache[chunkIndex];
   }
 
