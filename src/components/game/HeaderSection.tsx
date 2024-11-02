@@ -16,9 +16,17 @@ const HeaderSection = ({ startWord, targetWord, progress, containerWidth }: Head
 
   useEffect(() => {
     const calculateInitialProgress = async () => {
-      const similarity = await cosineSimilarity(startWord, targetWord);
-      const calculatedProgress = Math.max(0, Math.min(100, (similarity + 0.2) / 0.45 * 100));
-      setInitialProgress(calculatedProgress);
+      // Only calculate if both words are non-empty
+      if (startWord && targetWord) {
+        try {
+          const similarity = await cosineSimilarity(startWord, targetWord);
+          const calculatedProgress = Math.max(0, Math.min(100, (similarity + 0.2) / 0.45 * 100));
+          setInitialProgress(calculatedProgress);
+        } catch (error) {
+          console.error('Failed to calculate initial progress:', error);
+          setInitialProgress(0);
+        }
+      }
     };
     calculateInitialProgress();
   }, [startWord, targetWord]);
