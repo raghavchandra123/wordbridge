@@ -34,7 +34,7 @@ const GameBoard = ({
 
   // Background loading effect
   useEffect(() => {
-    let intervalId: number;
+    let intervalId: ReturnType<typeof setInterval>;
     
     const initializeBackgroundLoading = async () => {
       // Start background loading of all chunks
