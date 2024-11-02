@@ -11,6 +11,7 @@ import { GameBoardProps } from "./game/GameBoardTypes";
 import { generateShareText } from "@/lib/utils/share";
 import { toast } from "./ui/use-toast";
 import { loadWordChunk } from "@/lib/embeddings";
+import { MAX_CHUNKS } from "@/lib/embeddings/constants";
 
 const GameBoard = ({
   game,
@@ -32,45 +33,73 @@ const GameBoard = ({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<number>();
   const backgroundLoadingRef = useRef<boolean>(false);
+  const nextChunkToLoadRef = useRef<number>(0);
 
   // Enhanced background loading effect
   useEffect(() => {
-    const triggerBackgroundLoading = async () => {
-      if (backgroundLoadingRef.current) {
-        console.log("🔄 Background loading already in progress, skipping...");
+    const loadNextChunkInBackground = async () => {
+      if (backgroundLoadingRef.current || nextChunkToLoadRef.current >= MAX_CHUNKS) {
         return;
       }
 
       backgroundLoadingRef.current = true;
-      console.log("🔄 Starting background chunk loading for displayed words");
-
+      const chunkIndex = nextChunkToLoadRef.current;
+      
       try {
-        // Load chunks for all displayed words in sequence
-        for (const word of game.currentChain) {
-          console.log(`📦 Background loading chunk for word: "${word}"`);
-          try {
-            await loadWordChunk(word);
-            console.log(`✅ Successfully loaded chunk for word: "${word}"`);
-          } catch (error) {
-            console.error(`❌ Failed to load chunk for word "${word}":`, error);
-          }
-        }
-
-        // Also preload chunk for target word
-        console.log(`📦 Background loading chunk for target word: "${game.targetWord}"`);
-        try {
-          await loadWordChunk(game.targetWord);
-          console.log(`✅ Successfully loaded chunk for target word: "${game.targetWord}"`);
-        } catch (error) {
-          console.error(`❌ Failed to load chunk for target word:`, error);
-        }
+        console.log(`🔄 Background loading chunk ${chunkIndex}/${MAX_CHUNKS - 1}`);
+        await loadWordChunk(`chunk_${chunkIndex}`); // Using a dummy word to trigger chunk loading
+        nextChunkToLoadRef.current++;
+        console.log(`✅ Successfully loaded chunk ${chunkIndex}`);
+      } catch (error) {
+        console.error(`❌ Failed to load chunk ${chunkIndex}:`, error);
+        // Still increment to avoid getting stuck on failed chunks
+        nextChunkToLoadRef.current++;
       } finally {
         backgroundLoadingRef.current = false;
-        console.log("✅ Background chunk loading complete");
       }
     };
 
-    triggerBackgroundLoading();
+    const scheduleNextChunkLoad = () => {
+      if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(() => loadNextChunkInBackground(), { timeout: 1000 });
+      } else {
+        setTimeout(loadNextChunkInBackground, 100);
+      }
+    };
+
+    // Initial load of displayed words
+    const loadInitialChunks = async () => {
+      console.log("🔄 Loading chunks for displayed words");
+      for (const word of game.currentChain) {
+        try {
+          await loadWordChunk(word);
+        } catch (error) {
+          console.error(`❌ Failed to load chunk for word "${word}":`, error);
+        }
+      }
+
+      try {
+        await loadWordChunk(game.targetWord);
+      } catch (error) {
+        console.error(`❌ Failed to load chunk for target word:`, error);
+      }
+
+      // Start background loading of remaining chunks
+      scheduleNextChunkLoad();
+    };
+
+    loadInitialChunks();
+
+    // Set up continuous background loading
+    const intervalId = setInterval(() => {
+      if (!backgroundLoadingRef.current) {
+        scheduleNextChunkLoad();
+      }
+    }, 1000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
   }, [game.currentChain, game.targetWord]);
 
   const scrollToBottom = () => {
