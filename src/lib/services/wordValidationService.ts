@@ -36,7 +36,7 @@ export const validateWordWithTarget = async (word: string, targetWord: string) =
     similarity,
     progress,
     conceptNetPromise,
-    // Word is valid if similarity threshold is met
+    // Game is complete if similarity threshold is met
     isComplete: similarity >= TARGET_WORD_MIN_SIMILARITY
   };
 };

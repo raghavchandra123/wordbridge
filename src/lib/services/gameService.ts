@@ -95,6 +95,7 @@ export const validateWordForChain = async (
       });
     }
     
+    // Word is ALWAYS valid at this point
     return { 
       isValid: true,
       similarityToTarget: targetValidation.similarity
