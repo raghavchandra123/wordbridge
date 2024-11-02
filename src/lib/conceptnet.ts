@@ -11,8 +11,7 @@ export const checkConceptNetRelation = async (word1: string, word2: string): Pro
     const response = await fetch(proxyUrl, {
       headers: {
         'Accept': 'application/json'
-      },
-      timeout: 5000 // 5 second timeout
+      }
     });
     
     if (!response.ok) {
