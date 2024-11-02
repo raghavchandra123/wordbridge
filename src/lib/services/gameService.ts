@@ -61,35 +61,25 @@ export const validateWordForChain = async (
   previousWord: string,
   targetWord: string
 ): Promise<{ isValid: boolean; similarityToTarget: number; message?: string }> => {
-  console.log(`🔍 Starting validation for word "${word}":
+  console.log(`🔍 Starting validation sequence for word "${word}":
     - Previous word: "${previousWord}"
     - Target word: "${targetWord}"`);
   
-  // Run ALL checks in parallel
-  const [
-    conceptNetWithPrevious,
-    conceptNetWithTarget,
-    similarityToPrevious,
-    similarityToTarget
-  ] = await Promise.all([
+  // Step 1: Check similarity and ConceptNet relation with previous word
+  console.log(`📊 Step 1: Checking relation with previous word "${previousWord}"...`);
+  const [conceptNetWithPrevious, similarityToPrevious] = await Promise.all([
     checkConceptNetRelation(previousWord, word),
-    checkConceptNetRelation(word, targetWord),
-    cosineSimilarity(previousWord, word),
-    cosineSimilarity(word, targetWord)
+    cosineSimilarity(previousWord, word)
   ]);
 
-  console.log(`📊 Validation results:
-    - Previous word relation:
-      * ConceptNet: ${conceptNetWithPrevious ? "✅ Found" : "❌ Not found"}
-      * Similarity: ${similarityToPrevious.toFixed(3)}
-    - Target word relation:
-      * ConceptNet: ${conceptNetWithTarget ? "✅ Found" : "❌ Not found"}
-      * Similarity: ${similarityToTarget.toFixed(3)}`);
+  console.log(`📊 Previous word check results:
+    - ConceptNet: ${conceptNetWithPrevious ? "✅ Found" : "❌ Not found"}
+    - Similarity: ${similarityToPrevious.toFixed(3)}`);
 
   const isValidWithPrevious = conceptNetWithPrevious || similarityToPrevious >= ADJACENT_WORD_MIN_SIMILARITY;
   
   if (!isValidWithPrevious) {
-    console.log(`❌ Word "${word}" is not valid with previous word`);
+    console.log(`❌ Word "${word}" failed previous word validation`);
     return {
       isValid: false,
       similarityToTarget: 0,
@@ -97,15 +87,17 @@ export const validateWordForChain = async (
     };
   }
 
-  // Store the ConceptNet result for the target word
-  if (conceptNetWithTarget) {
-    console.log(`✅ ConceptNet relation found between "${word}" and target "${targetWord}"`);
-  } else {
-    console.log(`ℹ️ No direct ConceptNet relation with target word, using similarity score`);
-  }
+  // Step 2: Only if previous word check passes, check target word relations
+  console.log(`📊 Step 2: Checking relation with target word "${targetWord}"...`);
+  const [conceptNetWithTarget, similarityToTarget] = await Promise.all([
+    checkConceptNetRelation(word, targetWord),
+    cosineSimilarity(word, targetWord)
+  ]);
 
-  console.log(`✅ Word "${word}" is valid. Similarity to target: ${similarityToTarget}`);
-  
+  console.log(`📊 Target word check results:
+    - ConceptNet: ${conceptNetWithTarget ? "✅ Found" : "❌ Not found"}
+    - Similarity: ${similarityToTarget.toFixed(3)}`);
+
   return { 
     isValid: true, 
     similarityToTarget
@@ -120,7 +112,6 @@ export const updateGameWithNewWord = (
 ): GameState => {
   const progress = calculateProgress(similarityToTarget);
   
-  // Ensure we're tracking the ConceptNet check completion
   console.log(`📝 Updating game state with word "${word}":
     - Similarity to target: ${similarityToTarget}
     - Progress: ${progress}

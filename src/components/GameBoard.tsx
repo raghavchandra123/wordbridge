@@ -31,23 +31,47 @@ const GameBoard = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<number>();
+  const backgroundLoadingRef = useRef<boolean>(false);
 
-  // Add effect to trigger background loading for displayed words
+  // Enhanced background loading effect
   useEffect(() => {
     const triggerBackgroundLoading = async () => {
-      console.log("🔄 Triggering background loading for displayed words");
-      // Load chunks for all displayed words
-      for (const word of game.currentChain) {
-        try {
-          await loadWordChunk(word);
-        } catch (error) {
-          console.error(`Failed to load chunk for word "${word}":`, error);
+      if (backgroundLoadingRef.current) {
+        console.log("🔄 Background loading already in progress, skipping...");
+        return;
+      }
+
+      backgroundLoadingRef.current = true;
+      console.log("🔄 Starting background chunk loading for displayed words");
+
+      try {
+        // Load chunks for all displayed words in sequence
+        for (const word of game.currentChain) {
+          console.log(`📦 Background loading chunk for word: "${word}"`);
+          try {
+            await loadWordChunk(word);
+            console.log(`✅ Successfully loaded chunk for word: "${word}"`);
+          } catch (error) {
+            console.error(`❌ Failed to load chunk for word "${word}":`, error);
+          }
         }
+
+        // Also preload chunk for target word
+        console.log(`📦 Background loading chunk for target word: "${game.targetWord}"`);
+        try {
+          await loadWordChunk(game.targetWord);
+          console.log(`✅ Successfully loaded chunk for target word: "${game.targetWord}"`);
+        } catch (error) {
+          console.error(`❌ Failed to load chunk for target word:`, error);
+        }
+      } finally {
+        backgroundLoadingRef.current = false;
+        console.log("✅ Background chunk loading complete");
       }
     };
 
     triggerBackgroundLoading();
-  }, [game.currentChain]);
+  }, [game.currentChain, game.targetWord]);
 
   const scrollToBottom = () => {
     if (scrollTimeoutRef.current) {
