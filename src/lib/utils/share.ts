@@ -1,11 +1,13 @@
 import { GameState } from "@/lib/types";
 
 const getColorEmoji = (progress: number): string => {
-  if (progress <= 25) {
+  if (progress <= 20) {
     return "🟦"; // Blue for start
-  } else if (progress <= 50) {
+  } else if (progress <= 40) {
     return "🟩"; // Green for early progress
-  } else if (progress <= 75) {
+  } else if (progress <= 60) {
+    return "🟧"; // Orange for mid progress
+  } else if (progress <= 80) {
     return "🟨"; // Yellow for mid progress
   } else {
     return "🟥"; // Red for end/target
@@ -27,9 +29,9 @@ export const generateShareText = (game: GameState): string => {
     const emojis = generateWordEmojis(word, progress);
     
     if (i === 1) {
-      shareText += `${game.startWord.toUpperCase()} ${emojis}\n`;
+      shareText += `${game.startWord.toUpperCase()}\n${emojis}\n`;
     } else if (i === game.currentChain.length - 1) {
-      shareText += `${emojis} ${game.targetWord.toUpperCase()}\n`;
+      shareText += `${emojis}\n${game.targetWord.toUpperCase()}\n`;
     } else {
       shareText += `${emojis}\n`;
     }
