@@ -9,6 +9,7 @@ import { checkConceptNetRelation } from '../conceptnet';
 import { toast } from '@/components/ui/use-toast';
 import { pauseBackgroundLoading, resumeBackgroundLoading } from '../embeddings/backgroundLoader';
 import { validateWordWithTarget } from './wordValidationService';
+import { calculateProgress } from '../embeddings/utils';
 
 const getDateSeed = () => {
   const today = new Date();
