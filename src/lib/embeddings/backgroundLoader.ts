@@ -3,6 +3,7 @@ import { MAX_CHUNKS } from './constants';
 
 let loadedChunks = new Set<number>();
 let isLoading = false;
+let isPaused = false;
 
 export const markChunkAsLoaded = (chunkIndex: number) => {
   loadedChunks.add(chunkIndex);
@@ -12,8 +13,16 @@ export const isChunkLoaded = (chunkIndex: number) => {
   return loadedChunks.has(chunkIndex);
 };
 
+export const pauseBackgroundLoading = () => {
+  isPaused = true;
+};
+
+export const resumeBackgroundLoading = () => {
+  isPaused = false;
+};
+
 const loadNextUnloadedChunk = async () => {
-  if (isLoading) return;
+  if (isLoading || isPaused) return;
   
   // Find the next unloaded chunk
   for (let i = 0; i < MAX_CHUNKS; i++) {
@@ -36,16 +45,16 @@ const loadNextUnloadedChunk = async () => {
 
 export const startBackgroundLoading = () => {
   const scheduleNextChunkLoad = () => {
-    if ('requestIdleCallback' in window) {
+    if (!isPaused && 'requestIdleCallback' in window) {
       window.requestIdleCallback(() => loadNextUnloadedChunk(), { timeout: 1000 });
-    } else {
+    } else if (!isPaused) {
       setTimeout(loadNextUnloadedChunk, 100);
     }
   };
 
   // Set up continuous background loading
   const intervalId = setInterval(() => {
-    if (!isLoading && loadedChunks.size < MAX_CHUNKS) {
+    if (!isLoading && !isPaused && loadedChunks.size < MAX_CHUNKS) {
       scheduleNextChunkLoad();
     }
   }, 1000);

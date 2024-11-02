@@ -9,6 +9,7 @@ import {
 import { checkConceptNetRelation } from '../conceptnet';
 import { calculateProgress } from '../embeddings/utils';
 import { toast } from '@/components/ui/use-toast';
+import { pauseBackgroundLoading, resumeBackgroundLoading } from '../embeddings/backgroundLoader';
 
 const getDateSeed = () => {
   const today = new Date();
@@ -65,63 +66,71 @@ export const validateWordForChain = async (
     - Previous word: "${previousWord}"
     - Target word: "${targetWord}"`);
   
-  // Step 1: Run previous word checks in parallel
-  console.log(`📊 Step 1: Running parallel checks with previous word "${previousWord}"...`);
+  // Pause background loading during validation
+  pauseBackgroundLoading();
   
-  let previousWordValid = false;
-  
-  // Create a race between similarity and ConceptNet checks
   try {
-    await Promise.race([
-      // Similarity check
-      cosineSimilarity(previousWord, word).then(similarity => {
-        if (similarity >= ADJACENT_WORD_MIN_SIMILARITY) {
-          console.log(`✅ Similarity check passed: ${similarity.toFixed(3)}`);
-          previousWordValid = true;
-          return true;
-        }
-        return false;
-      }),
-      
-      // ConceptNet check
-      checkConceptNetRelation(previousWord, word).then(hasRelation => {
-        if (hasRelation) {
-          console.log('✅ ConceptNet relation found');
-          previousWordValid = true;
-          return true;
-        }
-        return false;
-      })
+    // Step 1: Run previous word checks in parallel
+    console.log(`📊 Step 1: Running parallel checks with previous word "${previousWord}"...`);
+    
+    let previousWordValid = false;
+    
+    // Create a race between similarity and ConceptNet checks
+    try {
+      await Promise.race([
+        // Similarity check
+        cosineSimilarity(previousWord, word).then(similarity => {
+          if (similarity >= ADJACENT_WORD_MIN_SIMILARITY) {
+            console.log(`✅ Similarity check passed: ${similarity.toFixed(3)}`);
+            previousWordValid = true;
+            return true;
+          }
+          return false;
+        }),
+        
+        // ConceptNet check
+        checkConceptNetRelation(previousWord, word).then(hasRelation => {
+          if (hasRelation) {
+            console.log('✅ ConceptNet relation found');
+            previousWordValid = true;
+            return true;
+          }
+          return false;
+        })
+      ]);
+    } catch (error) {
+      console.error('❌ Error during previous word validation:', error);
+    }
+
+    if (!previousWordValid) {
+      console.log(`❌ Word "${word}" failed previous word validation`);
+      return {
+        isValid: false,
+        similarityToTarget: 0,
+        message: `Try a word more similar to "${previousWord}"`
+      };
+    }
+
+    // Step 2: Run both target word checks in parallel and wait for both to complete
+    console.log(`📊 Step 2: Running target word checks for "${targetWord}"...`);
+    
+    const [conceptNetWithTarget, similarityToTarget] = await Promise.all([
+      checkConceptNetRelation(word, targetWord),
+      cosineSimilarity(word, targetWord)
     ]);
-  } catch (error) {
-    console.error('❌ Error during previous word validation:', error);
-  }
 
-  if (!previousWordValid) {
-    console.log(`❌ Word "${word}" failed previous word validation`);
-    return {
-      isValid: false,
-      similarityToTarget: 0,
-      message: `Try a word more similar to "${previousWord}"`
+    console.log(`📊 Target word check results:
+      - ConceptNet: ${conceptNetWithTarget ? "✅ Found" : "❌ Not found"}
+      - Similarity: ${similarityToTarget.toFixed(3)}`);
+
+    return { 
+      isValid: true, 
+      similarityToTarget
     };
+  } finally {
+    // Resume background loading after validation is complete
+    resumeBackgroundLoading();
   }
-
-  // Step 2: Run both target word checks in parallel and wait for both to complete
-  console.log(`📊 Step 2: Running target word checks for "${targetWord}"...`);
-  
-  const [conceptNetWithTarget, similarityToTarget] = await Promise.all([
-    checkConceptNetRelation(word, targetWord),
-    cosineSimilarity(word, targetWord)
-  ]);
-
-  console.log(`📊 Target word check results:
-    - ConceptNet: ${conceptNetWithTarget ? "✅ Found" : "❌ Not found"}
-    - Similarity: ${similarityToTarget.toFixed(3)}`);
-
-  return { 
-    isValid: true, 
-    similarityToTarget
-  };
 };
 
 export const updateGameWithNewWord = (
