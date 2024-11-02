@@ -34,13 +34,14 @@ const GameBoard = ({
 
   // Background loading effect
   useEffect(() => {
-    // Load chunks for current words
-    loadInitialChunks([...game.currentChain, game.targetWord]);
-    
-    // Start background loading of remaining chunks
+    // Start background loading of all chunks
     const intervalId = startBackgroundLoading();
+    
+    // Load initial chunks (0 and 1 for now, can be adjusted based on needs)
+    loadInitialChunks([0, 1]);
+    
     return () => clearInterval(intervalId);
-  }, [game.currentChain, game.targetWord]);
+  }, []);
 
   const scrollToBottom = () => {
     if (scrollTimeoutRef.current) {
