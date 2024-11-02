@@ -23,6 +23,7 @@ export const checkConceptNetRelation = async (word1: string, word2: string): Pro
       headers: {
         'Accept': 'application/json'
       },
+      mode: 'cors', // Explicitly set CORS mode
       signal: controller.signal
     });
     
@@ -31,7 +32,7 @@ export const checkConceptNetRelation = async (word1: string, word2: string): Pro
 
     if (!response.ok) {
       console.error(`❌ Response not OK: ${response.status} ${response.statusText}`);
-      throw new Error(`HTTP error! status: ${response.status}`);
+      return false; // Return false instead of throwing on non-200 responses
     }
     
     console.log('📦 Parsing JSON response...');
@@ -52,7 +53,7 @@ export const checkConceptNetRelation = async (word1: string, word2: string): Pro
       errorStack: error.stack
     });
     
-    // Don't show error toast since ConceptNet is optional
+    // Always return false on any error since ConceptNet is optional
     return false;
   }
 };
