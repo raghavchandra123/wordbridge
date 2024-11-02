@@ -11,10 +11,28 @@ const WordDisplay = ({ word, progress, containerWidth }: WordDisplayProps) => {
   const gap = 2;
   const letters = word.length;
   const maxSize = 40;
-  const size = Math.min(Math.floor((containerWidth - padding * 2 - (letters - 1) * gap) / letters), maxSize);
+  
+  // Calculate the available width for the word
+  const availableWidth = containerWidth - padding * 2;
+  
+  // Calculate the size of each letter square ensuring it fits
+  const size = Math.min(
+    Math.floor((availableWidth - (letters - 1) * gap) / letters),
+    maxSize
+  );
+
+  // If the word is too long, reduce the gap between letters
+  const adjustedGap = size === maxSize ? gap : Math.max(0, Math.min(gap, (availableWidth - size * letters) / (letters - 1)));
 
   return (
-    <div className="flex justify-center gap-0.5">
+    <div 
+      className="flex justify-center"
+      style={{
+        gap: `${adjustedGap}px`,
+        maxWidth: '100%',
+        overflowX: 'hidden'
+      }}
+    >
       {word.split('').map((letter, index) => (
         <LetterSquare 
           key={`${word}-${index}`}

@@ -34,16 +34,19 @@ const LetterSquare = ({ letter, progress, size }: LetterSquareProps) => {
   
   const color = getColorForProgress(progress);
   
+  // Calculate font size based on square size, with a minimum of 10px
+  const fontSize = Math.max(Math.floor(size * 0.5), 10);
+  
   return (
     <div 
-      className="flex items-center justify-center font-bold rounded-lg m-0.5 transition-colors"
+      className="flex items-center justify-center font-bold rounded-lg transition-colors shrink-0"
       style={{
         width: `${size}px`,
         height: `${size}px`,
         border: `2px solid ${THEME_COLORS.BORDER}`,
         backgroundColor: `rgba(${color.r}, ${color.g}, ${color.b}, 0.5)`,
         color: THEME_COLORS.TEXT.PRIMARY,
-        fontSize: `${Math.max(size * 0.4, 12)}px`,
+        fontSize: `${fontSize}px`,
       }}
     >
       {letter.toUpperCase()}
