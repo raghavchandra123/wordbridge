@@ -3,13 +3,13 @@ import { toast } from "@/components/ui/use-toast";
 const CORS_PROXY = "https://corsproxy.io/?";
 
 export const checkConceptNetRelation = async (word1: string, word2: string): Promise<boolean> => {
-  console.log(`🌐 Starting ConceptNet check between "${word1}" and "${word2}"`);
+  console.log(`🔍 Checking ConceptNet relation between "${word1}" and "${word2}"...`);
   
   try {
     const apiUrl = `https://api.conceptnet.io/query?node=/c/en/${word1}&other=/c/en/${word2}`;
     const proxyUrl = `${CORS_PROXY}${encodeURIComponent(apiUrl)}`;
     
-    console.log(`📡 Sending request to: ${proxyUrl}`);
+    console.log(`📡 Sending request to ConceptNet API...`);
     
     // Create AbortController for timeout
     const controller = new AbortController();
@@ -18,7 +18,6 @@ export const checkConceptNetRelation = async (word1: string, word2: string): Pro
       controller.abort();
     }, 5000); // 5 second timeout
 
-    console.log('🔄 Fetching data...');
     const response = await fetch(proxyUrl, {
       headers: {
         'Accept': 'application/json'
@@ -27,7 +26,7 @@ export const checkConceptNetRelation = async (word1: string, word2: string): Pro
     });
     
     clearTimeout(timeoutId);
-    console.log(`✅ Response received with status: ${response.status}`);
+    console.log(`✅ Response received from ConceptNet API`);
 
     if (!response.ok) {
       console.error(`❌ Response not OK: ${response.status} ${response.statusText}`);
@@ -38,13 +37,14 @@ export const checkConceptNetRelation = async (word1: string, word2: string): Pro
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     
-    console.log('📦 Parsing JSON response...');
     const data = await response.json();
-    
     const hasRelation = data.edges && data.edges.length > 0;
-    console.log(`🔍 Relation found: ${hasRelation}`, {
-      edgesCount: data.edges?.length || 0
-    });
+    
+    if (hasRelation) {
+      console.log(`✨ Found relation between "${word1}" and "${word2}"`);
+    } else {
+      console.log(`❌ No relation found between "${word1}" and "${word2}"`);
+    }
     
     return hasRelation;
   } catch (error) {
