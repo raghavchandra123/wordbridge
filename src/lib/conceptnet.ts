@@ -1,16 +1,19 @@
 import { toast } from "@/components/ui/use-toast";
 
+const CORS_PROXY = "https://corsproxy.io/";
+
 export const checkConceptNetRelation = async (word1: string, word2: string): Promise<boolean> => {
   console.log(`🌐 Starting ConceptNet check between "${word1}" and "${word2}"`);
   try {
-    const response = await fetch(
-      `https://api.conceptnet.io/query?node=/c/en/${word1}&other=/c/en/${word2}`,
-      {
-        headers: {
-          'Accept': 'application/json'
-        }
-      }
-    );
+    const apiUrl = `https://api.conceptnet.io/query?node=/c/en/${word1}&other=/c/en/${word2}`;
+    const proxyUrl = `${CORS_PROXY}?${encodeURIComponent(apiUrl)}`;
+    
+    const response = await fetch(proxyUrl, {
+      headers: {
+        'Accept': 'application/json'
+      },
+      timeout: 5000 // 5 second timeout
+    });
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
