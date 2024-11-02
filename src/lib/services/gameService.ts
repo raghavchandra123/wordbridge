@@ -66,41 +66,39 @@ export const validateWordForChain = async (
     - Previous word: "${previousWord}"
     - Target word: "${targetWord}"`);
   
-  // Pause background loading during validation
   pauseBackgroundLoading();
   
   try {
-    // Step 1: Run previous word checks in parallel
+    // Step 1: Previous Word Validation with proper race logic
     console.log(`📊 Step 1: Running parallel checks with previous word "${previousWord}"...`);
     
-    let previousWordValid = false;
+    let similarityPromise = cosineSimilarity(previousWord, word);
+    let conceptNetPromise = checkConceptNetRelation(previousWord, word);
     
-    // Create a race between similarity and ConceptNet checks
-    try {
-      await Promise.race([
-        // Similarity check
-        cosineSimilarity(previousWord, word).then(similarity => {
-          if (similarity >= ADJACENT_WORD_MIN_SIMILARITY) {
-            console.log(`✅ Similarity check passed: ${similarity.toFixed(3)}`);
-            previousWordValid = true;
-            return true;
-          }
-          return false;
-        }),
+    // Create a function to handle the first successful check
+    const handleFirstSuccess = async (result: boolean, source: string) => {
+      if (result) {
+        console.log(`✅ ${source} check passed first - proceeding to target validation`);
+        return true;
+      }
+      // If first check failed, wait for the other one
+      try {
+        const otherResult = source === 'Similarity' 
+          ? await conceptNetPromise 
+          : await similarityPromise.then(sim => sim >= ADJACENT_WORD_MIN_SIMILARITY);
         
-        // ConceptNet check
-        checkConceptNetRelation(previousWord, word).then(hasRelation => {
-          if (hasRelation) {
-            console.log('✅ ConceptNet relation found');
-            previousWordValid = true;
-            return true;
-          }
-          return false;
-        })
-      ]);
-    } catch (error) {
-      console.error('❌ Error during previous word validation:', error);
-    }
+        return otherResult;
+      } catch (error) {
+        console.error(`Error in second check after ${source} failed:`, error);
+        return false;
+      }
+    };
+
+    // Race between similarity and ConceptNet checks
+    const previousWordValid = await Promise.race([
+      similarityPromise.then(sim => handleFirstSuccess(sim >= ADJACENT_WORD_MIN_SIMILARITY, 'Similarity')),
+      conceptNetPromise.then(rel => handleFirstSuccess(rel, 'ConceptNet'))
+    ]);
 
     if (!previousWordValid) {
       console.log(`❌ Word "${word}" failed previous word validation`);
@@ -111,7 +109,7 @@ export const validateWordForChain = async (
       };
     }
 
-    // Step 2: Run both target word checks in parallel and wait for both to complete
+    // Step 2: Target Word Validation - wait for both checks
     console.log(`📊 Step 2: Running target word checks for "${targetWord}"...`);
     
     const [conceptNetWithTarget, similarityToTarget] = await Promise.all([
@@ -128,7 +126,6 @@ export const validateWordForChain = async (
       similarityToTarget
     };
   } finally {
-    // Resume background loading after validation is complete
     resumeBackgroundLoading();
   }
 };
