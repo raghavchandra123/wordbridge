@@ -82,8 +82,18 @@ export const validateWordForChain = async (
       };
     }
 
-    // Only proceed to target validation if previous word passed
+    // Check target word - get similarity result immediately
     const targetValidation = await validateWordWithTarget(word, targetWord);
+    
+    // Start ConceptNet check in background if similarity didn't pass
+    if (!targetValidation.isComplete) {
+      targetValidation.conceptNetPromise.then(hasRelation => {
+        if (hasRelation) {
+          // Update game state to complete if ConceptNet passes
+          // This will be handled by the component
+        }
+      });
+    }
     
     return { 
       isValid: true,

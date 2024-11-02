@@ -1,5 +1,5 @@
-import { cosineSimilarity } from "../embeddings";
 import { checkConceptNetRelation } from "../conceptnet";
+import { cosineSimilarity } from "../embeddings";
 import { ADJACENT_WORD_MIN_SIMILARITY, TARGET_WORD_MIN_SIMILARITY } from "../constants";
 
 export const validateWordWithPrevious = async (word: string, previousWord: string) => {
@@ -25,17 +25,18 @@ export const validateWordWithPrevious = async (word: string, previousWord: strin
 };
 
 export const validateWordWithTarget = async (word: string, targetWord: string) => {
-  // For target word, we need both checks to pass
-  const [similarity, conceptNetRelation] = await Promise.all([
-    cosineSimilarity(word, targetWord),
-    checkConceptNetRelation(word, targetWord)
-  ]);
-
+  // First check similarity since it's fast
+  const similarity = await cosineSimilarity(word, targetWord);
   const progress = Math.max(0, Math.min(100, (similarity + 0.2) / 0.45 * 100));
+  
+  // Start ConceptNet check in background
+  const conceptNetPromise = checkConceptNetRelation(word, targetWord);
 
   return {
     similarity,
     progress,
-    isComplete: conceptNetRelation || similarity >= TARGET_WORD_MIN_SIMILARITY
+    conceptNetPromise,
+    // Word is valid if similarity threshold is met
+    isComplete: similarity >= TARGET_WORD_MIN_SIMILARITY
   };
 };
