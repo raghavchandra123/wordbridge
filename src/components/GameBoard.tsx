@@ -12,6 +12,7 @@ import { generateShareText } from "@/lib/utils/share";
 import { toast } from "./ui/use-toast";
 import { loadInitialChunks, startBackgroundLoading } from "@/lib/embeddings/backgroundLoader";
 import { useViewport } from "@/hooks/useViewport";
+import { cosineSimilarity } from "@/lib/embeddings";
 
 const GameBoard = ({
   game,
@@ -78,13 +79,22 @@ const GameBoard = ({
     return game.wordProgresses[index - 1] || 0;
   };
 
-  const handleBackButton = () => {
+  const handleBackButton = async () => {
     if (editingIndex !== null) {
       onWordClick(null);
     } else if (game.currentChain.length > 1) {
       const newChain = [...game.currentChain];
       newChain.pop();
       const newProgresses = [...game.wordProgresses];
+      
+      // Calculate new progress for the last word in the chain
+      if (newChain.length > 1) {
+        const lastWord = newChain[newChain.length - 1];
+        const similarity = await cosineSimilarity(lastWord, game.targetWord);
+        const newProgress = Math.max(0, Math.min(100, (similarity + 0.2) / 0.45 * 100));
+        newProgresses[newChain.length - 2] = newProgress;
+      }
+      
       newProgresses.pop();
       setGame({
         ...game,
@@ -133,7 +143,7 @@ const GameBoard = ({
       <HeaderSection 
         startWord={game.startWord}
         targetWord={game.targetWord}
-        progress={progress}
+        progress={getWordProgress(game.currentChain.length - 1)}
         containerWidth={containerWidth}
       />
 
