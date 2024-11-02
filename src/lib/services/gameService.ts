@@ -70,25 +70,31 @@ export const validateWordForChain = async (
   pauseBackgroundLoading();
   
   try {
-    // Run both validations in parallel
-    const [previousValidation, targetValidation] = await Promise.all([
-      validateWordWithPrevious(word, previousWord),
-      validateWordWithTarget(word, targetWord)
-    ]);
+    // Start both validations in parallel but handle them independently
+    const targetValidation = validateWordWithTarget(word, targetWord);
+    const previousValidation = validateWordWithPrevious(word, previousWord);
 
-    if (!previousValidation.isValid) {
-      console.log(`❌ Word "${word}" failed previous word validations`);
-      return {
-        isValid: false,
-        similarityToTarget: 0,
-        message: `Try a word more similar to "${previousWord}"`
-      };
-    }
+    // Wait for target similarity first since it's critical for game progress
+    const { similarity: similarityToTarget } = await targetValidation;
 
+    // Check previous word validation asynchronously
+    previousValidation.then(validation => {
+      if (!validation.isValid) {
+        toast({
+          description: `Try a word more similar to "${previousWord}"`,
+          variant: "destructive",
+        });
+      }
+    }).catch(error => {
+      console.error('Previous word validation failed:', error);
+    });
+
+    // Return immediately with target similarity
     return { 
-      isValid: true, 
-      similarityToTarget: targetValidation.similarity
+      isValid: true,
+      similarityToTarget
     };
+
   } finally {
     resumeBackgroundLoading();
   }
