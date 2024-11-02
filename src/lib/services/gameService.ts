@@ -62,34 +62,37 @@ export const validateWordForChain = async (
 ): Promise<{ isValid: boolean; similarityToTarget: number; message?: string }> => {
   console.log(`🔍 Validating word "${word}" for chain (previous: "${previousWord}", target: "${targetWord}")`);
   
-  // Check similarity with previous word
-  const similarityToPrevious = await cosineSimilarity(previousWord, word);
-  console.log(`📊 Similarity to previous word: ${similarityToPrevious}`);
+  // Start both checks in parallel for previous word
+  const [conceptNetResult, similarityToPrevious] = await Promise.all([
+    checkConceptNetRelation(previousWord, word),
+    cosineSimilarity(previousWord, word)
+  ]);
+
+  const isValidWithPrevious = conceptNetResult || similarityToPrevious >= ADJACENT_WORD_MIN_SIMILARITY;
   
-  if (similarityToPrevious < ADJACENT_WORD_MIN_SIMILARITY) {
-    console.log(`⚠️ Similarity with previous word below threshold (${ADJACENT_WORD_MIN_SIMILARITY}). Checking ConceptNet relation...`);
-    const hasRelation = await checkConceptNetRelation(previousWord, word);
-    
-    if (!hasRelation) {
-      console.log(`❌ No ConceptNet relation found. Word "${word}" is invalid.`);
+  if (!isValidWithPrevious) {
+    console.log(`❌ Word "${word}" is not valid with previous word`);
+    return {
+      isValid: false,
+      similarityToTarget: 0,
+      message: `Try a word more similar to "${previousWord}"`
+    };
+  }
+
+  // For target word, we need the vector similarity for progress calculation
+  const similarityToTarget = await cosineSimilarity(word, targetWord);
+  
+  // If similarity is low, check ConceptNet as a fallback
+  if (similarityToTarget < TARGET_WORD_MIN_SIMILARITY) {
+    const hasTargetRelation = await checkConceptNetRelation(word, targetWord);
+    if (!hasTargetRelation) {
+      console.log(`❌ Word "${word}" is not similar enough to target`);
       return {
         isValid: false,
-        similarityToTarget: 0,
-        message: `Try a word more similar to "${previousWord}"`
+        similarityToTarget,
+        message: "Try a word more similar to the target word"
       };
     }
-    console.log(`✅ ConceptNet relation found with previous word. Continuing validation.`);
-  }
-  
-  // Check similarity with target word
-  const similarityToTarget = await cosineSimilarity(word, targetWord);
-  console.log(`📊 Similarity to target word: ${similarityToTarget}`);
-  
-  // If similarity to target is below threshold, check ConceptNet
-  if (similarityToTarget < TARGET_WORD_MIN_SIMILARITY) {
-    console.log(`⚠️ Similarity with target word below threshold (${TARGET_WORD_MIN_SIMILARITY}). Checking ConceptNet relation...`);
-    const hasTargetRelation = await checkConceptNetRelation(word, targetWord);
-    console.log(`${hasTargetRelation ? '✅' : '❌'} ConceptNet relation with target word: ${hasTargetRelation ? 'found' : 'not found'}`);
   }
   
   return { 

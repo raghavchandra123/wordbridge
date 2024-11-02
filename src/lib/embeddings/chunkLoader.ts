@@ -4,6 +4,8 @@ import { MAX_CHUNKS, MAX_RETRIES, RETRY_DELAY, VECTOR_SIZE } from './constants';
 import { processCompressedData } from './vectorProcessor';
 
 const chunkCache: { [chunkIndex: number]: WordDictionary } = {};
+let loadQueue: number[] = [];
+let isLoading = false;
 
 const findClosestWordsInCache = (targetWord: string): {
   beforeWord?: { word: string; chunkIndex: number };
@@ -62,6 +64,41 @@ const fetchWithRetry = async (url: string, retries = MAX_RETRIES): Promise<Array
   }
 };
 
+const loadChunkInBackground = async (chunkIndex: number) => {
+  if (chunkCache[chunkIndex] || !loadQueue.includes(chunkIndex)) return;
+  
+  try {
+    const chunkPath = `/data/chunks/embeddings_chunk_${chunkIndex}.gz`;
+    const compressedData = await fetchWithRetry(chunkPath);
+    const processedChunk = processCompressedData(compressedData);
+    chunkCache[chunkIndex] = processedChunk;
+    loadQueue = loadQueue.filter(idx => idx !== chunkIndex);
+    console.log(`✅ Background loaded chunk ${chunkIndex}`);
+  } catch (error) {
+    console.error(`❌ Background loading failed for chunk ${chunkIndex}:`, error);
+    loadQueue = loadQueue.filter(idx => idx !== chunkIndex);
+  }
+};
+
+const processBackgroundLoading = async () => {
+  if (isLoading || loadQueue.length === 0) return;
+  
+  isLoading = true;
+  await loadChunkInBackground(loadQueue[0]);
+  isLoading = false;
+  
+  if (loadQueue.length > 0) {
+    setTimeout(processBackgroundLoading, 100);
+  }
+};
+
+const queueChunkForLoading = (chunkIndex: number) => {
+  if (!loadQueue.includes(chunkIndex) && !chunkCache[chunkIndex]) {
+    loadQueue.push(chunkIndex);
+    processBackgroundLoading();
+  }
+};
+
 export async function loadWordChunk(word: string): Promise<WordDictionary | null> {
   try {
     console.log(`\n🔄 Loading chunk for word: "${word}"`);
@@ -82,7 +119,13 @@ export async function loadWordChunk(word: string): Promise<WordDictionary | null
     if (beforeWord && afterWord) {
       left = Math.min(beforeWord.chunkIndex, afterWord.chunkIndex);
       right = Math.max(beforeWord.chunkIndex, afterWord.chunkIndex);
-      console.log(`🎯 Narrowed search to chunks ${left}-${right} based on cache`);
+      
+      // Queue nearby chunks for background loading
+      for (let i = left - 1; i <= right + 1; i++) {
+        if (i >= 0 && i < MAX_CHUNKS) {
+          queueChunkForLoading(i);
+        }
+      }
     }
     
     while (left <= right) {
