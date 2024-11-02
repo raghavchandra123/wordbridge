@@ -25,18 +25,20 @@ export const validateWordWithPrevious = async (word: string, previousWord: strin
 };
 
 export const validateWordWithTarget = async (word: string, targetWord: string) => {
-  // First check similarity since it's fast
-  const similarity = await cosineSimilarity(word, targetWord);
-  const progress = Math.max(0, Math.min(100, (similarity + 0.2) / 0.45 * 100));
-  
-  // Start ConceptNet check in background
+  // Start both checks in parallel immediately
+  const similarityPromise = cosineSimilarity(word, targetWord);
   const conceptNetPromise = checkConceptNetRelation(word, targetWord);
 
+  // Wait for similarity to calculate progress
+  const similarity = await similarityPromise;
+  const progress = Math.max(0, Math.min(100, (similarity + 0.2) / 0.45 * 100));
+  
   return {
     similarity,
     progress,
+    // Keep checking ConceptNet in background
     conceptNetPromise,
-    // Game is complete if similarity threshold is met
-    isComplete: similarity >= TARGET_WORD_MIN_SIMILARITY
+    // Game is complete if EITHER check passes
+    isComplete: similarity >= TARGET_WORD_MIN_SIMILARITY || await conceptNetPromise
   };
 };
