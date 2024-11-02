@@ -23,7 +23,6 @@ export const checkConceptNetRelation = async (word1: string, word2: string): Pro
       headers: {
         'Accept': 'application/json'
       },
-      mode: 'cors', // Explicitly set CORS mode
       signal: controller.signal
     });
     
@@ -32,7 +31,11 @@ export const checkConceptNetRelation = async (word1: string, word2: string): Pro
 
     if (!response.ok) {
       console.error(`❌ Response not OK: ${response.status} ${response.statusText}`);
-      return false; // Return false instead of throwing on non-200 responses
+      toast({
+        description: "Network error occurred. Please check your internet connection and try again.",
+        variant: "destructive"
+      });
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
     
     console.log('📦 Parsing JSON response...');
@@ -53,7 +56,11 @@ export const checkConceptNetRelation = async (word1: string, word2: string): Pro
       errorStack: error.stack
     });
     
-    // Always return false on any error since ConceptNet is optional
-    return false;
+    toast({
+      description: "Network error occurred. Please check your internet connection and try again.",
+      variant: "destructive"
+    });
+    
+    throw error; // Re-throw to ensure the check is treated as failed
   }
 };
