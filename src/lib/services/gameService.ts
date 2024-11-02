@@ -4,12 +4,11 @@ import { GameState } from '../types';
 import { 
   WORD_PAIR_MIN_SIMILARITY, 
   ADJACENT_WORD_MIN_SIMILARITY,
-  TARGET_WORD_MIN_SIMILARITY
 } from '../constants';
 import { checkConceptNetRelation } from '../conceptnet';
-import { calculateProgress } from '../embeddings/utils';
 import { toast } from '@/components/ui/use-toast';
 import { pauseBackgroundLoading, resumeBackgroundLoading } from '../embeddings/backgroundLoader';
+import { validateWordWithTarget } from './wordValidationService';
 
 const getDateSeed = () => {
   const today = new Date();
@@ -81,7 +80,6 @@ export const validateWordForChain = async (
     console.log(`Similarity check result: ${similarityValid ? "✅" : "❌"} (${similarity.toFixed(3)})`);
     console.log(`ConceptNet check result: ${conceptNetRelation ? "✅" : "❌"}`);
 
-    // If either check passes, the word is valid
     if (!similarityValid && !conceptNetRelation) {
       console.log(`❌ Word "${word}" failed both previous word validations`);
       return {
@@ -91,21 +89,18 @@ export const validateWordForChain = async (
       };
     }
 
-    // Step 2: Target Word Validation - wait for both checks
+    // Step 2: Target Word Validation using the new service
     console.log(`📊 Step 2: Running target word checks for "${targetWord}"...`);
-    
-    const [conceptNetWithTarget, similarityToTarget] = await Promise.all([
-      checkConceptNetRelation(word, targetWord),
-      cosineSimilarity(word, targetWord)
-    ]);
+    const targetValidation = await validateWordWithTarget(word, targetWord);
 
     console.log(`📊 Target word check results:
-      - ConceptNet: ${conceptNetWithTarget ? "✅ Found" : "❌ Not found"}
-      - Similarity: ${similarityToTarget.toFixed(3)}`);
+      - Similarity: ${targetValidation.similarity.toFixed(3)}
+      - Progress: ${targetValidation.progress}%
+      - Complete: ${targetValidation.isComplete ? "Yes" : "No"}`);
 
     return { 
       isValid: true, 
-      similarityToTarget
+      similarityToTarget: targetValidation.similarity
     };
   } finally {
     resumeBackgroundLoading();

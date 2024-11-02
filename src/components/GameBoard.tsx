@@ -11,6 +11,7 @@ import { GameBoardProps } from "./game/GameBoardTypes";
 import { generateShareText } from "@/lib/utils/share";
 import { toast } from "./ui/use-toast";
 import { loadInitialChunks, startBackgroundLoading } from "@/lib/embeddings/backgroundLoader";
+import { useViewport } from "@/hooks/useViewport";
 
 const GameBoard = ({
   game,
@@ -24,10 +25,7 @@ const GameBoard = ({
   progress,
 }: GameBoardProps) => {
   const [containerRef, setContainerRef] = useState<HTMLDivElement | null>(null);
-  const [visualViewport, setVisualViewport] = useState<{ height: number; width: number }>({
-    height: window.innerHeight,
-    width: window.innerWidth,
-  });
+  const visualViewport = useViewport();
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<number>();
@@ -37,10 +35,7 @@ const GameBoard = ({
     let intervalId: ReturnType<typeof setInterval>;
     
     const initializeBackgroundLoading = async () => {
-      // Start background loading of all chunks
       intervalId = await startBackgroundLoading();
-      
-      // Load initial chunks (0 and 1 for now, can be adjusted based on needs)
       await loadInitialChunks([0, 1]);
     };
     
@@ -65,31 +60,6 @@ const GameBoard = ({
       }
     });
   };
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.visualViewport) {
-        const newHeight = window.visualViewport.height;
-        const newWidth = window.visualViewport.width;
-        console.log('VIEW: Viewport size changed:', { height: newHeight, width: newWidth });
-        setVisualViewport({
-          height: newHeight,
-          width: newWidth,
-        });
-      }
-    };
-
-    window.visualViewport?.addEventListener('resize', handleResize);
-    window.visualViewport?.addEventListener('scroll', handleResize);
-
-    return () => {
-      window.visualViewport?.removeEventListener('resize', handleResize);
-      window.visualViewport?.removeEventListener('scroll', handleResize);
-      if (scrollTimeoutRef.current) {
-        window.cancelAnimationFrame(scrollTimeoutRef.current);
-      }
-    };
-  }, []);
 
   useEffect(() => {
     if (inputRef.current && !game.isComplete) {
