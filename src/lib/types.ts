@@ -9,6 +9,7 @@ export interface GameState {
   wordProgresses: number[];
   isComplete: boolean;
   score: number;
+  initialProgress?: number;
 }
 
 export interface HighScore {
