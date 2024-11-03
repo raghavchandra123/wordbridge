@@ -1,12 +1,10 @@
 import { useState, useRef, useEffect } from "react";
-import { ScrollArea } from "./ui/scroll-area";
 import { Button } from "./ui/button";
 import WordDisplay from "./WordDisplay";
 import HeaderSection from "./game/HeaderSection";
 import WordInput from "./game/WordInput";
 import { GameContainer } from "./game/layout/GameContainer";
-import { THEME_COLORS } from "@/lib/constants";
-import { Share, Shuffle, Lightbulb } from "lucide-react";
+import { Lightbulb } from "lucide-react";
 import { GameBoardProps } from "./game/GameBoardTypes";
 import { generateShareText } from "@/lib/utils/share";
 import { toast } from "./ui/use-toast";
@@ -15,10 +13,9 @@ import { useViewport } from "@/hooks/useViewport";
 import { useProgressManager } from "./game/ProgressManager";
 import { generateHint } from "@/lib/utils/hintGenerator";
 import { findRandomWordPair } from "@/lib/embeddings";
-
-// Since this file is too long, let's split it into smaller components
 import { GameBoardScrollArea } from "./game/GameBoardScrollArea";
 import { GameBoardControls } from "./game/GameBoardControls";
+import { GameControlButtons } from "./game/GameControlButtons";
 
 const GameBoard = ({
   game,
@@ -85,6 +82,16 @@ const GameBoard = ({
     if (index === 0) return 0;
     if (index === game.currentChain.length - 1) return progress;
     return game.wordProgresses[index - 1] || 0;
+  };
+
+  const handleRetry = () => {
+    setGame({
+      ...game,
+      currentChain: [game.startWord],
+      wordProgresses: [],
+      isComplete: false,
+      score: 0
+    });
   };
 
   const handleBackButton = async () => {
@@ -218,20 +225,29 @@ const GameBoard = ({
         inputRef={inputRef}
       />
 
-      <GameBoardControls
-        game={game}
-        currentWord={currentWord}
-        onWordChange={onWordChange}
-        onWordSubmit={onWordSubmit}
-        editingIndex={editingIndex}
-        isChecking={isChecking}
-        handleBackButton={handleBackButton}
-        handleHint={handleHint}
-        handleNewWords={handleNewWords}
-        handleShare={handleShare}
-        isGeneratingHint={isGeneratingHint}
-        inputRef={inputRef}
-      />
+      {game.isComplete ? (
+        <GameControlButtons
+          game={game}
+          handleShare={handleShare}
+          handleRetry={handleRetry}
+          handleNewWords={handleNewWords}
+        />
+      ) : (
+        <GameBoardControls
+          game={game}
+          currentWord={currentWord}
+          onWordChange={onWordChange}
+          onWordSubmit={onWordSubmit}
+          editingIndex={editingIndex}
+          isChecking={isChecking}
+          handleBackButton={handleBackButton}
+          handleHint={handleHint}
+          handleNewWords={handleNewWords}
+          handleShare={handleShare}
+          isGeneratingHint={isGeneratingHint}
+          inputRef={inputRef}
+        />
+      )}
     </GameContainer>
   );
 };
