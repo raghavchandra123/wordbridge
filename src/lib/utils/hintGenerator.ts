@@ -11,7 +11,7 @@ export const generateHint = async (
   const maxAttempts = 200; // Total 200 attempts (100 with stricter threshold, 100 with normal threshold)
   let attempts = 0;
   let requireProgressImprovement = true;
-  let stricterThreshold = true; // First 100 attempts use 1.5x threshold
+  let stricterThreshold = true; // First 100 attempts use 2x threshold
 
   while (attempts < maxAttempts) {
     // After 100 attempts, remove the progress improvement requirement and relax threshold
@@ -33,7 +33,7 @@ export const generateHint = async (
       // Check similarity with previous word
       const prevSimilarity = await cosineSimilarity(randomWord, previousWord);
       const requiredSimilarity = stricterThreshold 
-        ? ADJACENT_WORD_MIN_SIMILARITY * 1.5 
+        ? ADJACENT_WORD_MIN_SIMILARITY * 2 
         : ADJACENT_WORD_MIN_SIMILARITY;
 
       if (prevSimilarity < requiredSimilarity) {
