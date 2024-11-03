@@ -5,7 +5,7 @@ import { WordDictionary } from './types';
 export const findRandomWordPair = async (_dictionary: WordDictionary): Promise<[string, string]> => {
   const wordList = getWordList();
   let attempts = 0;
-  const maxAttempts = 100;
+  const maxAttempts = 300;
   
   while (attempts < maxAttempts) {
     const rawWord1 = wordList[Math.floor(Math.random() * wordList.length)];
