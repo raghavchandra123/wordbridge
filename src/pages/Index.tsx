@@ -133,8 +133,8 @@ const Index = () => {
               Connect the words using similar words
               <Dialog>
                 <DialogTrigger asChild>
-                  <button className="inline-flex items-center px-4 py-2 rounded-md bg-blue-500 hover:bg-blue-600 text-white transition-colors ml-2">
-                    <BookOpen className="w-4 h-4 mr-2" />
+                  <button className="inline-flex items-center px-2 py-1 text-sm rounded-md bg-blue-500 hover:bg-blue-600 text-white transition-colors ml-2">
+                    <BookOpen className="w-3 h-3 mr-1" />
                     Tutorial
                   </button>
                 </DialogTrigger>
