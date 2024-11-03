@@ -6,13 +6,14 @@ import HeaderSection from "./game/HeaderSection";
 import WordInput from "./game/WordInput";
 import { GameContainer } from "./game/layout/GameContainer";
 import { THEME_COLORS } from "@/lib/constants";
-import { Share } from "lucide-react";
+import { Share, Shuffle } from "lucide-react";
 import { GameBoardProps } from "./game/GameBoardTypes";
 import { generateShareText } from "@/lib/utils/share";
 import { toast } from "./ui/use-toast";
 import { loadInitialChunks, startBackgroundLoading } from "@/lib/embeddings/backgroundLoader";
 import { useViewport } from "@/hooks/useViewport";
 import { useProgressManager } from "./game/ProgressManager";
+import { findRandomWordPair } from "@/lib/embeddings/game";
 
 const GameBoard = ({
   game,
@@ -122,6 +123,29 @@ const GameBoard = ({
     }
   };
 
+  const handleNewWords = async () => {
+    try {
+      const [startWord, targetWord] = await findRandomWordPair({});
+      setGame({
+        startWord,
+        targetWord,
+        currentChain: [startWord],
+        wordProgresses: [],
+        isComplete: false,
+        score: 0
+      });
+      toast({
+        description: "New word pair generated!",
+      });
+    } catch (err) {
+      console.error('Failed to generate new words:', err);
+      toast({
+        description: "Failed to generate new words. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const headerHeight = 120;
   const inputSectionHeight = game.isComplete ? 0 : 60;
   const completionButtonsHeight = game.isComplete ? 120 : 0;
@@ -178,15 +202,25 @@ const GameBoard = ({
       </ScrollArea>
 
       {!game.isComplete && (
-        <WordInput
-          currentWord={currentWord}
-          onWordChange={onWordChange}
-          onWordSubmit={onWordSubmit}
-          editingIndex={editingIndex}
-          isChecking={isChecking}
-          onEditCancel={handleBackButton}
-          inputRef={inputRef}
-        />
+        <>
+          <WordInput
+            currentWord={currentWord}
+            onWordChange={onWordChange}
+            onWordSubmit={onWordSubmit}
+            editingIndex={editingIndex}
+            isChecking={isChecking}
+            onEditCancel={handleBackButton}
+            inputRef={inputRef}
+          />
+          <Button 
+            onClick={handleNewWords}
+            variant="outline"
+            className="w-full mt-2"
+          >
+            <Shuffle className="mr-2 h-4 w-4" />
+            New Words
+          </Button>
+        </>
       )}
 
       {game.isComplete && (

@@ -8,15 +8,17 @@ import { Button } from "@/components/ui/button";
 import { GameState } from "@/lib/types";
 import { generateShareText } from "@/lib/utils/share";
 import { toast } from "@/components/ui/use-toast";
-import { Share } from "lucide-react";
+import { Share, Shuffle } from "lucide-react";
+import { findRandomWordPair } from "@/lib/embeddings/game";
 
 interface EndGameDialogProps {
   game: GameState;
   open: boolean;
   onClose: () => void;
+  setGame: (game: GameState) => void;
 }
 
-const EndGameDialog = ({ game, open, onClose }: EndGameDialogProps) => {
+const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => {
   const nextPuzzleTime = new Date();
   nextPuzzleTime.setHours(24, 0, 0, 0);
   
@@ -47,6 +49,30 @@ const EndGameDialog = ({ game, open, onClose }: EndGameDialogProps) => {
     }
   };
 
+  const handleNewWords = async () => {
+    try {
+      const [startWord, targetWord] = await findRandomWordPair({});
+      setGame({
+        startWord,
+        targetWord,
+        currentChain: [startWord],
+        wordProgresses: [],
+        isComplete: false,
+        score: 0
+      });
+      onClose();
+      toast({
+        description: "New word pair generated!",
+      });
+    } catch (err) {
+      console.error('Failed to generate new words:', err);
+      toast({
+        description: "Failed to generate new words. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
@@ -66,6 +92,15 @@ const EndGameDialog = ({ game, open, onClose }: EndGameDialogProps) => {
           >
             <Share className="mr-2 h-4 w-4" />
             Share Result
+          </Button>
+
+          <Button 
+            onClick={handleNewWords}
+            variant="outline"
+            className="w-full"
+          >
+            <Shuffle className="mr-2 h-4 w-4" />
+            New Words
           </Button>
           
           <p className="text-sm text-center text-muted-foreground">
