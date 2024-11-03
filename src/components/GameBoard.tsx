@@ -14,6 +14,7 @@ import { loadInitialChunks, startBackgroundLoading } from "@/lib/embeddings/back
 import { useViewport } from "@/hooks/useViewport";
 import { useProgressManager } from "./game/ProgressManager";
 import { generateHint } from "@/lib/utils/hintGenerator";
+import { findRandomWordPair } from "@/lib/embeddings";
 
 const GameBoard = ({
   game,
@@ -294,4 +295,5 @@ const GameBoard = ({
 };
 
 export default GameBoard;
+
 
