@@ -48,6 +48,14 @@ export const GameBoardControls = ({
         >
           Retry
         </Button>
+        <Button 
+          onClick={handleNewWords}
+          variant="outline"
+          className="w-full"
+        >
+          <Shuffle className="mr-2 h-4 w-4" />
+          New Game
+        </Button>
       </div>
     );
   }
