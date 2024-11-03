@@ -155,6 +155,7 @@ const Index = () => {
         game={game}
         open={showEndGame}
         onClose={() => setShowEndGame(false)}
+        setGame={setGame} // Pass setGame here
       />
     </div>
   );
