@@ -126,13 +126,13 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-[#97BED9]">
       <Card className="max-w-2xl mx-auto rounded-none h-screen bg-[#F5F8FA]">
-        <CardHeader className="space-y-0 pb-2 flex flex-row items-center justify-center">
-          <div className="flex items-center">
+        <CardHeader className="space-y-0 pb-2">
+          <div className="flex justify-center items-center">
             <CardTitle className="text-4xl">Word Bridge</CardTitle>
             <Dialog>
               <DialogTrigger asChild>
-                <button className="p-2 hover:bg-gray-100 rounded-full">
-                  <HelpCircle className="w-6 h-6" />
+                <button className="p-2 ml-2 hover:bg-blue-100 rounded-full bg-blue-50">
+                  <HelpCircle className="w-6 h-6 text-blue-500" />
                 </button>
               </DialogTrigger>
               <DialogContent className="max-w-3xl">
@@ -146,7 +146,7 @@ const Index = () => {
               </DialogContent>
             </Dialog>
           </div>
-          <CardDescription className="text-center text-lg">
+          <CardDescription className="text-center text-lg mt-2">
             Connect the words using similar words
           </CardDescription>
         </CardHeader>
