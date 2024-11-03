@@ -20,6 +20,8 @@ const generateWordEmojis = (word: string, progress: number): string => {
 
 export const generateShareText = (game: GameState): string => {
   const chainLength = game.currentChain.length - 1;
+  const gameUrl = `${window.location.origin}/${game.startWord}/${game.targetWord}`;
+  
   let shareText = `I Connected ${game.startWord.toUpperCase()} to ${game.targetWord.toUpperCase()} in ${chainLength} words!\n\n`;
   
   // Add each word's emojis with the actual words at start and end
@@ -37,7 +39,7 @@ export const generateShareText = (game: GameState): string => {
     }
   }
   
-  shareText += "\nYou can try it here: https://wordbridge.gptengineer.run/";
+  shareText += `\nPlay with these words: ${gameUrl}`;
   
   return shareText;
 };

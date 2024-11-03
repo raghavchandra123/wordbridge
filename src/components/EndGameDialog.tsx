@@ -96,8 +96,7 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
 
           <Button 
             onClick={handleNewWords}
-            variant="outline"
-            className="w-full"
+            className="w-full bg-[#97BED9] hover:bg-[#97BED9]/90 text-white"
           >
             <Shuffle className="mr-2 h-4 w-4" />
             New Words
