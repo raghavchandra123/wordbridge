@@ -20,7 +20,7 @@ const generateWordEmojis = (word: string, progress: number): string => {
 
 export const generateShareText = (game: GameState): string => {
   const chainLength = game.currentChain.length - 1;
-  const gameUrl = `${window.location.origin}/${game.startWord}/${game.targetWord}`;
+  const gameUrl = `${window.location.origin.replace('preview--', '')}/${game.startWord}/${game.targetWord}`;
   
   let shareText = `I Connected ${game.startWord.toUpperCase()} to ${game.targetWord.toUpperCase()} in ${chainLength} steps!\n\n`;
   
