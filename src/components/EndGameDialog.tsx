@@ -49,6 +49,17 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
     }
   };
 
+  const handleRetry = () => {
+    setGame({
+      ...game,
+      currentChain: [game.startWord],
+      wordProgresses: [],
+      isComplete: false,
+      score: 0
+    });
+    onClose();
+  };
+
   const handleNewWords = async () => {
     try {
       const [startWord, targetWord] = await findRandomWordPair({});
@@ -92,7 +103,7 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
           </Button>
 
           <Button 
-            onClick={() => window.location.reload()}
+            onClick={handleRetry}
             className="w-full bg-[#FF8B8B] hover:bg-[#FF8B8B]/90 text-white"
           >
             Retry
