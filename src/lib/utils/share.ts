@@ -22,7 +22,7 @@ export const generateShareText = (game: GameState): string => {
   const chainLength = game.currentChain.length - 1;
   const gameUrl = `${window.location.origin}/${game.startWord}/${game.targetWord}`;
   
-  let shareText = `I Connected ${game.startWord.toUpperCase()} to ${game.targetWord.toUpperCase()} in ${chainLength} words!\n\n`;
+  let shareText = `I Connected ${game.startWord.toUpperCase()} to ${game.targetWord.toUpperCase()} in ${chainLength} steps!\n\n`;
   
   // Add each word's emojis with the actual words at start and end
   for (let i = 1; i < game.currentChain.length; i++) {

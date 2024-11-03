@@ -20,12 +20,14 @@ export const useGameInitialization = (startWord?: string, targetWord?: string) =
       try {
         await loadEmbeddings();
         
-        if (startWord && targetWord && isValidWord(startWord) && isValidWord(targetWord)) {
-          // Initialize with provided words
+        // If both words are provided and valid, use them
+        if (startWord && targetWord && 
+            isValidWord(startWord.toLowerCase()) && 
+            isValidWord(targetWord.toLowerCase())) {
           setGame({
-            startWord,
-            targetWord,
-            currentChain: [startWord],
+            startWord: startWord.toLowerCase(),
+            targetWord: targetWord.toLowerCase(),
+            currentChain: [startWord.toLowerCase()],
             wordProgresses: [],
             isComplete: false,
             score: 0,
