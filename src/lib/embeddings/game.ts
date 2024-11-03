@@ -1,4 +1,4 @@
-import { getWordList } from './loader';
+import { getWordList, getBaseForm } from './loader';
 import { cosineSimilarity } from '../embeddings';
 import { WordDictionary } from './types';
 
@@ -8,8 +8,12 @@ export const findRandomWordPair = async (_dictionary: WordDictionary): Promise<[
   const maxAttempts = 100;
   
   while (attempts < maxAttempts) {
-    const word1 = wordList[Math.floor(Math.random() * wordList.length)];
-    const word2 = wordList[Math.floor(Math.random() * wordList.length)];
+    const rawWord1 = wordList[Math.floor(Math.random() * wordList.length)];
+    const rawWord2 = wordList[Math.floor(Math.random() * wordList.length)];
+    
+    // Get base forms
+    const word1 = getBaseForm(rawWord1) || rawWord1;
+    const word2 = getBaseForm(rawWord2) || rawWord2;
     
     if (word1 === word2) continue;
     
