@@ -8,15 +8,16 @@ export const generateHint = async (
   usedWords: string[]
 ): Promise<string | null> => {
   const commonWords = getWordList();
-  const maxAttempts = 200; // Total 200 attempts (100 with stricter threshold, 100 with normal threshold)
+  const maxAttempts = 300; // Total 300 attempts (3 phases of 100 attempts each)
   let attempts = 0;
   let requireProgressImprovement = true;
-  let stricterThreshold = true; // First 100 attempts use 2x threshold
+  let stricterThreshold = true;
 
   while (attempts < maxAttempts) {
-    // After 100 attempts, remove the progress improvement requirement and relax threshold
+    // Phase transitions at 100 and 200 attempts
     if (attempts === 100) {
       requireProgressImprovement = false;
+    } else if (attempts === 200) {
       stricterThreshold = false;
     }
 
