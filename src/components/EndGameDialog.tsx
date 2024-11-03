@@ -84,8 +84,15 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
           </p>
           
           <Button 
-            onClick={handleShare}
+            onClick={() => window.location.reload()}
             className="w-full bg-[#FF8B8B] hover:bg-[#FF8B8B]/90 text-white"
+          >
+            Retry Today's Puzzle
+          </Button>
+
+          <Button 
+            onClick={handleShare}
+            className="w-full bg-[#97BED9] hover:bg-[#97BED9]/90 text-white"
           >
             <Share className="mr-2 h-4 w-4" />
             Share Result
@@ -93,7 +100,8 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
 
           <Button 
             onClick={handleNewWords}
-            className="w-full bg-[#97BED9] hover:bg-[#97BED9]/90 text-white"
+            variant="outline"
+            className="w-full"
           >
             <Shuffle className="mr-2 h-4 w-4" />
             New Words
