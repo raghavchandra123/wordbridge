@@ -131,24 +131,24 @@ const Index = () => {
           <div className="flex flex-col items-center justify-center space-y-2">
             <CardDescription className="text-center text-lg">
               Connect the words using similar words
+              <Dialog>
+                <DialogTrigger asChild>
+                  <button className="inline-flex items-center px-4 py-2 rounded-md bg-blue-500 hover:bg-blue-600 text-white transition-colors ml-2">
+                    <BookOpen className="w-4 h-4 mr-2" />
+                    Tutorial
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="max-w-3xl">
+                  <ScrollArea className="h-[80vh]">
+                    <img 
+                      src="/images/tutorial.jpg" 
+                      alt="Tutorial" 
+                      className="w-full"
+                    />
+                  </ScrollArea>
+                </DialogContent>
+              </Dialog>
             </CardDescription>
-            <Dialog>
-              <DialogTrigger asChild>
-                <button className="inline-flex items-center px-4 py-2 rounded-md bg-blue-500 hover:bg-blue-600 text-white transition-colors">
-                  <BookOpen className="w-4 h-4 mr-2" />
-                  Tutorial
-                </button>
-              </DialogTrigger>
-              <DialogContent className="max-w-3xl">
-                <ScrollArea className="h-[80vh]">
-                  <img 
-                    src="/images/tutorial.jpg" 
-                    alt="Tutorial" 
-                    className="w-full"
-                  />
-                </ScrollArea>
-              </DialogContent>
-            </Dialog>
           </div>
         </CardHeader>
         <CardContent>
