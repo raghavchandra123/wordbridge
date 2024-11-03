@@ -8,14 +8,16 @@ export const generateHint = async (
   usedWords: string[]
 ): Promise<string | null> => {
   const commonWords = getWordList();
-  const maxAttempts = 200; // Total 200 attempts (100 with progress check, 100 without)
+  const maxAttempts = 200; // Total 200 attempts (100 with stricter threshold, 100 with normal threshold)
   let attempts = 0;
   let requireProgressImprovement = true;
+  let stricterThreshold = true; // First 100 attempts use 1.5x threshold
 
   while (attempts < maxAttempts) {
-    // After 100 attempts, remove the progress improvement requirement
+    // After 100 attempts, remove the progress improvement requirement and relax threshold
     if (attempts === 100) {
       requireProgressImprovement = false;
+      stricterThreshold = false;
     }
 
     // Randomly select a word
@@ -30,7 +32,11 @@ export const generateHint = async (
     try {
       // Check similarity with previous word
       const prevSimilarity = await cosineSimilarity(randomWord, previousWord);
-      if (prevSimilarity < ADJACENT_WORD_MIN_SIMILARITY) {
+      const requiredSimilarity = stricterThreshold 
+        ? ADJACENT_WORD_MIN_SIMILARITY * 1.5 
+        : ADJACENT_WORD_MIN_SIMILARITY;
+
+      if (prevSimilarity < requiredSimilarity) {
         attempts++;
         continue;
       }

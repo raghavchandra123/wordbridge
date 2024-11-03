@@ -164,9 +164,15 @@ const GameBoard = ({
       );
 
       if (hint) {
-        toast({
-          description: `Hint: Try using the word "${hint}"`,
-        });
+        // Instead of showing a toast with the hint, we'll submit it directly
+        onWordChange(hint);
+        // Submit the form after a short delay to ensure the word is set
+        setTimeout(() => {
+          const form = document.querySelector('form');
+          if (form) {
+            form.dispatchEvent(new Event('submit', { cancelable: true }));
+          }
+        }, 100);
       } else {
         toast({
           description: "Couldn't find a hint at this time. Try a different word!",
@@ -295,5 +301,3 @@ const GameBoard = ({
 };
 
 export default GameBoard;
-
-
