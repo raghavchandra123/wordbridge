@@ -6,14 +6,14 @@ import HeaderSection from "./game/HeaderSection";
 import WordInput from "./game/WordInput";
 import { GameContainer } from "./game/layout/GameContainer";
 import { THEME_COLORS } from "@/lib/constants";
-import { Share, Shuffle } from "lucide-react";
+import { Share, Shuffle, Lightbulb } from "lucide-react";
 import { GameBoardProps } from "./game/GameBoardTypes";
 import { generateShareText } from "@/lib/utils/share";
 import { toast } from "./ui/use-toast";
 import { loadInitialChunks, startBackgroundLoading } from "@/lib/embeddings/backgroundLoader";
 import { useViewport } from "@/hooks/useViewport";
 import { useProgressManager } from "./game/ProgressManager";
-import { findRandomWordPair } from "@/lib/embeddings/game";
+import { generateHint } from "@/lib/utils/hintGenerator";
 
 const GameBoard = ({
   game,
@@ -27,6 +27,7 @@ const GameBoard = ({
   progress,
 }: GameBoardProps) => {
   const [containerRef, setContainerRef] = useState<HTMLDivElement | null>(null);
+  const [isGeneratingHint, setIsGeneratingHint] = useState(false);
   const visualViewport = useViewport();
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -146,6 +147,42 @@ const GameBoard = ({
     }
   };
 
+  const handleHint = async () => {
+    if (isGeneratingHint) return;
+    setIsGeneratingHint(true);
+
+    try {
+      const previousWord = game.currentChain[game.currentChain.length - 1];
+      const currentProgress = game.wordProgresses[game.wordProgresses.length - 1] || 0;
+      
+      const hint = await generateHint(
+        previousWord,
+        game.targetWord,
+        currentProgress,
+        game.currentChain
+      );
+
+      if (hint) {
+        toast({
+          description: `Hint: Try using the word "${hint}"`,
+        });
+      } else {
+        toast({
+          description: "Couldn't find a hint at this time. Try a different word!",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error generating hint:', error);
+      toast({
+        description: "Error generating hint. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingHint(false);
+    }
+  };
+
   const headerHeight = 120;
   const inputSectionHeight = game.isComplete ? 0 : 60;
   const completionButtonsHeight = game.isComplete ? 120 : 0;
@@ -212,14 +249,25 @@ const GameBoard = ({
             onEditCancel={handleBackButton}
             inputRef={inputRef}
           />
-          <Button 
-            onClick={handleNewWords}
-            variant="outline"
-            className="w-full mt-2"
-          >
-            <Shuffle className="mr-2 h-4 w-4" />
-            New Words
-          </Button>
+          <div className="flex gap-2 mt-2">
+            <Button 
+              onClick={handleHint}
+              variant="outline"
+              className="flex-1"
+              disabled={isGeneratingHint}
+            >
+              <Lightbulb className="mr-2 h-4 w-4" />
+              {isGeneratingHint ? "Finding Hint..." : "Hint"}
+            </Button>
+            <Button 
+              onClick={handleNewWords}
+              variant="outline"
+              className="flex-1"
+            >
+              <Shuffle className="mr-2 h-4 w-4" />
+              New Words
+            </Button>
+          </div>
         </>
       )}
 
@@ -246,3 +294,4 @@ const GameBoard = ({
 };
 
 export default GameBoard;
+
