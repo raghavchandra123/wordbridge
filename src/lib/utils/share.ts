@@ -33,7 +33,7 @@ export const generateShareText = (game: GameState): string => {
     if (i === 1) {
       shareText += `${game.startWord.toUpperCase()}\n${emojis}\n`;
     } else if (i === game.currentChain.length - 1) {
-      shareText += `${emojis}\n${game.targetWord.toUpperCase()}\n`;
+      shareText += `${emojis}\n${game.targetWord.toUpperCase()}\n`; // Ensure target word is displayed
     } else {
       shareText += `${emojis}\n`;
     }
