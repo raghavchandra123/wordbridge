@@ -1,12 +1,7 @@
 import { getWordList } from '../embeddings/loader';
 import { cosineSimilarity } from '../embeddings';
 import { GameState } from '../types';
-import { 
-  WORD_PAIR_MIN_SIMILARITY, 
-  ADJACENT_WORD_MIN_SIMILARITY,
-  TARGET_WORD_MIN_SIMILARITY,
-} from '../constants';
-import { checkConceptNetRelation } from '../conceptnet';
+import { WORD_PAIR_MIN_SIMILARITY } from '../constants';
 import { toast } from '@/components/ui/use-toast';
 import { pauseBackgroundLoading, resumeBackgroundLoading } from '../embeddings/backgroundLoader';
 import { validateWordWithTarget, validateWordWithPrevious } from './wordValidationService';
@@ -63,18 +58,15 @@ export const validateWordForChain = async (
   previousWord: string,
   targetWord: string
 ): Promise<{ isValid: boolean; similarityToTarget: number; message?: string }> => {
-  console.log(`🔍 Starting validation sequence for word "${word}":
-    - Previous word: "${previousWord}"
-    - Target word: "${targetWord}"`);
+  console.log(`🔍 Validating word "${word}" with previous word "${previousWord}"`);
   
   pauseBackgroundLoading();
   
   try {
-    // First check previous word - this will resolve as soon as EITHER check passes
     const previousValidation = await validateWordWithPrevious(word, previousWord);
     
     if (!previousValidation.isValid) {
-      console.log(`❌ Word "${word}" failed previous word validations`);
+      console.log(`❌ Word "${word}" not similar enough to "${previousWord}"`);
       return {
         isValid: false,
         similarityToTarget: 0,
@@ -82,10 +74,8 @@ export const validateWordForChain = async (
       };
     }
 
-    // Start both target word checks in parallel
     const targetValidation = await validateWordWithTarget(word, targetWord);
     
-    // Word is ALWAYS valid at this point
     return { 
       isValid: true,
       similarityToTarget: targetValidation.similarity
