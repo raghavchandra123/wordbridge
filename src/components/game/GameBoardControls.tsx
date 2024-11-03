@@ -36,18 +36,17 @@ export const GameBoardControls = ({
     return (
       <div className="flex flex-col gap-2">
         <Button 
+          onClick={handleShare}
+          className="w-full bg-[#97BED9] hover:bg-[#97BED9]/90 text-white"
+        >
+          <Share className="mr-2 h-4 w-4" />
+          Share
+        </Button>
+        <Button 
           onClick={() => window.location.reload()}
           className="w-full bg-[#FF8B8B] hover:bg-[#FF8B8B]/90 text-white"
         >
           Retry
-        </Button>
-        <Button 
-          onClick={handleShare}
-          variant="outline"
-          className="w-full"
-        >
-          <Share className="mr-2 h-4 w-4" />
-          Share Result
         </Button>
       </div>
     );
@@ -80,7 +79,7 @@ export const GameBoardControls = ({
           className="flex-1"
         >
           <Shuffle className="mr-2 h-4 w-4" />
-          New Words
+          New Game
         </Button>
       </div>
     </>
