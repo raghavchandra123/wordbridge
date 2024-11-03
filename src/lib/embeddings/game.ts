@@ -15,7 +15,7 @@ export const findRandomWordPair = async (_dictionary: WordDictionary): Promise<[
     
     const similarity = await cosineSimilarity(word1, word2);
     
-    if (similarity < 0.1) {
+    if (similarity < 0) {
       return [word1, word2];
     }
     
