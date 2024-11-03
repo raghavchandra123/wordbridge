@@ -24,22 +24,20 @@ export const generateShareText = (game: GameState): string => {
   
   let shareText = `I Connected ${game.startWord.toUpperCase()} to ${game.targetWord.toUpperCase()} in ${chainLength} steps!\n\n`;
   
-  // Add each word's emojis with the actual words at start and end
+  // Add start word
+  shareText += `${game.startWord.toUpperCase()}\n`;
+  
+  // Add each word's emojis
   for (let i = 1; i < game.currentChain.length; i++) {
-    const word = game.currentChain[i];
     const progress = i === game.currentChain.length - 1 ? 100 : game.wordProgresses[i - 1];
-    const emojis = generateWordEmojis(word, progress);
-    
-    if (i === 1) {
-      shareText += `${game.startWord.toUpperCase()}\n${emojis}\n`;
-    } else if (i === game.currentChain.length - 1) {
-      shareText += `${emojis}\n${game.targetWord.toUpperCase()}\n`; // Ensure target word is displayed
-    } else {
-      shareText += `${emojis}\n`;
-    }
+    const emojis = generateWordEmojis(game.currentChain[i], progress);
+    shareText += `${emojis}\n`;
   }
   
-  shareText += `\nPlay with these words: ${gameUrl}`;
+  // Add target word after the last emoji line
+  shareText += `${game.targetWord.toUpperCase()}\n\n`;
+  
+  shareText += `Play with these words: ${gameUrl}`;
   
   return shareText;
 };
