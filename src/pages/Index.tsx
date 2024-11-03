@@ -11,6 +11,9 @@ import GameBoard from "@/components/GameBoard";
 import { saveGameProgress } from "@/lib/storage/gameStorage";
 import { TARGET_WORD_MIN_SIMILARITY } from "@/lib/constants";
 import { calculateProgress } from "@/lib/embeddings/utils";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { HelpCircle } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const Index = () => {
   const { startWord, targetWord } = useParams();
@@ -123,11 +126,29 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-[#97BED9]">
       <Card className="max-w-2xl mx-auto rounded-none h-screen bg-[#F5F8FA]">
-        <CardHeader className="space-y-0 pb-2">
-          <CardTitle className="text-4xl text-center">Word Bridge</CardTitle>
-          <CardDescription className="text-center text-lg">
-            Connect the words using similar words
-          </CardDescription>
+        <CardHeader className="space-y-0 pb-2 flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-4xl text-center">Word Bridge</CardTitle>
+            <CardDescription className="text-center text-lg">
+              Connect the words using similar words
+            </CardDescription>
+          </div>
+          <Dialog>
+            <DialogTrigger asChild>
+              <button className="p-2 hover:bg-gray-100 rounded-full">
+                <HelpCircle className="w-6 h-6" />
+              </button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl">
+              <ScrollArea className="h-[80vh]">
+                <img 
+                  src="/images/tutorial.jpg" 
+                  alt="Tutorial" 
+                  className="w-full"
+                />
+              </ScrollArea>
+            </DialogContent>
+          </Dialog>
         </CardHeader>
         <CardContent>
           <GameBoard
