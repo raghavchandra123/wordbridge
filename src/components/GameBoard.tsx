@@ -16,6 +16,10 @@ import { useProgressManager } from "./game/ProgressManager";
 import { generateHint } from "@/lib/utils/hintGenerator";
 import { findRandomWordPair } from "@/lib/embeddings";
 
+// Since this file is too long, let's split it into smaller components
+import { GameBoardScrollArea } from "./game/GameBoardScrollArea";
+import { GameBoardControls } from "./game/GameBoardControls";
+
 const GameBoard = ({
   game,
   setGame,
@@ -90,7 +94,6 @@ const GameBoard = ({
       const newChain = [...game.currentChain];
       newChain.pop();
       
-      // Recalculate all progresses when removing a word
       const newProgresses = await recalculateChainProgress(newChain);
       
       setGame({
@@ -136,9 +139,6 @@ const GameBoard = ({
         isComplete: false,
         score: 0
       });
-      toast({
-        description: "New word pair generated!",
-      });
     } catch (err) {
       console.error('Failed to generate new words:', err);
       toast({
@@ -164,9 +164,7 @@ const GameBoard = ({
       );
 
       if (hint) {
-        // Instead of showing a toast with the hint, we'll submit it directly
         onWordChange(hint);
-        // Submit the form after a short delay to ensure the word is set
         setTimeout(() => {
           const form = document.querySelector('form');
           if (form) {
@@ -209,93 +207,31 @@ const GameBoard = ({
         containerWidth={containerWidth}
       />
 
-      <ScrollArea 
+      <GameBoardScrollArea
         ref={scrollAreaRef}
-        className="flex-grow min-h-0 rounded-md border"
-        style={{ 
-          height: `${maxScrollHeight}px`,
-          minHeight: '60px',
-          maxHeight: `${maxScrollHeight}px`
-        }}
-      >
-        <div className="space-y-0.5 p-1">
-          {game.currentChain.map((word, index) => (
-            <Button
-              key={`${word}-${index}`}
-              variant="ghost"
-              className="w-full py-0.5 text-center font-medium transition-colors hover:bg-opacity-10"
-              onClick={() => {
-                onWordClick(index === editingIndex ? null : index);
-                setTimeout(() => inputRef.current?.focus(), 0);
-              }}
-              disabled={index === 0 || game.isComplete}
-              style={{ 
-                opacity: index === 0 ? 1 : undefined,
-                pointerEvents: index === 0 ? 'none' : undefined,
-                color: THEME_COLORS.TEXT.PRIMARY
-              }}
-            >
-              <WordDisplay 
-                word={word} 
-                progress={getWordProgress(index)}
-                containerWidth={containerWidth} 
-              />
-            </Button>
-          ))}
-        </div>
-      </ScrollArea>
+        maxScrollHeight={maxScrollHeight}
+        game={game}
+        editingIndex={editingIndex}
+        onWordClick={onWordClick}
+        getWordProgress={getWordProgress}
+        containerWidth={containerWidth}
+        inputRef={inputRef}
+      />
 
-      {!game.isComplete && (
-        <>
-          <WordInput
-            currentWord={currentWord}
-            onWordChange={onWordChange}
-            onWordSubmit={onWordSubmit}
-            editingIndex={editingIndex}
-            isChecking={isChecking}
-            onEditCancel={handleBackButton}
-            inputRef={inputRef}
-          />
-          <div className="flex gap-2 mt-2">
-            <Button 
-              onClick={handleHint}
-              variant="outline"
-              className="flex-1"
-              disabled={isGeneratingHint}
-            >
-              <Lightbulb className="mr-2 h-4 w-4" />
-              {isGeneratingHint ? "Finding Hint..." : "Hint"}
-            </Button>
-            <Button 
-              onClick={handleNewWords}
-              variant="outline"
-              className="flex-1"
-            >
-              <Shuffle className="mr-2 h-4 w-4" />
-              New Words
-            </Button>
-          </div>
-        </>
-      )}
-
-      {game.isComplete && (
-        <div className="flex flex-col gap-2">
-          <Button 
-            onClick={() => window.location.reload()}
-            className="w-full bg-[#FF8B8B] hover:bg-[#FF8B8B]/90 text-white"
-          >
-            Retry
-          </Button>
-          <Button 
-            onClick={handleShare}
-            variant="outline"
-            className="w-full"
-          >
-            <Share className="mr-2 h-4 w-4" />
-            Share Result
-          </Button>
-        </div>
-      )}
+      <GameBoardControls
+        game={game}
+        currentWord={currentWord}
+        onWordChange={onWordChange}
+        onWordSubmit={onWordSubmit}
+        editingIndex={editingIndex}
+        isChecking={isChecking}
+        handleBackButton={handleBackButton}
+        handleHint={handleHint}
+        handleNewWords={handleNewWords}
+        handleShare={handleShare}
+        isGeneratingHint={isGeneratingHint}
+        inputRef={inputRef}
+      />
     </GameContainer>
   );
 };

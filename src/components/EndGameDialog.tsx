@@ -61,9 +61,6 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
         score: 0
       });
       onClose();
-      toast({
-        description: "New word pair generated!",
-      });
     } catch (err) {
       console.error('Failed to generate new words:', err);
       toast({
