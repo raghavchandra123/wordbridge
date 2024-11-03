@@ -12,8 +12,9 @@ import { saveGameProgress } from "@/lib/storage/gameStorage";
 import { TARGET_WORD_MIN_SIMILARITY } from "@/lib/constants";
 import { calculateProgress } from "@/lib/embeddings/utils";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { HelpCircle } from "lucide-react";
+import { HelpCircle } from "lucide-react"; // This will be replaced
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { BookOpen } from "lucide-react"; // Importing the new icon
 
 const Index = () => {
   const { startWord, targetWord } = useParams();
@@ -132,7 +133,7 @@ const Index = () => {
             <Dialog>
               <DialogTrigger asChild>
                 <button className="p-2 ml-2 hover:bg-blue-100 rounded-full bg-blue-50">
-                  <HelpCircle className="w-6 h-6 text-blue-500" />
+                  <BookOpen className="w-6 h-6 text-blue-500" /> {/* Updated icon */}
                 </button>
               </DialogTrigger>
               <DialogContent className="max-w-3xl">
@@ -148,6 +149,10 @@ const Index = () => {
           </div>
           <CardDescription className="text-center text-lg mt-2">
             Connect the words using similar words
+            <div className="flex items-center">
+              <BookOpen className="w-4 h-4 text-blue-500 ml-1" /> {/* Tutorial icon moved here */}
+              <span className="ml-1">Tutorial</span> {/* Renamed */}
+            </div>
           </CardDescription>
         </CardHeader>
         <CardContent>
