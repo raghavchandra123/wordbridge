@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { GameState } from "@/lib/types";
+import { supabase } from "@/integrations/supabase/client";
 
 interface EndGameDialogProps {
   game: GameState;
@@ -34,7 +35,9 @@ export default function EndGameDialog({ game, open, onClose, setGame }: EndGameD
       }
     };
     
-    fetchUserLevel();
+    if (open) {
+      fetchUserLevel();
+    }
   }, [session?.user?.id, open]);
 
   return (
@@ -44,9 +47,9 @@ export default function EndGameDialog({ game, open, onClose, setGame }: EndGameD
           <DialogTitle className="text-center">
             Level {userLevel} - Game Complete!
           </DialogTitle>
-          <div className="mt-2 text-center">
-            <p>Your final score: {game.score}</p>
-            <p>Words used: {game.currentChain.join(', ')}</p>
+          <div className="mt-2 text-center space-y-2">
+            <p className="text-sm text-muted-foreground">Your final score: {game.score}</p>
+            <p className="text-sm text-muted-foreground">Words used: {game.currentChain.join(' → ')}</p>
           </div>
         </DialogHeader>
       </DialogContent>
