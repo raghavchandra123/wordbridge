@@ -24,12 +24,12 @@ export default function LeaderboardPage() {
     const fetchLeaderboard = async () => {
       const today = new Date().toISOString().split('T')[0];
       
-      // Get today's scores with user profiles
       const { data: todayScores, error: todayError } = await supabase
         .from('daily_scores')
         .select(`
           score,
-          profiles!inner (
+          user_id,
+          profiles (
             username,
             full_name,
             avatar_url
@@ -43,8 +43,12 @@ export default function LeaderboardPage() {
         return;
       }
 
-      // Get average scores for these users
-      const userIds = todayScores?.map((score: any) => score.profiles.id) || [];
+      if (!todayScores?.length) {
+        setLeaderboard([]);
+        return;
+      }
+
+      const userIds = todayScores.map(score => score.user_id);
       const { data: statsData, error: statsError } = await supabase
         .from('user_statistics')
         .select('user_id, total_games, total_score')
@@ -55,20 +59,20 @@ export default function LeaderboardPage() {
         return;
       }
 
-      const processedData = todayScores?.map((entry: any) => {
-        const userStats = statsData?.find(stat => stat.user_id === entry.profiles.id);
+      const processedData = todayScores.map((entry: any) => {
+        const userStats = statsData?.find(stat => stat.user_id === entry.user_id);
         const averageScore = userStats && userStats.total_games > 0
           ? Number((userStats.total_score / userStats.total_games).toFixed(2))
-          : null;
+          : 0;
 
         return {
           username: entry.profiles.username,
           full_name: entry.profiles.full_name || entry.profiles.username,
           avatar_url: entry.profiles.avatar_url,
           score: entry.score,
-          average_score: averageScore || 0
+          average_score: averageScore
         };
-      }) || [];
+      });
 
       setLeaderboard(processedData);
     };
@@ -109,13 +113,13 @@ export default function LeaderboardPage() {
             Back to Game
           </Button>
           <CardTitle className="text-2xl text-center">Leaderboard</CardTitle>
-          <div className="w-20" /> {/* Spacer for alignment */}
+          <div className="w-20" />
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-[70vh]">
             <div className="space-y-4">
               <div className="grid grid-cols-[1fr_auto_auto] gap-4 px-3 py-2 font-semibold text-gray-600">
-                <div>Player</div>
+                <div>Name</div>
                 <div className="text-right">Today's Score</div>
                 <div className="text-right">Average Score</div>
               </div>

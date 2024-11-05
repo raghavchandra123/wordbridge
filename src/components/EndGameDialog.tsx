@@ -1,25 +1,7 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { GameState } from "@/lib/types";
-import { generateShareText } from "@/lib/utils/share";
-import { toast } from "@/components/ui/use-toast";
-import { Share, Shuffle } from "lucide-react";
-import { findRandomWordPair } from "@/lib/embeddings/game";
-import { useNavigate } from "react-router-dom";
-import { TopScores } from "./leaderboard/TopScores";
-import { useAuth } from "./auth/AuthProvider";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Progress } from "./ui/progress";
-import { addDays, startOfDay } from 'date-fns';
-import { toZonedTime } from 'date-fns-tz';
 
 interface EndGameDialogProps {
   game: GameState;
@@ -28,177 +10,46 @@ interface EndGameDialogProps {
   setGame: (game: GameState) => void;
 }
 
-interface UserProfile {
-  username: string;
-  full_name: string;
-  avatar_url: string;
-  level: number;
-  experience: number;
-}
-
-const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => {
-  const navigate = useNavigate();
+export default function EndGameDialog({ game, open, onClose, setGame }: EndGameDialogProps) {
   const { session } = useAuth();
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [userLevel, setUserLevel] = useState<number>(1);
   
   useEffect(() => {
-    if (session?.user?.id) {
-      supabase
+    const fetchUserLevel = async () => {
+      if (!session?.user?.id) return;
+      
+      const { data, error } = await supabase
         .from('profiles')
-        .select('username, full_name, avatar_url, level, experience')
+        .select('level')
         .eq('id', session.user.id)
-        .single()
-        .then(({ data, error }) => {
-          if (!error && data) {
-            setUserProfile(data);
-          }
-        });
-    }
-  }, [session?.user?.id]);
-
-  // Calculate next puzzle time in GMT
-  const now = new Date();
-  const gmtNow = toZonedTime(now, 'GMT');
-  const nextPuzzleTime = addDays(startOfDay(gmtNow), 1);
-  
-  const timeUntilNext = nextPuzzleTime.getTime() - gmtNow.getTime();
-  const hoursUntilNext = Math.floor(timeUntilNext / (1000 * 60 * 60));
-  const minutesUntilNext = Math.floor((timeUntilNext % (1000 * 60 * 60)) / (1000 * 60));
-
-  const getProgressToNextLevel = (experience: number) => {
-    const currentLevelExp = (Math.floor(experience / 100)) * 100;
-    return ((experience - currentLevelExp) / 100) * 100;
-  };
-
-  const getLevelColor = (level: number) => {
-    if (level >= 10) return 'bg-purple-500';
-    if (level >= 5) return 'bg-blue-500';
-    return 'bg-green-500';
-  };
-
-  const handleShare = async () => {
-    const shareText = generateShareText(game);
-    
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          text: shareText,
-        });
-      } else {
-        await navigator.clipboard.writeText(shareText);
-        toast({
-          description: "Copied to clipboard!",
-        });
+        .single();
+        
+      if (error) {
+        console.error('Error fetching user level:', error);
+        return;
       }
-    } catch (err) {
-      console.error('Share failed:', err);
-      toast({
-        description: "Sharing failed. Please try again",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleRetry = () => {
-    setGame({
-      ...game,
-      currentChain: [game.startWord],
-      wordProgresses: [],
-      isComplete: false,
-      score: 0
-    });
-    onClose();
-  };
-
-  const handleNewWords = async () => {
-    try {
-      const [startWord, targetWord] = await findRandomWordPair({});
-      setGame({
-        startWord,
-        targetWord,
-        currentChain: [startWord],
-        wordProgresses: [],
-        isComplete: false,
-        score: 0
-      });
-      onClose();
-    } catch (err) {
-      console.error('Failed to generate new words:', err);
-      toast({
-        description: "Failed to generate new words. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
+      
+      if (data) {
+        setUserLevel(data.level);
+      }
+    };
+    
+    fetchUserLevel();
+  }, [session?.user?.id, open]);
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-center">
-            Congratulations!
+          <DialogTitle className="text-center">
+            Level {userLevel} - Game Complete!
           </DialogTitle>
-          <DialogDescription className="text-center">
-            You connected {game.startWord} to {game.targetWord} in {game.score} steps!
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="space-y-4">
-          {userProfile && (
-            <div className="flex flex-col items-center space-y-2 py-4">
-              <div className="relative">
-                <Avatar className={`h-16 w-16 ring-2 ${getLevelColor(userProfile.level)}`}>
-                  <AvatarImage src={userProfile.avatar_url} />
-                  <AvatarFallback>{userProfile.username?.[0]}</AvatarFallback>
-                </Avatar>
-                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 rounded-full">
-                  Level {userProfile.level}
-                </div>
-              </div>
-              <div className="w-full mt-4">
-                <Progress value={getProgressToNextLevel(userProfile.experience)} className="h-2" />
-                <p className="text-sm text-center mt-1 text-gray-600">
-                  {userProfile.experience % 100}/100 XP to next level
-                </p>
-              </div>
-            </div>
-          )}
-          
-          <Button 
-            onClick={handleShare}
-            className="w-full bg-[#97BED9] hover:bg-[#97BED9]/90 text-white"
-          >
-            <Share className="mr-2 h-4 w-4" />
-            Share
-          </Button>
-
-          <Button 
-            onClick={handleRetry}
-            className="w-full bg-[#FF8B8B] hover:bg-[#FF8B8B]/90 text-white"
-          >
-            Retry
-          </Button>
-
-          <Button 
-            onClick={handleNewWords}
-            variant="outline"
-            className="w-full"
-          >
-            <Shuffle className="mr-2 h-4 w-4" />
-            New Game
-          </Button>
-
-          <div className="border-t pt-4">
-            <TopScores />
+          <div className="mt-2 text-center">
+            <p>Your final score: {game.score}</p>
+            <p>Words used: {game.currentChain.join(', ')}</p>
           </div>
-          
-          <p className="text-sm text-center text-muted-foreground">
-            Next puzzle in {hoursUntilNext}h {minutesUntilNext}m
-          </p>
-        </div>
+        </DialogHeader>
       </DialogContent>
     </Dialog>
   );
-};
-
-export default EndGameDialog;
+}
