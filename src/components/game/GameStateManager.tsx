@@ -31,8 +31,8 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
         if (isDaily) {
           await updateDailyScore(session.user.id, score);
           
-          // Update experience
-          const experienceGain = Math.round(100 / score);
+          // Update experience - ensure it's an integer
+          const experienceGain = Math.floor(100 / score);
           const { error: expError } = await supabase
             .from('profiles')
             .update({ experience: experienceGain })
