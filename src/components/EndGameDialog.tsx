@@ -1,6 +1,7 @@
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -137,12 +138,12 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
           <DialogTitle className="text-2xl font-bold text-center">
             Congratulations!
           </DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <p className="text-lg text-center">
+          <DialogDescription className="text-center">
             You connected {game.startWord} to {game.targetWord} in {game.score} steps!
-          </p>
-
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="space-y-4">
           {userProfile && (
             <div className="flex flex-col items-center space-y-2 py-4">
               <div className="relative">

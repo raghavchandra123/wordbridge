@@ -42,7 +42,7 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
           )
         `)
         .eq('daily_scores.date', today)
-        .order('daily_scores.score')
+        .order('daily_scores.score', { ascending: true })
         .limit(3);
 
       if (error) {
