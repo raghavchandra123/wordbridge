@@ -21,10 +21,6 @@ export default function LeaderboardPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!session) {
-      return;
-    }
-
     const fetchLeaderboard = async () => {
       const today = new Date().toISOString().split('T')[0];
       
@@ -69,7 +65,9 @@ export default function LeaderboardPage() {
       setLeaderboard(processedData);
     };
 
-    fetchLeaderboard();
+    if (session) {
+      fetchLeaderboard();
+    }
   }, [session]);
 
   const getLevelColor = (level: number) => {
@@ -94,20 +92,12 @@ export default function LeaderboardPage() {
         {!session ? (
           <CardContent className="text-center py-8">
             <p className="mb-4">Please log in to view the leaderboard</p>
-            <div className="flex justify-center gap-4">
-              <Button
-                onClick={() => navigate('/')}
-                className="bg-[#97BED9] hover:bg-[#97BED9]/90 text-white"
-              >
-                Back to Game
-              </Button>
-              <Button
-                onClick={() => navigate('/login')}
-                className="bg-[#97BED9] hover:bg-[#97BED9]/90 text-white"
-              >
-                Login
-              </Button>
-            </div>
+            <Button
+              onClick={() => navigate('/')}
+              className="bg-[#97BED9] hover:bg-[#97BED9]/90 text-white"
+            >
+              Back to Game
+            </Button>
           </CardContent>
         ) : (
           <CardContent>

@@ -3,20 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { CardTitle } from "@/components/ui/card";
 import { THEME_COLORS } from "@/lib/constants";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { useState } from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 export const GameHeader = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
-  const [showTutorial, setShowTutorial] = useState(false);
 
   return (
     <div className="space-y-2 pb-2">
       <div className="flex justify-between items-center">
         <button
-          onClick={() => setShowTutorial(true)}
+          onClick={() => {}}
           className="flex items-center justify-center w-8 h-8 rounded-md"
           style={{ 
             backgroundColor: `${THEME_COLORS.GRADIENT.MID1}`,
@@ -70,26 +66,13 @@ export const GameHeader = () => {
         </div>
       </div>
 
-      <Dialog open={showTutorial} onOpenChange={setShowTutorial}>
-        <DialogContent className="max-w-2xl">
-          <ScrollArea className="h-[80vh]">
-            <div className="space-y-4 p-4">
-              <h2 className="text-2xl font-bold">How to Play Word Bridge</h2>
-              <img 
-                src="/images/tutorial.jpg" 
-                alt="Tutorial" 
-                className="w-full rounded-lg shadow-md"
-              />
-              <div className="space-y-4">
-                <p>Connect the starting word to the target word using similar words.</p>
-                <p>Each word in your chain should be similar to both its neighbors.</p>
-                <p>The progress bar shows how close your current word is to the target.</p>
-                <p>Try to complete the puzzle in as few steps as possible!</p>
-              </div>
-            </div>
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
+      <div className="text-center">
+        <img 
+          src="/images/tutorial.jpg" 
+          alt="Tutorial" 
+          className="w-full rounded-lg shadow-md"
+        />
+      </div>
     </div>
   );
 };
