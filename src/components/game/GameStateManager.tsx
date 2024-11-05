@@ -28,7 +28,16 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
           seedDate: game.metadata?.seedDate
         });
 
-        await updateDailyScore(session.user.id, score, game.metadata?.seedDate);
+        // Only update daily score if this is a daily game
+        if (game.metadata?.seedDate) {
+          await updateDailyScore(session.user.id, score, game.metadata?.seedDate);
+        } else {
+          logDatabaseOperation('Skipping Daily Score Update', {
+            reason: 'Not a daily game',
+            seedDate: game.metadata?.seedDate
+          });
+        }
+
         await updateExperience(session.user.id, score);
         await updateTotalStats(session.user.id, score);
 
