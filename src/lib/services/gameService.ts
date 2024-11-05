@@ -1,7 +1,7 @@
 import { getWordList } from '../embeddings/loader';
 import { cosineSimilarity } from '../embeddings';
 import { GameState } from '../types';
-import { WORD_PAIR_MIN_SIMILARITY } from '../constants';
+import { INITIAL_MIN_THRESHOLD, INITIAL_THRESHOLD_RANGE } from '../constants';
 import { toast } from '@/components/ui/use-toast';
 import { pauseBackgroundLoading, resumeBackgroundLoading } from '../embeddings/backgroundLoader';
 import { validateWordWithTarget, validateWordWithPrevious } from './wordValidationService';
@@ -43,7 +43,9 @@ export const findDailyWordPair = async (): Promise<[string, string]> => {
       wordList[word2Index]
     );
     
-    if (similarity < WORD_PAIR_MIN_SIMILARITY) {
+    // Use initial thresholds for daily puzzle
+    if (similarity >= INITIAL_MIN_THRESHOLD && similarity <= INITIAL_MIN_THRESHOLD + INITIAL_THRESHOLD_RANGE) {
+      console.log(`Found daily word pair with similarity: ${similarity.toFixed(3)}`);
       return [wordList[word1Index], wordList[word2Index]];
     }
     
