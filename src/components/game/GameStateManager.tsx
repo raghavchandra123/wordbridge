@@ -28,7 +28,6 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
           seedDate: game.metadata?.seedDate
         });
 
-        // Update stats in sequence with proper logging
         await updateDailyScore(session.user.id, score, game.metadata?.seedDate);
         await updateExperience(session.user.id, score);
         await updateTotalStats(session.user.id, score);

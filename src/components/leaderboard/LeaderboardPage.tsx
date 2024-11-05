@@ -43,8 +43,19 @@ export default function LeaderboardPage() {
         return;
       }
 
+      if (!todayScores?.length) {
+        setLeaderboard([]);
+        return;
+      }
+
       // Get average scores for these users
-      const userIds = todayScores?.map((score: any) => score.profiles.id) || [];
+      const userIds = todayScores.map((score: any) => score.profiles.id).filter(Boolean);
+      
+      if (!userIds.length) {
+        setLeaderboard([]);
+        return;
+      }
+
       const { data: statsData, error: statsError } = await supabase
         .from('user_statistics')
         .select('user_id, total_games, total_score')
@@ -59,14 +70,14 @@ export default function LeaderboardPage() {
         const userStats = statsData?.find(stat => stat.user_id === entry.profiles.id);
         const averageScore = userStats && userStats.total_games > 0
           ? Number((userStats.total_score / userStats.total_games).toFixed(2))
-          : null;
+          : 0;
 
         return {
           username: entry.profiles.username,
           full_name: entry.profiles.full_name || entry.profiles.username,
           avatar_url: entry.profiles.avatar_url,
           score: entry.score,
-          average_score: averageScore || 0
+          average_score: averageScore
         };
       }) || [];
 
