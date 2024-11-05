@@ -65,16 +65,11 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
         }
 
         saveGameStats(score, isDaily);
-        onGameComplete();
       } catch (error) {
         console.error('Error in updateScore:', error);
-        hasUpdatedRef.current = false;
-        
-        toast({
-          title: "Error Updating Score",
-          description: "There was an error saving your score. Please try again.",
-          variant: "destructive",
-        });
+      } finally {
+        // Always trigger game complete, even if there were errors
+        onGameComplete();
       }
     };
 
