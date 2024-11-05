@@ -28,7 +28,7 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
         if (isDaily) {
           const today = startOfDay(toZonedTime(new Date(), 'GMT'));
           
-          // Use upsert for daily scores to handle potential duplicates
+          // Use upsert for daily scores
           const { error: scoreError } = await supabase
             .from('daily_scores')
             .upsert({
@@ -36,8 +36,7 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
               score,
               date: today.toISOString().split('T')[0]
             }, {
-              onConflict: 'user_id,date',
-              ignoreDuplicates: false // This will update if the new score is different
+              onConflict: 'user_id,date'
             });
 
           if (scoreError) throw scoreError;
@@ -55,7 +54,7 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
 
           if (statsError) throw statsError;
 
-          // Update experience points directly
+          // Update experience points
           const experienceGain = Math.max(20 - score, 1) * 10;
           const { error: expError } = await supabase
             .rpc('increment_experience', {

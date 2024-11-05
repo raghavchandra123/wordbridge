@@ -114,6 +114,13 @@ export type Database = {
         }
         Returns: number
       }
+      increment_experience: {
+        Args: {
+          user_id: string
+          amount: number
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
