@@ -42,7 +42,12 @@ const Index = () => {
       }
 
       const previousWord = game.currentChain[editingIndex !== null ? editingIndex - 1 : game.currentChain.length - 1];
-      const validation = await validateWordForChain(currentWord, previousWord, game.targetWord);
+      const validation = await validateWordForChain(
+        currentWord, 
+        previousWord, 
+        game.targetWord,
+        () => onWordRejected()
+      );
       
       if (!validation.isValid) {
         toast({

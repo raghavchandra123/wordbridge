@@ -58,7 +58,8 @@ export const findDailyWordPair = async (): Promise<[string, string]> => {
 export const validateWordForChain = async (
   word: string,
   previousWord: string,
-  targetWord: string
+  targetWord: string,
+  onWordRejected?: () => void
 ): Promise<{ isValid: boolean; similarityToTarget: number; message?: string }> => {
   console.log(`🔍 Validating word "${word}" with previous word "${previousWord}"`);
   
@@ -69,6 +70,7 @@ export const validateWordForChain = async (
     
     if (!previousValidation.isValid) {
       console.log(`❌ Word "${word}" not similar enough to "${previousWord}"`);
+      if (onWordRejected) onWordRejected();
       return {
         isValid: false,
         similarityToTarget: 0,
