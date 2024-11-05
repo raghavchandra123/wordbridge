@@ -6,7 +6,7 @@ import { useSyncGameStats } from '@/hooks/useSyncGameStats';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '../ui/use-toast';
 import { addDays, startOfDay } from 'date-fns';
-import { utcToZonedTime, zonedTimeToUtc } from 'date-fns-tz';
+import { toZonedTime } from 'date-fns-tz';
 
 interface GameStateManagerProps {
   game: GameState;
@@ -27,7 +27,7 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
       try {
         if (isDaily) {
           // Get today's date in GMT
-          const today = startOfDay(utcToZonedTime(new Date(), 'GMT'));
+          const today = startOfDay(toZonedTime(new Date(), 'GMT'));
           
           // First check if a score already exists for today
           const { data: existingScore } = await supabase

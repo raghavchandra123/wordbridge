@@ -18,7 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Progress } from "./ui/progress";
 import { addDays, startOfDay } from 'date-fns';
-import { utcToZonedTime } from 'date-fns-tz';
+import { toZonedTime } from 'date-fns-tz';
 
 interface EndGameDialogProps {
   game: GameState;
@@ -57,7 +57,7 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
 
   // Calculate next puzzle time in GMT
   const now = new Date();
-  const gmtNow = utcToZonedTime(now, 'GMT');
+  const gmtNow = toZonedTime(now, 'GMT');
   const nextPuzzleTime = addDays(startOfDay(gmtNow), 1);
   
   const timeUntilNext = nextPuzzleTime.getTime() - gmtNow.getTime();

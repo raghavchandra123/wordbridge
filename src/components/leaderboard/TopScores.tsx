@@ -7,7 +7,7 @@ import { Button } from '../ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { Progress } from '../ui/progress';
-import { utcToZonedTime } from 'date-fns-tz';
+import { toZonedTime } from 'date-fns-tz';
 
 interface TopScore {
   username: string;
@@ -26,7 +26,7 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
 
   useEffect(() => {
     const fetchTopScores = async () => {
-      const today = utcToZonedTime(new Date(), 'GMT').toISOString().split('T')[0];
+      const today = toZonedTime(new Date(), 'GMT').toISOString().split('T')[0];
       
       const { data, error } = await supabase
         .from('profiles')
@@ -42,7 +42,7 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
           )
         `)
         .eq('daily_scores.date', today)
-        .order('daily_scores.score', { ascending: true })
+        .order('daily_scores.score')
         .limit(3);
 
       if (error) {
