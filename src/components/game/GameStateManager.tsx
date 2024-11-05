@@ -28,62 +28,57 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
         const score = game.currentChain.length - 1;
         const isDaily = !game.startWord.includes('-');
         
+        // For daily games, update the daily score
         if (isDaily) {
           await updateDailyScore(session.user.id, score);
-          
-          // Calculate experience gain
-          const experienceGain = Math.floor(100 / score);
-          
-          // First get current stats
-          const { data: currentStats, error: fetchError } = await supabase
-            .from('user_statistics')
-            .select('total_games, total_score')
-            .eq('user_id', session.user.id)
-            .single();
-
-          if (fetchError) {
-            console.error('Error fetching statistics:', fetchError);
-            return;
-          }
-
-          // Update experience using increment_experience function
-          const { error: expError } = await supabase
-            .rpc('increment_experience', {
-              user_id: session.user.id,
-              amount: experienceGain
-            });
-
-          if (expError) {
-            console.error('Error updating experience:', expError);
-            toast({
-              description: "There was an issue updating your experience points.",
-              variant: "destructive",
-            });
-          }
-
-          // Update statistics with incremented values
-          const newTotalGames = (currentStats?.total_games || 0) + 1;
-          const newTotalScore = (currentStats?.total_score || 0) + score;
-
-          const { error: statsError } = await supabase
-            .from('user_statistics')
-            .upsert({
-              user_id: session.user.id,
-              total_games: newTotalGames,
-              total_score: newTotalScore
-            }, {
-              onConflict: 'user_id'
-            });
-
-          if (statsError) {
-            console.error('Error updating statistics:', statsError);
-            toast({
-              description: "There was an issue updating your statistics.",
-              variant: "destructive",
-            });
-          }
         }
 
+        // Update experience points
+        const experienceGain = Math.floor(100 / score);
+        const { error: expError } = await supabase
+          .from('profiles')
+          .update({ experience: supabase.rpc('increment', { x: experienceGain }) })
+          .eq('id', session.user.id);
+
+        if (expError) {
+          console.error('Error updating experience:', expError);
+          toast({
+            description: "There was an issue updating your experience points.",
+            variant: "destructive",
+          });
+        }
+
+        // Update total games and score for ALL games
+        const { data: currentStats, error: fetchError } = await supabase
+          .from('user_statistics')
+          .select('total_games, total_score')
+          .eq('user_id', session.user.id)
+          .single();
+
+        if (fetchError) {
+          console.error('Error fetching statistics:', fetchError);
+          return;
+        }
+
+        const { error: statsError } = await supabase
+          .from('user_statistics')
+          .upsert({
+            user_id: session.user.id,
+            total_games: (currentStats?.total_games || 0) + 1,
+            total_score: (currentStats?.total_score || 0) + score
+          }, {
+            onConflict: 'user_id'
+          });
+
+        if (statsError) {
+          console.error('Error updating statistics:', statsError);
+          toast({
+            description: "There was an issue updating your statistics.",
+            variant: "destructive",
+          });
+        }
+
+        // Save local stats
         saveGameStats(score, isDaily);
       } catch (error) {
         console.error('Error in updateScore:', error);
