@@ -37,22 +37,6 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
           const today = startOfDay(toZonedTime(new Date(), 'GMT'));
           console.log('📅 Using date:', today.toISOString());
           
-          // First check if we already have a better score for today
-          const { data: existingScore } = await supabase
-            .from('daily_scores')
-            .select('score')
-            .eq('user_id', session.user.id)
-            .eq('date', today.toISOString().split('T')[0])
-            .single();
-
-          // If we already have a better score, just complete the game without updating
-          if (existingScore && existingScore.score <= score) {
-            console.log('📝 Existing score is better, keeping it:', existingScore.score);
-            saveGameStats(score, isDaily);
-            onGameComplete();
-            return;
-          }
-          
           // Get current user level for XP calculation
           const { data: userData, error: userError } = await supabase
             .from('profiles')
@@ -64,67 +48,64 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
             console.error('❌ Error fetching user level:', userError);
             throw userError;
           }
-          
+
           console.log('👤 User data:', userData);
           const currentLevel = userData?.level || 1;
           const experienceGain = calculateExperienceGain(score, currentLevel);
           console.log('⭐ Experience to gain:', experienceGain);
 
-          console.log('📊 Attempting to upsert daily score...');
-          const { error: scoreError } = await supabase
-            .from('daily_scores')
-            .upsert(
-              {
-                user_id: session.user.id,
-                score,
-                date: today.toISOString().split('T')[0]
-              },
-              {
-                onConflict: 'user_id,date'
-              }
-            );
-
-          if (scoreError) {
-            console.error('❌ Error upserting daily score:', scoreError);
-            throw scoreError;
-          }
-          
-          console.log('✅ Daily score updated successfully');
-
-          // Update total games and score
-          console.log('📈 Updating user statistics...');
-          const { error: statsError } = await supabase
-            .from('user_statistics')
-            .upsert(
-              {
-                user_id: session.user.id,
-                total_games: 1,
-                total_score: score
-              },
-              {
-                onConflict: 'user_id'
-              }
-            );
-
-          if (statsError) {
-            console.error('❌ Error updating statistics:', statsError);
-            throw statsError;
-          }
-
-          // Update experience points
-          console.log('🌟 Updating experience points...');
-          const { error: expError } = await supabase
-            .rpc('increment_experience', {
-              user_id: session.user.id,
-              amount: experienceGain
+          // Use a single RPC call to handle the score update and return whether it was updated
+          const { data: wasUpdated, error: updateError } = await supabase
+            .rpc('update_daily_score_if_better', {
+              p_user_id: session.user.id,
+              p_score: score,
+              p_date: today.toISOString().split('T')[0]
             });
 
-          if (expError) {
-            console.error('❌ Error updating experience:', expError);
-            throw expError;
+          if (updateError) {
+            console.error('❌ Error updating score:', updateError);
+            throw updateError;
           }
 
-          console.log('✨ All updates completed successfully!');
+          // Only update experience and stats if the score was actually updated
+          if (wasUpdated) {
+            console.log('✅ Score was better, updating experience and stats...');
+            
+            // Update total games and score
+            const { error: statsError } = await supabase
+              .from('user_statistics')
+              .upsert(
+                {
+                  user_id: session.user.id,
+                  total_games: 1,
+                  total_score: score
+                },
+                {
+                  onConflict: 'user_id'
+                }
+              );
+
+            if (statsError) {
+              console.error('❌ Error updating statistics:', statsError);
+              throw statsError;
+            }
+
+            // Update experience points
+            const { error: expError } = await supabase
+              .rpc('increment_experience', {
+                user_id: session.user.id,
+                amount: experienceGain
+              });
+
+            if (expError) {
+              console.error('❌ Error updating experience:', expError);
+              throw expError;
+            }
+
+            console.log('✨ All updates completed successfully!');
+          } else {
+            console.log('📝 Existing score was better, no updates needed');
+          }
         }
 
         saveGameStats(score, isDaily);
