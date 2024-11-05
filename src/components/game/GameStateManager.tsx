@@ -5,13 +5,17 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { useSyncGameStats } from '@/hooks/useSyncGameStats';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '../ui/use-toast';
-import { addDays, startOfDay } from 'date-fns';
+import { startOfDay } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 
 interface GameStateManagerProps {
   game: GameState;
   onGameComplete: () => void;
 }
+
+const calculateExperienceGain = (score: number, currentLevel: number) => {
+  return Math.round(100 / score / (1 + 0.1 * currentLevel));
+};
 
 export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps) => {
   const { session } = useAuth();
@@ -28,7 +32,19 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
         if (isDaily) {
           const today = startOfDay(toZonedTime(new Date(), 'GMT'));
           
-          // Use upsert for daily scores
+          // Get current user level for XP calculation
+          const { data: userData, error: userError } = await supabase
+            .from('profiles')
+            .select('level')
+            .eq('id', session.user.id)
+            .single();
+
+          if (userError) throw userError;
+          
+          const currentLevel = userData?.level || 1;
+          const experienceGain = calculateExperienceGain(score, currentLevel);
+
+          // Update daily score using upsert
           const { error: scoreError } = await supabase
             .from('daily_scores')
             .upsert({
@@ -55,7 +71,6 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
           if (statsError) throw statsError;
 
           // Update experience points
-          const experienceGain = Math.max(20 - score, 1) * 10;
           const { error: expError } = await supabase
             .rpc('increment_experience', {
               user_id: session.user.id,

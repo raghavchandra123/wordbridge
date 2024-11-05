@@ -15,7 +15,7 @@ interface TopScore {
   score: number;
   level: number;
   experience: number;
-  average_score: number;
+  average_score: number | null;
 }
 
 export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => {
@@ -27,7 +27,6 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
     const fetchTopScores = async () => {
       const today = toZonedTime(new Date(), 'GMT').toISOString().split('T')[0];
       
-      // First get today's scores
       const { data: todayScores, error: todayError } = await supabase
         .from('daily_scores')
         .select(`
@@ -50,7 +49,6 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
         return;
       }
 
-      // Then get average scores for these users
       const userIds = todayScores?.map(score => score.user_id) || [];
       const { data: statsData, error: statsError } = await supabase
         .from('user_statistics')
@@ -65,7 +63,7 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
       const processedData = todayScores?.map((entry: any) => {
         const userStats = statsData?.find(stat => stat.user_id === entry.user_id);
         const averageScore = userStats && userStats.total_games > 0
-          ? Math.round(userStats.total_score / userStats.total_games)
+          ? (userStats.total_score / userStats.total_games).toFixed(2)
           : null;
 
         return {
@@ -100,7 +98,7 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
     <div className="space-y-4">
       <div className="text-lg font-semibold text-center mb-4">Top Players Today</div>
       <div className="space-y-4">
-        {topScores.map((entry, index) => (
+        {topScores.map((entry) => (
           <div
             key={entry.username}
             className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-4 p-3 rounded-lg bg-gray-50"
