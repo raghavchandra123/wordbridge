@@ -30,7 +30,9 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
       
       try {
         if (isDaily) {
+          console.log('🎮 Starting daily score update...');
           const today = startOfDay(toZonedTime(new Date(), 'GMT'));
+          console.log('📅 Using date:', today.toISOString());
           
           // Get current user level for XP calculation
           const { data: userData, error: userError } = await supabase
@@ -39,13 +41,19 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
             .eq('id', session.user.id)
             .single();
 
-          if (userError) throw userError;
+          if (userError) {
+            console.error('❌ Error fetching user level:', userError);
+            throw userError;
+          }
           
+          console.log('👤 User data:', userData);
           const currentLevel = userData?.level || 1;
           const experienceGain = calculateExperienceGain(score, currentLevel);
+          console.log('⭐ Experience to gain:', experienceGain);
 
           // Update daily score using upsert with onConflict strategy
-          const { error: scoreError } = await supabase
+          console.log('📊 Attempting to update daily score...');
+          const { data: scoreData, error: scoreError } = await supabase
             .from('daily_scores')
             .upsert(
               {
@@ -57,11 +65,25 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
                 onConflict: 'user_id,date',
                 ignoreDuplicates: false
               }
-            );
+            )
+            .select();
 
-          if (scoreError) throw scoreError;
+          if (scoreError) {
+            console.error('❌ Error updating daily score:', {
+              error: scoreError,
+              payload: {
+                user_id: session.user.id,
+                score,
+                date: today.toISOString().split('T')[0]
+              }
+            });
+            throw scoreError;
+          }
+          
+          console.log('✅ Daily score updated:', scoreData);
 
           // Update total games and score
+          console.log('📈 Updating user statistics...');
           const { error: statsError } = await supabase
             .from('user_statistics')
             .upsert(
@@ -75,22 +97,42 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
               }
             );
 
-          if (statsError) throw statsError;
+          if (statsError) {
+            console.error('❌ Error updating statistics:', statsError);
+            throw statsError;
+          }
 
           // Update experience points
+          console.log('🌟 Updating experience points...');
           const { error: expError } = await supabase
             .rpc('increment_experience', {
               user_id: session.user.id,
               amount: experienceGain
             });
 
-          if (expError) throw expError;
+          if (expError) {
+            console.error('❌ Error updating experience:', expError);
+            throw expError;
+          }
+
+          console.log('✨ All updates completed successfully!');
         }
 
         saveGameStats(score, isDaily);
         onGameComplete();
       } catch (error: any) {
-        console.error('Error updating score:', error);
+        console.error('❌ Error in updateScore:', {
+          error,
+          gameState: {
+            isComplete: game.isComplete,
+            chainLength: game.currentChain.length,
+            startWord: game.startWord
+          },
+          session: {
+            userId: session?.user?.id
+          }
+        });
+        
         // Only show toast for non-duplicate errors
         if (error.code !== '23505') {
           toast({
