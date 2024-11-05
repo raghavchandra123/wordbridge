@@ -33,11 +33,25 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
           await updateDailyScore(session.user.id, score);
         }
 
-        // Update experience points
+        // Get current experience value first
+        const { data: currentProfile, error: profileError } = await supabase
+          .from('profiles')
+          .select('experience')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
+          return;
+        }
+
+        // Calculate and update experience
         const experienceGain = Math.floor(100 / score);
+        const newExperience = (currentProfile?.experience || 0) + experienceGain;
+
         const { error: expError } = await supabase
           .from('profiles')
-          .update({ experience: supabase.rpc('increment', { x: experienceGain }) })
+          .update({ experience: newExperience })
           .eq('id', session.user.id);
 
         if (expError) {
