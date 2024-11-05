@@ -9,9 +9,14 @@ import { TopScores } from "@/components/leaderboard/TopScores";
 
 export const GameHeader = () => {
   const navigate = useNavigate();
-  const { session } = useAuth();
+  const { session, signOut } = useAuth();
   const [showTutorial, setShowTutorial] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login');
+  };
 
   return (
     <div className="space-y-2 pb-2">
@@ -46,7 +51,7 @@ export const GameHeader = () => {
           
           {session ? (
             <button
-              onClick={() => supabase.auth.signOut()}
+              onClick={handleSignOut}
               className="flex items-center justify-center w-8 h-8 rounded-md"
               style={{ 
                 backgroundColor: `${THEME_COLORS.GRADIENT.END}`,

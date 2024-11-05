@@ -40,7 +40,8 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
             date
           )
         `)
-        .order('username')
+        .eq('daily_scores.date', today)
+        .order('daily_scores.score', { ascending: true })
         .limit(3);
 
       if (error) {
@@ -50,29 +51,20 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
 
       const processedData = data.map((profile: any) => {
         const scores = profile.daily_scores || [];
-        const todayScore = scores.find((s: any) => s.date === today);
         const totalScore = scores.reduce((acc: number, curr: any) => acc + curr.score, 0);
         
         return {
           username: profile.username,
-          full_name: profile.full_name,
+          full_name: profile.full_name || profile.username,
           avatar_url: profile.avatar_url,
           level: profile.level,
           experience: profile.experience,
-          score: todayScore?.score || Infinity,
+          score: scores[0]?.score || Infinity,
           average_score: scores.length ? Math.round(totalScore / scores.length) : Infinity,
-          has_played_today: !!todayScore
         };
       });
 
-      processedData.sort((a, b) => {
-        if (!a.has_played_today && !b.has_played_today) return 0;
-        if (!a.has_played_today) return 1;
-        if (!b.has_played_today) return -1;
-        return a.score - b.score;
-      });
-
-      setTopScores(processedData.slice(0, 3));
+      setTopScores(processedData);
     };
 
     fetchTopScores();
@@ -92,16 +84,16 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
   return (
     <div className="space-y-4">
       <div className="text-lg font-semibold text-center mb-4">Top Players Today</div>
-      <div className="grid grid-cols-[auto_1fr_auto] gap-4">
+      <div className="space-y-4">
         {topScores.map((entry, index) => (
           <div
             key={entry.username}
-            className="col-span-3 grid grid-cols-[auto_1fr_auto] items-center gap-4 p-3 rounded-lg bg-gray-50"
+            className="grid grid-cols-[auto_1fr_auto] items-center gap-4 p-3 rounded-lg bg-gray-50"
           >
             <div className="relative">
               <Avatar className={`h-12 w-12 ring-2 ${getLevelColor(entry.level)}`}>
                 <AvatarImage src={entry.avatar_url} />
-                <AvatarFallback>{entry.username?.[0]}</AvatarFallback>
+                <AvatarFallback>{entry.full_name?.[0]}</AvatarFallback>
               </Avatar>
               <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 rounded-full">
                 {entry.level}
@@ -111,15 +103,13 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
               </div>
             </div>
             <div className="flex flex-col">
-              <div className="font-medium">{entry.full_name || entry.username}</div>
-            </div>
-            <div className="text-right">
-              <div className="font-medium">
-                {entry.has_played_today ? `Score: ${entry.score}` : 'Not played today'}
-              </div>
+              <div className="font-medium">{entry.full_name}</div>
               <div className="text-sm text-gray-500">
-                Avg: {entry.average_score === Infinity ? '-' : entry.average_score}
+                Avg Score: {entry.average_score === Infinity ? '-' : entry.average_score}
               </div>
+            </div>
+            <div className="text-right font-medium">
+              Score: {entry.score === Infinity ? '-' : entry.score}
             </div>
           </div>
         ))}
