@@ -45,7 +45,7 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
           return;
         }
 
-        // Calculate and update experience
+        // Simple experience calculation and direct update
         const experienceGain = Math.floor(100 / score);
         const newExperience = (currentProfile?.experience || 0) + experienceGain;
 
@@ -62,7 +62,7 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
           });
         }
 
-        // Update total games and score for ALL games
+        // Get current stats
         const { data: currentStats, error: fetchError } = await supabase
           .from('user_statistics')
           .select('total_games, total_score')
@@ -74,14 +74,13 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
           return;
         }
 
+        // Simple update of total games and score
         const { error: statsError } = await supabase
           .from('user_statistics')
           .upsert({
             user_id: session.user.id,
             total_games: (currentStats?.total_games || 0) + 1,
             total_score: (currentStats?.total_score || 0) + score
-          }, {
-            onConflict: 'user_id'
           });
 
         if (statsError) {
