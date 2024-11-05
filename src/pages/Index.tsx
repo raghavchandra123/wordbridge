@@ -13,6 +13,7 @@ import { TARGET_WORD_MIN_SIMILARITY } from "@/lib/constants";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { BookOpen } from "lucide-react";
+import { useDynamicDifficulty } from "@/hooks/useDynamicDifficulty";
 
 const Index = () => {
   const { startWord, targetWord } = useParams();
@@ -23,6 +24,7 @@ const Index = () => {
   const [progress, setProgress] = useState(0);
   const [isChecking, setIsChecking] = useState(false);
   const [showEndGame, setShowEndGame] = useState(false);
+  const { onWordRejected } = useDynamicDifficulty();
 
   const handleWordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +36,7 @@ const Index = () => {
     try {
       if (!isValidWord(currentWord)) {
         console.log(`Word "${currentWord}" not in dictionary`);
+        onWordRejected();
         toast({
           title: "Invalid word",
           description: "This word is not in our dictionary",
@@ -47,6 +50,7 @@ const Index = () => {
       
       if (!validation.isValid) {
         console.log(`Word "${currentWord}" failed validation`);
+        onWordRejected();
         toast({
           title: "Word not similar enough",
           description: validation.message,
