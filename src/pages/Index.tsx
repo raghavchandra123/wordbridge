@@ -130,11 +130,11 @@ const Index = () => {
         return;
       }
 
-      // Update experience
+      // Update experience - FIXED to use direct update instead of RPC
       const { error: expError } = await supabase
         .from('profiles')
-        .update({
-          experience: supabase.rpc('increment_experience', { amount: experienceGained })
+        .update({ 
+          experience: supabase.sql`experience + ${experienceGained}` 
         })
         .eq('id', session.user.id);
 
@@ -192,4 +192,3 @@ const Index = () => {
 };
 
 export default Index;
-
