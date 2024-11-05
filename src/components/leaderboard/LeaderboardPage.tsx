@@ -12,7 +12,9 @@ interface LeaderboardEntry {
   full_name: string;
   avatar_url: string;
   score: number;
-  average_score: number;
+  level: number;
+  experience: number;
+  average_score: number | null;
 }
 
 export default function LeaderboardPage() {
@@ -24,7 +26,6 @@ export default function LeaderboardPage() {
     const fetchLeaderboard = async () => {
       const today = new Date().toISOString().split('T')[0];
       
-      // Get today's scores with user profiles
       const { data: todayScores, error: todayError } = await supabase
         .from('daily_scores')
         .select(`
@@ -32,7 +33,9 @@ export default function LeaderboardPage() {
           profiles!inner (
             username,
             full_name,
-            avatar_url
+            avatar_url,
+            level,
+            experience
           )
         `)
         .eq('date', today)
@@ -48,7 +51,6 @@ export default function LeaderboardPage() {
         return;
       }
 
-      // Get average scores for these users
       const userIds = todayScores.map((score: any) => score.profiles.id).filter(Boolean);
       
       if (!userIds.length) {
@@ -76,6 +78,8 @@ export default function LeaderboardPage() {
           username: entry.profiles.username,
           full_name: entry.profiles.full_name || entry.profiles.username,
           avatar_url: entry.profiles.avatar_url,
+          level: entry.profiles.level,
+          experience: entry.profiles.experience,
           score: entry.score,
           average_score: averageScore
         };
@@ -112,15 +116,15 @@ export default function LeaderboardPage() {
   return (
     <div className="min-h-screen bg-[#97BED9] p-4">
       <Card className="max-w-2xl mx-auto">
-        <CardHeader className="flex justify-between items-center">
+        <CardHeader className="flex flex-row items-center justify-between">
           <Button
             onClick={() => navigate('/')}
-            className="text-sm px-3 py-1 rounded-md bg-[#97BED9] hover:bg-[#97BED9]/90 text-white"
+            className="bg-[#97BED9] hover:bg-[#97BED9]/90 text-white"
           >
-            Back to Game
+            Back
           </Button>
-          <CardTitle className="text-2xl text-center">Leaderboard</CardTitle>
-          <div className="w-20" /> {/* Spacer for alignment */}
+          <CardTitle className="text-2xl">Leaderboard</CardTitle>
+          <div className="w-[72px]" /> {/* Spacer for alignment */}
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-[70vh]">

@@ -38,7 +38,7 @@ export const updateExperience = async (userId: string, score: number) => {
   try {
     const experienceGain = Math.floor((20 - score) * 10);
     
-    // First, get current experience
+    // First get current experience
     const { data: currentProfile, error: fetchError } = await supabase
       .from('profiles')
       .select('experience')
@@ -50,6 +50,7 @@ export const updateExperience = async (userId: string, score: number) => {
     const currentExperience = currentProfile?.experience || 0;
     const newExperience = currentExperience + experienceGain;
 
+    // Direct update without RPC
     const { error: updateError } = await supabase
       .from('profiles')
       .update({ experience: newExperience })
