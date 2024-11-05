@@ -7,6 +7,7 @@ import { Button } from '../ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { Progress } from '../ui/progress';
+import { utcToZonedTime } from 'date-fns-tz';
 
 interface TopScore {
   username: string;
@@ -25,7 +26,7 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
 
   useEffect(() => {
     const fetchTopScores = async () => {
-      const today = new Date().toISOString().split('T')[0];
+      const today = utcToZonedTime(new Date(), 'GMT').toISOString().split('T')[0];
       
       const { data, error } = await supabase
         .from('profiles')

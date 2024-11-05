@@ -108,7 +108,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      increment: {
+        Args: {
+          x: number
+        }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
