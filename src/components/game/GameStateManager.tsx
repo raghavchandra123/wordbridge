@@ -33,10 +33,10 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
           
           // Update experience
           const experienceGain = Math.round(100 / score);
-          const { error: expError } = await supabase.rpc('increment_experience', {
-            user_id: session.user.id,
-            amount: experienceGain
-          });
+          const { error: expError } = await supabase
+            .from('profiles')
+            .update({ experience: experienceGain })
+            .eq('id', session.user.id);
 
           if (expError) {
             console.error('Error updating experience:', expError);
@@ -46,19 +46,26 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
             });
           }
 
-          // Update statistics
+          // First get current stats
+          const { data: currentStats, error: fetchError } = await supabase
+            .from('user_statistics')
+            .select('total_games, total_score')
+            .eq('user_id', session.user.id)
+            .single();
+
+          if (fetchError) {
+            console.error('Error fetching statistics:', fetchError);
+            return;
+          }
+
+          // Then update with incremented values
           const { error: statsError } = await supabase
             .from('user_statistics')
-            .upsert(
-              {
-                user_id: session.user.id,
-                total_games: 1,
-                total_score: score
-              },
-              {
-                onConflict: 'user_id'
-              }
-            );
+            .update({
+              total_games: (currentStats?.total_games || 0) + 1,
+              total_score: (currentStats?.total_score || 0) + score
+            })
+            .eq('user_id', session.user.id);
 
           if (statsError) {
             console.error('Error updating statistics:', statsError);
