@@ -12,32 +12,51 @@ interface GameStateManagerProps {
 export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps) => {
   const { session } = useAuth();
   const hasUpdatedRef = useRef(false);
+  const previousGameStateRef = useRef<GameState | null>(null);
 
   useEffect(() => {
+    // Reset hasUpdated when starting a new game
+    if (previousGameStateRef.current?.startWord !== game.startWord || 
+        previousGameStateRef.current?.targetWord !== game.targetWord) {
+      hasUpdatedRef.current = false;
+      previousGameStateRef.current = game;
+    }
+
     const updateGameStats = async () => {
-      if (!game.isComplete || !session?.user?.id || hasUpdatedRef.current) {
+      if (!game.isComplete || !session?.user?.id) {
         logDatabaseOperation('Skipping Game Stats Update', {
-          reason: !game.isComplete ? 'Game not complete' : 
-                 !session?.user?.id ? 'No user session' : 
-                 'Already updated',
-          hasUpdated: hasUpdatedRef.current,
+          reason: !game.isComplete ? 'Game not complete' : 'No user session',
           isComplete: game.isComplete,
           userId: session?.user?.id
         });
         return;
       }
 
+      if (hasUpdatedRef.current) {
+        logDatabaseOperation('Skipping Game Stats Update', {
+          reason: 'Already updated',
+          hasUpdated: hasUpdatedRef.current,
+          gameState: {
+            startWord: game.startWord,
+            targetWord: game.targetWord,
+            chainLength: game.currentChain.length
+          }
+        });
+        return;
+      }
+
       try {
-        hasUpdatedRef.current = true;
         const score = game.currentChain.length - 1;
         
         logDatabaseOperation('Starting Game Stats Update', {
           score,
           seedDate: game.metadata?.seedDate,
-          hasUpdated: hasUpdatedRef.current
+          currentChain: game.currentChain
         });
 
-        // Only update daily score if this is a daily game
+        // Set the flag before making any updates to prevent race conditions
+        hasUpdatedRef.current = true;
+
         if (game.metadata?.seedDate) {
           await updateDailyScore(session.user.id, score, game.metadata.seedDate);
         } else {
@@ -59,7 +78,7 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
     };
 
     updateGameStats();
-  }, [game.isComplete, game.currentChain.length, session?.user?.id, onGameComplete, game.metadata?.seedDate]);
+  }, [game.isComplete, game.currentChain.length, session?.user?.id, onGameComplete, game]);
 
   return null;
 };

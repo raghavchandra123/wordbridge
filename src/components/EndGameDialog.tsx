@@ -5,21 +5,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { GameState } from "@/lib/types";
-import { generateShareText } from "@/lib/utils/share";
-import { toast } from "@/components/ui/use-toast";
-import { Share, Shuffle } from "lucide-react";
-import { findRandomWordPair } from "@/lib/embeddings/game";
-import { useNavigate } from "react-router-dom";
 import { TopScores } from "./leaderboard/TopScores";
 import { useAuth } from "./auth/AuthProvider";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Progress } from "./ui/progress";
-import { addDays, startOfDay } from 'date-fns';
-import { toZonedTime } from 'date-fns-tz';
 import { EndGameProfile } from "./game/EndGameProfile";
 import { EndGameActions } from "./game/EndGameActions";
 import { EndGameTimer } from "./game/EndGameTimer";
@@ -32,7 +22,6 @@ interface EndGameDialogProps {
 }
 
 const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => {
-  const navigate = useNavigate();
   const { session } = useAuth();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   

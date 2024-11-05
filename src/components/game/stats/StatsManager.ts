@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { logDatabaseOperation } from '@/lib/utils/dbLogger';
 
-export const updateDailyScore = async (userId: string, score: number, seedDate: string | undefined) => {
+export const updateDailyScore = async (userId: string, score: number, seedDate: string) => {
   try {
     const today = new Date().toISOString().split('T')[0];
     
@@ -79,14 +79,20 @@ export const updateDailyScore = async (userId: string, score: number, seedDate: 
   }
 };
 
-export const updateExperience = async (userId: string, amount: number) => {
+export const updateExperience = async (userId: string, score: number) => {
+  const experienceGained = Math.max(20 - score, 1) * 10;
+  logDatabaseOperation('Updating Experience', { userId, experienceGained });
+  
   try {
     const { error } = await supabase
       .from('profiles')
-      .update({ experience: amount })
+      .update({ experience: experienceGained })
       .eq('id', userId);
 
-    if (error) throw error;
+    if (error) {
+      logDatabaseOperation('Experience Update Failed', { error });
+      throw error;
+    }
   } catch (error) {
     logDatabaseOperation('Experience Update Failed', { error });
     throw error;
@@ -94,6 +100,8 @@ export const updateExperience = async (userId: string, amount: number) => {
 };
 
 export const updateTotalStats = async (userId: string, score: number) => {
+  logDatabaseOperation('Updating Total Stats', { userId, score });
+  
   try {
     const { data: currentStats, error: fetchError } = await supabase
       .from('user_statistics')
@@ -101,7 +109,10 @@ export const updateTotalStats = async (userId: string, score: number) => {
       .eq('user_id', userId)
       .single();
 
-    if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      logDatabaseOperation('Total Stats Fetch Failed', { error: fetchError });
+      throw fetchError;
+    }
 
     const totalGames = (currentStats?.total_games || 0) + 1;
     const totalScore = (currentStats?.total_score || 0) + score;
@@ -116,7 +127,10 @@ export const updateTotalStats = async (userId: string, score: number) => {
         onConflict: 'user_id'
       });
 
-    if (error) throw error;
+    if (error) {
+      logDatabaseOperation('Total Stats Update Failed', { error });
+      throw error;
+    }
   } catch (error) {
     logDatabaseOperation('Total Stats Update Failed', { error });
     throw error;

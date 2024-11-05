@@ -39,7 +39,7 @@ const Index = () => {
 
     try {
       if (!isValidWord(currentWord)) {
-        onWordRejected(); // Decrease difficulty when word is invalid
+        onWordRejected();
         toast({
           title: "Invalid word",
           description: "This word is not in our dictionary",
@@ -52,7 +52,7 @@ const Index = () => {
       const validation = await validateWordForChain(currentWord, previousWord, game.targetWord);
       
       if (!validation.isValid) {
-        onWordRejected(); // Decrease difficulty when validation fails
+        onWordRejected();
         toast({
           title: "Word not similar enough",
           description: validation.message,
@@ -93,7 +93,14 @@ const Index = () => {
       saveGameProgress(newGame);
       
       if (isComplete) {
-        handleGameComplete(newGame);
+        saveHighScore({
+          startWord: newGame.startWord,
+          targetWord: newGame.targetWord,
+          chain: newGame.currentChain,
+          score: newGame.currentChain.length - 1,
+          timestamp: Date.now(),
+        });
+        setShowEndGame(true);
       }
       
       setCurrentWord("");
@@ -101,47 +108,6 @@ const Index = () => {
     } finally {
       setIsChecking(false);
     }
-  };
-
-  const handleGameComplete = async (completedGame: typeof game) => {
-    saveHighScore({
-      startWord: completedGame.startWord,
-      targetWord: completedGame.targetWord,
-      chain: completedGame.currentChain,
-      score: completedGame.currentChain.length - 1,
-      timestamp: Date.now(),
-    });
-    
-    if (session?.user) {
-      const score = completedGame.currentChain.length - 1;
-      const experienceGained = Math.max(20 - score, 1) * 10;
-
-      // Update daily score
-      const { error: scoreError } = await supabase
-        .from('daily_scores')
-        .upsert({
-          user_id: session.user.id,
-          score,
-          date: new Date().toISOString().split('T')[0]
-        });
-
-      if (scoreError) {
-        console.error('Error updating score:', scoreError);
-        return;
-      }
-
-      // Update experience using direct SQL update
-      const { error: expError } = await supabase
-        .from('profiles')
-        .update({ experience: experienceGained })
-        .eq('id', session.user.id);
-
-      if (expError) {
-        console.error('Error updating experience:', expError);
-      }
-    }
-
-    setShowEndGame(true);
   };
 
   if (isLoading) {
