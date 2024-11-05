@@ -51,8 +51,7 @@ export default function LoginPage() {
             providers={['google']}
             socialLayout="horizontal"
             theme="light"
-            showLinks={false}
-            view="sign_in"
+            showLinks={true}
           />
         </CardContent>
       </Card>
