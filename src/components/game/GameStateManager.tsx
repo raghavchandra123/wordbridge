@@ -42,6 +42,11 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
 
             if (expError) {
               console.error('Error updating experience:', expError);
+              toast({
+                title: "Error Updating Experience",
+                description: "There was an issue updating your experience points.",
+                variant: "destructive",
+              });
             }
 
             // Update statistics
@@ -60,6 +65,11 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
 
             if (statsError) {
               console.error('Error updating statistics:', statsError);
+              toast({
+                title: "Error Updating Statistics",
+                description: "There was an issue updating your statistics.",
+                variant: "destructive",
+              });
             }
           }
         }
@@ -67,8 +77,13 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
         saveGameStats(score, isDaily);
       } catch (error) {
         console.error('Error in updateScore:', error);
+        toast({
+          title: "Error Saving Game",
+          description: "There was an issue saving your game progress.",
+          variant: "destructive",
+        });
       } finally {
-        // Always trigger game complete, even if there were errors
+        // Always show completion dialog
         onGameComplete();
       }
     };

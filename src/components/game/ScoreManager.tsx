@@ -23,6 +23,11 @@ export const updateDailyScore = async (userId: string, score: number): Promise<b
     return true;
   } catch (error) {
     console.error('Error in updateDailyScore:', error);
+    toast({
+      title: "Error Saving Score",
+      description: "There was an issue saving your score. Your progress has been saved locally.",
+      variant: "destructive",
+    });
     return false;
   }
 };
