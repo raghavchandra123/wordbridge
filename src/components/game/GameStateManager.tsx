@@ -14,7 +14,9 @@ interface GameStateManagerProps {
 }
 
 const calculateExperienceGain = (score: number, currentLevel: number) => {
-  return Math.round(100 / score / (1 + 0.1 * currentLevel));
+  const gain = Math.round(100 / score / (1 + 0.1 * currentLevel));
+  console.log('📊 Experience calculation:', { score, currentLevel, calculatedGain: gain });
+  return gain;
 };
 
 export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps) => {
@@ -24,18 +26,31 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
 
   useEffect(() => {
     const updateScore = async () => {
-      if (!game.isComplete || !session?.user?.id || hasUpdatedRef.current) return;
+      if (!game.isComplete || !session?.user?.id || hasUpdatedRef.current) {
+        console.log('🔍 Update conditions not met:', {
+          isComplete: game.isComplete,
+          userId: session?.user?.id ? 'exists' : 'missing',
+          hasUpdated: hasUpdatedRef.current
+        });
+        return;
+      }
 
       const score = game.currentChain.length - 1;
       const isDaily = !game.startWord.includes('-');
       
       try {
-        console.log('🎮 Starting daily score update...');
+        console.log('🎮 Starting score update process...', {
+          score,
+          isDaily,
+          userId: session.user.id,
+          startWord: game.startWord
+        });
+        
         hasUpdatedRef.current = true;
 
         if (isDaily) {
           const today = startOfDay(toZonedTime(new Date(), 'GMT'));
-          console.log('📅 Using date:', today.toISOString());
+          console.log('📅 Processing daily score for date:', today.toISOString());
           
           // Get current user level for XP calculation
           const { data: userData, error: userError } = await supabase
@@ -49,12 +64,18 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
             throw userError;
           }
 
-          console.log('👤 User data:', userData);
+          console.log('👤 User data retrieved:', userData);
           const currentLevel = userData?.level || 1;
           const experienceGain = calculateExperienceGain(score, currentLevel);
           console.log('⭐ Experience to gain:', experienceGain);
 
-          // Use a single RPC call to handle the score update and return whether it was updated
+          // Use RPC to handle score update
+          console.log('📊 Attempting to update daily score...', {
+            userId: session.user.id,
+            score,
+            date: today.toISOString().split('T')[0]
+          });
+
           const { data: wasUpdated, error: updateError } = await supabase
             .rpc('update_daily_score_if_better', {
               p_user_id: session.user.id,
@@ -63,15 +84,16 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
             });
 
           if (updateError) {
-            console.error('❌ Error updating score:', updateError);
+            console.error('❌ Error in update_daily_score_if_better:', updateError);
             throw updateError;
           }
 
+          console.log('✅ Daily score update result:', { wasUpdated });
+
           // Only update experience and stats if the score was actually updated
           if (wasUpdated) {
-            console.log('✅ Score was better, updating experience and stats...');
+            console.log('📈 Score was better, updating statistics...');
             
-            // Update total games and score
             const { error: statsError } = await supabase
               .from('user_statistics')
               .upsert(
@@ -90,7 +112,7 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
               throw statsError;
             }
 
-            // Update experience points
+            console.log('🌟 Updating experience points...');
             const { error: expError } = await supabase
               .rpc('increment_experience', {
                 user_id: session.user.id,
@@ -111,12 +133,18 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
         saveGameStats(score, isDaily);
         onGameComplete();
       } catch (error: any) {
-        console.error('Error in updateScore:', error);
+        console.error('❌ Error in updateScore:', {
+          error,
+          errorMessage: error.message,
+          errorDetails: error.details,
+          errorCode: error.code
+        });
+        
         hasUpdatedRef.current = false;
         
         toast({
-          title: "Error",
-          description: "Failed to update score. Please try again.",
+          title: "Error Updating Score",
+          description: `Failed to update score: ${error.message}. Code: ${error.code}`,
           variant: "destructive",
         });
       }

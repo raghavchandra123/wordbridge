@@ -121,6 +121,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      update_daily_score_if_better: {
+        Args: {
+          p_user_id: string
+          p_score: number
+          p_date: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
