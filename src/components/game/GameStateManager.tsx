@@ -55,14 +55,13 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
 
           if (statsError) throw statsError;
 
-          // Update experience points only for daily games
+          // Update experience points directly
           const experienceGain = Math.max(20 - score, 1) * 10;
           const { error: expError } = await supabase
-            .from('profiles')
-            .update({ 
-              experience: supabase.rpc('increment', { x: experienceGain })
-            })
-            .eq('id', session.user.id);
+            .rpc('increment_experience', {
+              user_id: session.user.id,
+              amount: experienceGain
+            });
 
           if (expError) throw expError;
         }
