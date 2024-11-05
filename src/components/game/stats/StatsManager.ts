@@ -4,25 +4,16 @@ import { toast } from '@/components/ui/use-toast';
 
 export const updateTotalStats = async (userId: string, score: number) => {
   try {
-    // First get current stats
     const { data: currentStats, error: fetchError } = await supabase
       .from('user_statistics')
       .select('total_games, total_score')
       .eq('user_id', userId)
       .single();
 
-    logDatabaseOperation('Fetching Current Stats', { currentStats, error: fetchError });
-    
     if (fetchError) throw fetchError;
 
     const newTotalGames = (currentStats?.total_games || 0) + 1;
     const newTotalScore = (currentStats?.total_score || 0) + score;
-
-    logDatabaseOperation('Calculating New Stats', { 
-      currentStats,
-      newTotalGames,
-      newTotalScore 
-    });
 
     const { error: updateError } = await supabase
       .from('user_statistics')
@@ -33,14 +24,8 @@ export const updateTotalStats = async (userId: string, score: number) => {
       });
 
     if (updateError) throw updateError;
-
-    logDatabaseOperation('Stats Updated Successfully', {
-      newTotalGames,
-      newTotalScore
-    });
-
   } catch (error) {
-    logDatabaseOperation('Error Updating Stats', { error });
+    console.error('Error updating stats:', error);
     toast({
       title: "Error Updating Stats",
       description: "Failed to update game statistics",
@@ -52,22 +37,26 @@ export const updateTotalStats = async (userId: string, score: number) => {
 export const updateExperience = async (userId: string, score: number) => {
   try {
     const experienceGain = Math.floor((20 - score) * 10);
-    logDatabaseOperation('Calculating Experience Gain', { score, experienceGain });
+    
+    const { data: currentProfile, error: fetchError } = await supabase
+      .from('profiles')
+      .select('experience')
+      .eq('id', userId)
+      .single();
 
-    const { error } = await supabase.rpc(
-      'increment_experience',
-      { 
-        user_id: userId,
-        amount: experienceGain
-      }
-    );
+    if (fetchError) throw fetchError;
 
-    if (error) throw error;
+    const newExperience = (currentProfile?.experience || 0) + experienceGain;
 
-    logDatabaseOperation('Experience Updated Successfully', { experienceGain });
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ experience: newExperience })
+      .eq('id', userId);
+
+    if (updateError) throw updateError;
 
   } catch (error) {
-    logDatabaseOperation('Error Updating Experience', { error });
+    console.error('Error updating experience:', error);
     toast({
       title: "Error Updating Experience",
       description: "Failed to update experience points",
@@ -81,35 +70,35 @@ export const updateDailyScore = async (userId: string, score: number, seedDate: 
     const today = new Date().toISOString().split('T')[0];
     const isDaily = seedDate === today;
     
-    logDatabaseOperation('Checking Daily Game Status', { 
-      seedDate,
-      today,
-      isDaily 
-    });
-
     if (!isDaily) {
-      logDatabaseOperation('Skipping Daily Score Update - Not Daily Game', {
-        seedDate,
-        today
-      });
+      console.log('Skipping daily score update - not a daily game');
       return;
     }
 
-    const { error } = await supabase.rpc(
-      'update_daily_score',
-      { 
-        p_user_id: userId,
-        p_score: score,
-        p_date: today
-      }
-    );
+    const { data: existingScore, error: fetchError } = await supabase
+      .from('daily_scores')
+      .select('score')
+      .eq('user_id', userId)
+      .eq('date', today)
+      .single();
 
-    if (error) throw error;
+    if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
 
-    logDatabaseOperation('Daily Score Updated Successfully', { score });
+    // Only update if no existing score or new score is better (lower)
+    if (!existingScore || score < existingScore.score) {
+      const { error: updateError } = await supabase
+        .from('daily_scores')
+        .upsert({
+          user_id: userId,
+          score,
+          date: today
+        });
+
+      if (updateError) throw updateError;
+    }
 
   } catch (error) {
-    logDatabaseOperation('Error Updating Daily Score', { error });
+    console.error('Error updating daily score:', error);
     toast({
       title: "Error Updating Daily Score",
       description: "Failed to update daily score",
