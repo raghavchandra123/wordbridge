@@ -11,13 +11,15 @@ export const useSyncGameStats = (userId: string | undefined) => {
       if (stats.totalGames === 0) return;
 
       try {
-        // Update user statistics
+        // Update user statistics using upsert with onConflict
         const { error: statsError } = await supabase
           .from('user_statistics')
           .upsert({
             user_id: userId,
             total_games: stats.totalGames,
             total_score: stats.totalScore,
+          }, {
+            onConflict: 'user_id'
           });
 
         if (statsError) throw statsError;
@@ -32,6 +34,8 @@ export const useSyncGameStats = (userId: string | undefined) => {
                 user_id: userId,
                 score: stats.dailyScore.score,
                 date: today
+              }, {
+                onConflict: 'user_id,date'
               });
 
             if (scoreError) throw scoreError;

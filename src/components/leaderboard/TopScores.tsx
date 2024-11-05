@@ -29,20 +29,19 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
       const today = toZonedTime(new Date(), 'GMT').toISOString().split('T')[0];
       
       const { data, error } = await supabase
-        .from('profiles')
+        .from('daily_scores')
         .select(`
-          username,
-          full_name,
-          avatar_url,
-          level,
-          experience,
-          daily_scores!inner (
-            score,
-            date
+          score,
+          profiles:user_id (
+            username,
+            full_name,
+            avatar_url,
+            level,
+            experience
           )
         `)
-        .eq('daily_scores.date', today)
-        .order('daily_scores.score', { ascending: true })
+        .eq('date', today)
+        .order('score', { ascending: true })
         .limit(3);
 
       if (error) {
@@ -50,20 +49,15 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
         return;
       }
 
-      const processedData = data.map((profile: any) => {
-        const scores = profile.daily_scores || [];
-        const totalScore = scores.reduce((acc: number, curr: any) => acc + curr.score, 0);
-        
-        return {
-          username: profile.username,
-          full_name: profile.full_name || profile.username,
-          avatar_url: profile.avatar_url,
-          level: profile.level,
-          experience: profile.experience,
-          score: scores[0]?.score || Infinity,
-          average_score: scores.length ? Math.round(totalScore / scores.length) : Infinity,
-        };
-      });
+      const processedData = data.map((entry: any) => ({
+        username: entry.profiles.username,
+        full_name: entry.profiles.full_name || entry.profiles.username,
+        avatar_url: entry.profiles.avatar_url,
+        level: entry.profiles.level,
+        experience: entry.profiles.experience,
+        score: entry.score,
+        average_score: entry.score // For now, just using the daily score
+      }));
 
       setTopScores(processedData);
     };
@@ -106,11 +100,11 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
             <div className="flex flex-col">
               <div className="font-medium">{entry.full_name}</div>
               <div className="text-sm text-gray-500">
-                Avg Score: {entry.average_score === Infinity ? '-' : entry.average_score}
+                Score: {entry.score === Infinity ? '-' : entry.score}
               </div>
             </div>
             <div className="text-right font-medium">
-              Score: {entry.score === Infinity ? '-' : entry.score}
+              #{index + 1}
             </div>
           </div>
         ))}
