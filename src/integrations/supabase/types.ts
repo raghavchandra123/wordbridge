@@ -65,6 +65,38 @@ export type Database = {
         }
         Relationships: []
       }
+      user_statistics: {
+        Row: {
+          created_at: string
+          id: string
+          total_games: number
+          total_score: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          total_games?: number
+          total_score?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          total_games?: number
+          total_score?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_statistics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

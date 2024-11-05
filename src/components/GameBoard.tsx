@@ -4,7 +4,6 @@ import WordDisplay from "./WordDisplay";
 import HeaderSection from "./game/HeaderSection";
 import WordInput from "./game/WordInput";
 import { GameContainer } from "./game/layout/GameContainer";
-import { Lightbulb } from "lucide-react";
 import { GameBoardProps } from "./game/GameBoardTypes";
 import { generateShareText } from "@/lib/utils/share";
 import { toast } from "./ui/use-toast";
@@ -17,7 +16,7 @@ import { GameBoardScrollArea } from "./game/GameBoardScrollArea";
 import { GameBoardControls } from "./game/GameBoardControls";
 import { GameControlButtons } from "./game/GameControlButtons";
 import { useDynamicDifficulty } from "@/hooks/useDynamicDifficulty";
-import { supabase } from "@/integrations/supabase/client"; // Added import for supabase
+import { GameStateManager } from "./game/GameStateManager";
 
 const GameBoard = ({
   game,
@@ -32,6 +31,7 @@ const GameBoard = ({
 }: GameBoardProps) => {
   const [containerRef, setContainerRef] = useState<HTMLDivElement | null>(null);
   const [isGeneratingHint, setIsGeneratingHint] = useState(false);
+  const [showEndGame, setShowEndGame] = useState(false);
   const visualViewport = useViewport();
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -46,7 +46,6 @@ const GameBoard = ({
     onGameCompleted,
   } = useDynamicDifficulty();
 
-  // Background loading effect
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval>;
 
@@ -214,47 +213,6 @@ const GameBoard = ({
     }
   };
 
-  useEffect(() => {
-    if (game.isComplete) {
-      onGameCompleted();
-      updateUserProgress(); // Call to update user progress
-    }
-  }, [game.isComplete]);
-
-  const updateUserProgress = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return;
-
-    const score = game.currentChain.length - 1;
-    const experienceGained = Math.max(20 - score, 1) * 10; // More experience for shorter chains
-
-    // Update daily score
-    const { error: scoreError } = await supabase
-      .from('daily_scores')
-      .upsert({
-        user_id: session.user.id,
-        score,
-        date: new Date().toISOString().split('T')[0]
-      });
-
-    if (scoreError) {
-      console.error('Error updating score:', scoreError);
-      return;
-    }
-
-    // Update experience
-    const { error: expError } = await supabase
-      .from('profiles')
-      .update({
-        experience: supabase.rpc('increment_experience', { amount: experienceGained })
-      })
-      .eq('id', session.user.id);
-
-    if (expError) {
-      console.error('Error updating experience:', expError);
-    }
-  };
-
   const headerHeight = 120;
   const inputSectionHeight = game.isComplete ? 0 : 60;
   const completionButtonsHeight = game.isComplete ? 120 : 0;
@@ -267,6 +225,8 @@ const GameBoard = ({
 
   return (
     <GameContainer mainHeight={visualViewport.height} ref={setContainerRef}>
+      <GameStateManager game={game} onGameComplete={() => setShowEndGame(true)} />
+      
       <HeaderSection
         startWord={game.startWord}
         targetWord={game.targetWord}
