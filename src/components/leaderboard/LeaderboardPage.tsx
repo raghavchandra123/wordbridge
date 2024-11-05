@@ -65,22 +65,15 @@ export default function LeaderboardPage() {
         return;
       }
 
-      const processedData = todayScores.map((entry: any) => {
-        const userStats = statsData?.find(stat => stat.user_id === entry.profiles.id);
-        const averageScore = userStats && userStats.total_games > 0
-          ? Number((userStats.total_score / userStats.total_games).toFixed(2))
-          : null;
-
-        return {
-          username: entry.profiles.username,
-          full_name: entry.profiles.full_name || entry.profiles.username,
-          avatar_url: entry.profiles.avatar_url,
-          level: entry.profiles.level,
-          experience: entry.profiles.experience,
-          score: entry.score,
-          average_score: averageScore
-        };
-      });
+      const processedData = todayScores.map((entry: any) => ({
+        username: entry.profiles.username,
+        full_name: entry.profiles.full_name || entry.profiles.username,
+        avatar_url: entry.profiles.avatar_url,
+        level: entry.profiles.level,
+        experience: entry.profiles.experience,
+        score: entry.score,
+        average_score: null
+      }));
 
       setLeaderboard(processedData);
     };
