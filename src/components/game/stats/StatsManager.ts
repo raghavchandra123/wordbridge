@@ -7,15 +7,20 @@ export const updateDailyScore = async (userId: string, score: number, seedDate: 
     
     // Log whether this is a daily game
     const isDailyGame = seedDate === today;
-    console.log('🎲 Daily Game Check:', {
+    logDatabaseOperation('Daily Score Update Check', {
       seedDate,
       today,
-      isDailyGame
+      isDailyGame,
+      score
     });
 
     // Only update if this is a daily game
     if (!isDailyGame) {
-      console.log('⏭️ Skipping daily score update - not a daily game');
+      logDatabaseOperation('Daily Score Update Skipped', {
+        reason: 'Not a daily game',
+        seedDate,
+        today
+      });
       return;
     }
 
@@ -28,11 +33,11 @@ export const updateDailyScore = async (userId: string, score: number, seedDate: 
       .single();
 
     if (fetchError && fetchError.code !== 'PGRST116') {
-      console.error('❌ Error fetching existing score:', fetchError);
+      logDatabaseOperation('Daily Score Fetch Error', { error: fetchError });
       throw fetchError;
     }
 
-    console.log('🎯 Score Comparison:', {
+    logDatabaseOperation('Daily Score Comparison', {
       existingScore: existingScore?.score,
       newScore: score,
       shouldUpdate: !existingScore || score < existingScore.score
@@ -51,24 +56,25 @@ export const updateDailyScore = async (userId: string, score: number, seedDate: 
         });
 
       if (error) {
-        console.error('❌ Error updating daily score:', error);
+        logDatabaseOperation('Daily Score Update Error', { error });
         throw error;
       }
 
-      console.log('✅ Daily score updated successfully:', {
+      logDatabaseOperation('Daily Score Updated', {
         userId,
         score,
         date: today,
         previousScore: existingScore?.score
       });
     } else {
-      console.log('⏭️ Skipping update - existing score is better:', {
+      logDatabaseOperation('Daily Score Update Skipped', {
+        reason: 'Existing score is better',
         existingScore: existingScore.score,
         newScore: score
       });
     }
   } catch (error) {
-    console.error('❌ Error in updateDailyScore:', error);
+    console.error('Error in updateDailyScore:', error);
     throw error;
   }
 };
