@@ -51,7 +51,6 @@ export const updateTotalStats = async (userId: string, score: number) => {
 
 export const updateExperience = async (userId: string, score: number) => {
   try {
-    // Calculate experience gain (inverse to score - better score = more experience)
     const experienceGain = Math.floor((20 - score) * 10);
     logDatabaseOperation('Calculating Experience Gain', { score, experienceGain });
 
@@ -68,7 +67,7 @@ export const updateExperience = async (userId: string, score: number) => {
 
     const newExperience = (currentProfile?.experience || 0) + experienceGain;
 
-    // Direct update instead of RPC
+    // Direct update with integer value
     const { error: updateError } = await supabase
       .from('profiles')
       .update({ experience: newExperience })
