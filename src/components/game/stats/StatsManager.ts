@@ -38,22 +38,12 @@ export const updateExperience = async (userId: string, score: number) => {
   try {
     const experienceGain = Math.floor((20 - score) * 10);
     
-    // First get current experience
-    const { data: currentProfile, error: fetchError } = await supabase
-      .from('profiles')
-      .select('experience')
-      .eq('id', userId)
-      .single();
-
-    if (fetchError) throw fetchError;
-
-    const currentExperience = currentProfile?.experience || 0;
-    const newExperience = currentExperience + experienceGain;
-
     // Direct update without RPC
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({ experience: newExperience })
+      .update({ 
+        experience: supabase.sql`experience + ${experienceGain}` 
+      })
       .eq('id', userId);
 
     if (updateError) throw updateError;
@@ -73,11 +63,12 @@ export const updateDailyScore = async (userId: string, score: number, seedDate: 
     const today = new Date().toISOString().split('T')[0];
     const isDaily = seedDate === today;
     
+    // Only proceed if this is a daily game
     if (!isDaily) {
-      console.log('Skipping daily score update - not a daily game');
       return;
     }
 
+    // First fetch existing score
     const { data: existingScore, error: fetchError } = await supabase
       .from('daily_scores')
       .select('score')

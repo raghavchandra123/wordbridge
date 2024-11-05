@@ -6,6 +6,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useAuth } from '../auth/AuthProvider';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../ui/button';
+import { Progress } from '../ui/progress';
+import { toZonedTime } from 'date-fns-tz';
 
 interface LeaderboardEntry {
   username: string;
@@ -24,7 +26,7 @@ export default function LeaderboardPage() {
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
-      const today = new Date().toISOString().split('T')[0];
+      const today = toZonedTime(new Date(), 'GMT').toISOString().split('T')[0];
       
       const { data: todayScores, error: todayError } = await supabase
         .from('daily_scores')
@@ -46,18 +48,13 @@ export default function LeaderboardPage() {
         return;
       }
 
-      if (!todayScores?.length) {
+      if (!todayScores) {
         setLeaderboard([]);
         return;
       }
 
       const userIds = todayScores.map((score: any) => score.profiles.id).filter(Boolean);
       
-      if (!userIds.length) {
-        setLeaderboard([]);
-        return;
-      }
-
       const { data: statsData, error: statsError } = await supabase
         .from('user_statistics')
         .select('user_id, total_games, total_score')
@@ -68,11 +65,11 @@ export default function LeaderboardPage() {
         return;
       }
 
-      const processedData = todayScores?.map((entry: any) => {
+      const processedData = todayScores.map((entry: any) => {
         const userStats = statsData?.find(stat => stat.user_id === entry.profiles.id);
         const averageScore = userStats && userStats.total_games > 0
           ? Number((userStats.total_score / userStats.total_games).toFixed(2))
-          : 0;
+          : null;
 
         return {
           username: entry.profiles.username,
@@ -83,7 +80,7 @@ export default function LeaderboardPage() {
           score: entry.score,
           average_score: averageScore
         };
-      }) || [];
+      });
 
       setLeaderboard(processedData);
     };
@@ -92,6 +89,17 @@ export default function LeaderboardPage() {
       fetchLeaderboard();
     }
   }, [session]);
+
+  const getLevelColor = (level: number) => {
+    if (level >= 10) return 'bg-purple-500';
+    if (level >= 5) return 'bg-blue-500';
+    return 'bg-green-500';
+  };
+
+  const getProgressToNextLevel = (experience: number) => {
+    const currentLevelExp = (Math.floor(experience / 100)) * 100;
+    return ((experience - currentLevelExp) / 100) * 100;
+  };
 
   if (!session) {
     return (
@@ -116,15 +124,14 @@ export default function LeaderboardPage() {
   return (
     <div className="min-h-screen bg-[#97BED9] p-4">
       <Card className="max-w-2xl mx-auto">
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader>
           <Button
             onClick={() => navigate('/')}
-            className="bg-[#97BED9] hover:bg-[#97BED9]/90 text-white"
+            className="w-24"
           >
             Back
           </Button>
-          <CardTitle className="text-2xl">Leaderboard</CardTitle>
-          <div className="w-[72px]" /> {/* Spacer for alignment */}
+          <CardTitle className="text-2xl text-center -mt-8">Leaderboard</CardTitle>
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-[70vh]">
@@ -140,14 +147,24 @@ export default function LeaderboardPage() {
                   className="grid grid-cols-[1fr_auto_auto] items-center gap-4 p-3 rounded-lg bg-gray-50"
                 >
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={entry.avatar_url} />
-                      <AvatarFallback>{entry.full_name[0]}</AvatarFallback>
-                    </Avatar>
-                    <div className="font-medium">{entry.full_name}</div>
+                    <div className="relative">
+                      <Avatar className={`h-12 w-12 ring-2 ${getLevelColor(entry.level)}`}>
+                        <AvatarImage src={entry.avatar_url} />
+                        <AvatarFallback>{entry.full_name[0]}</AvatarFallback>
+                      </Avatar>
+                      <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 rounded-full">
+                        {entry.level}
+                      </div>
+                      <div className="absolute -bottom-4 left-0 w-full">
+                        <Progress value={getProgressToNextLevel(entry.experience)} className="h-1" />
+                      </div>
+                    </div>
+                    <div className="font-medium ml-2">{entry.full_name}</div>
                   </div>
                   <div className="text-right font-medium">{entry.score}</div>
-                  <div className="text-right font-medium">{entry.average_score.toFixed(2)}</div>
+                  <div className="text-right font-medium">
+                    {entry.average_score !== null ? entry.average_score.toFixed(2) : '-'}
+                  </div>
                 </div>
               ))}
             </div>
