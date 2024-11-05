@@ -14,6 +14,7 @@ import { calculateProgress } from "@/lib/embeddings/utils";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { BookOpen } from "lucide-react";
+import { useDynamicDifficulty } from "@/hooks/useDynamicDifficulty";
 
 const Index = () => {
   const { startWord, targetWord } = useParams();
@@ -24,6 +25,7 @@ const Index = () => {
   const [progress, setProgress] = useState(0);
   const [isChecking, setIsChecking] = useState(false);
   const [showEndGame, setShowEndGame] = useState(false);
+  const { onWordRejected } = useDynamicDifficulty();
 
   const handleWordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,12 +35,12 @@ const Index = () => {
 
     try {
       if (!isValidWord(currentWord)) {
+        onWordRejected(); // Decrease difficulty when word is invalid
         toast({
           title: "Invalid word",
           description: "This word is not in our dictionary",
           variant: "destructive",
         });
-        onWordRejected(); // Add difficulty adjustment for invalid words
         return;
       }
 
@@ -46,7 +48,7 @@ const Index = () => {
       const validation = await validateWordForChain(currentWord, previousWord, game.targetWord);
       
       if (!validation.isValid) {
-        onWordRejected(); // Add difficulty adjustment for failed validation
+        onWordRejected(); // Decrease difficulty when validation fails
         toast({
           title: "Word not similar enough",
           description: validation.message,
