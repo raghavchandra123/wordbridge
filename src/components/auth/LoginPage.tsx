@@ -38,7 +38,7 @@ export default function LoginPage() {
                 },
               },
             }}
-            providers={['google', 'facebook']}
+            providers={['google']}
             socialLayout="horizontal"
             theme="light"
             showLinks={false}
