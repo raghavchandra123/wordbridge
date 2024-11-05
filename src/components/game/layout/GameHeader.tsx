@@ -3,19 +3,22 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { CardTitle } from "@/components/ui/card";
 import { THEME_COLORS } from "@/lib/constants";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useState } from "react";
 
 export const GameHeader = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
+  const [showTutorial, setShowTutorial] = useState(false);
 
   return (
     <div className="space-y-2 pb-2">
       <div className="flex justify-between items-center">
         <button
-          onClick={() => {}}
+          onClick={() => setShowTutorial(true)}
           className="flex items-center justify-center w-8 h-8 rounded-md"
           style={{ 
-            backgroundColor: `${THEME_COLORS.GRADIENT.MID1}`,
+            backgroundColor: `${THEME_COLORS.GRADIENT.START}`,
             color: THEME_COLORS.TEXT.PRIMARY
           }}
           title="Tutorial"
@@ -66,13 +69,15 @@ export const GameHeader = () => {
         </div>
       </div>
 
-      <div className="text-center">
-        <img 
-          src="/images/tutorial.jpg" 
-          alt="Tutorial" 
-          className="w-full rounded-lg shadow-md"
-        />
-      </div>
+      <Dialog open={showTutorial} onOpenChange={setShowTutorial}>
+        <DialogContent className="max-w-2xl">
+          <img 
+            src="/images/tutorial.jpg" 
+            alt="Tutorial" 
+            className="w-full rounded-lg shadow-md"
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
