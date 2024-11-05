@@ -38,6 +38,7 @@ const Index = () => {
           description: "This word is not in our dictionary",
           variant: "destructive",
         });
+        onWordRejected(); // Add difficulty adjustment for invalid words
         return;
       }
 
@@ -45,6 +46,7 @@ const Index = () => {
       const validation = await validateWordForChain(currentWord, previousWord, game.targetWord);
       
       if (!validation.isValid) {
+        onWordRejected(); // Add difficulty adjustment for failed validation
         toast({
           title: "Word not similar enough",
           description: validation.message,
