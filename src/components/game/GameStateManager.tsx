@@ -28,29 +28,16 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
         const score = game.currentChain.length - 1;
         const isDaily = !game.startWord.includes('-');
         
-        // For daily games, update the daily score
+        // For daily games only, update the daily score
         if (isDaily) {
           await updateDailyScore(session.user.id, score);
         }
 
-        // Get and update experience
-        const { data: currentProfile, error: profileError } = await supabase
-          .from('profiles')
-          .select('experience')
-          .eq('id', session.user.id)
-          .single();
-
-        if (profileError) {
-          console.error('Error fetching profile:', profileError);
-          return;
-        }
-
+        // Calculate and update experience
         const experienceGain = Math.floor(100 / score);
-        const newExperience = (currentProfile?.experience || 0) + experienceGain;
-
         const { error: expError } = await supabase
           .from('profiles')
-          .update({ experience: newExperience })
+          .update({ experience: supabase.rpc('increment', { x: experienceGain }) })
           .eq('id', session.user.id);
 
         if (expError) {
@@ -61,16 +48,26 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
           });
         }
 
-        // Update user statistics using upsert
+        // Get current stats first
+        const { data: currentStats, error: statsGetError } = await supabase
+          .from('user_statistics')
+          .select('total_games, total_score')
+          .eq('user_id', session.user.id)
+          .single();
+
+        if (statsGetError && statsGetError.code !== 'PGRST116') {
+          throw statsGetError;
+        }
+
+        // Update user statistics with incremented values
         const { error: statsError } = await supabase
           .from('user_statistics')
           .upsert({
             user_id: session.user.id,
-            total_games: 1,
-            total_score: score
+            total_games: (currentStats?.total_games || 0) + 1,
+            total_score: (currentStats?.total_score || 0) + score
           }, {
-            onConflict: 'user_id',
-            ignoreDuplicates: false
+            onConflict: 'user_id'
           });
 
         if (statsError) {

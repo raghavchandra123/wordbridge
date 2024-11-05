@@ -19,7 +19,7 @@ export const updateDailyScore = async (userId: string, score: number): Promise<b
         .from('daily_scores')
         .upsert({
           user_id: userId,
-          score: score,
+          score,
           date: today
         }, {
           onConflict: 'user_id,date'
