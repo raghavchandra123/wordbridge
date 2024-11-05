@@ -33,7 +33,7 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
           await updateDailyScore(session.user.id, score);
         }
 
-        // Get current experience value first
+        // Get current experience value
         const { data: currentProfile, error: profileError } = await supabase
           .from('profiles')
           .select('experience')
@@ -45,11 +45,11 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
           return;
         }
 
-        // Calculate experience gain
+        // Calculate new experience
         const experienceGain = Math.floor(100 / score);
         const newExperience = (currentProfile?.experience || 0) + experienceGain;
 
-        // Direct update with the new experience value
+        // Update experience
         const { error: expError } = await supabase
           .from('profiles')
           .update({ experience: newExperience })
@@ -64,32 +64,46 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
         }
 
         // Get current stats
-        const { data: currentStats, error: fetchError } = await supabase
+        const { data: currentStats, error: statsError } = await supabase
           .from('user_statistics')
-          .select('total_games, total_score')
+          .select('*')
           .eq('user_id', session.user.id)
           .single();
 
-        if (fetchError) {
-          console.error('Error fetching statistics:', fetchError);
-          return;
-        }
+        if (!currentStats) {
+          // If no stats exist, create new entry
+          const { error: insertError } = await supabase
+            .from('user_statistics')
+            .insert({
+              user_id: session.user.id,
+              total_games: 1,
+              total_score: score
+            });
 
-        // Update total games and score
-        const { error: statsError } = await supabase
-          .from('user_statistics')
-          .upsert({
-            user_id: session.user.id,
-            total_games: (currentStats?.total_games || 0) + 1,
-            total_score: (currentStats?.total_score || 0) + score
-          });
+          if (insertError) {
+            console.error('Error creating statistics:', insertError);
+            toast({
+              description: "There was an issue saving your statistics.",
+              variant: "destructive",
+            });
+          }
+        } else {
+          // Update existing stats
+          const { error: updateError } = await supabase
+            .from('user_statistics')
+            .update({
+              total_games: currentStats.total_games + 1,
+              total_score: currentStats.total_score + score
+            })
+            .eq('user_id', session.user.id);
 
-        if (statsError) {
-          console.error('Error updating statistics:', statsError);
-          toast({
-            description: "There was an issue updating your statistics.",
-            variant: "destructive",
-          });
+          if (updateError) {
+            console.error('Error updating statistics:', updateError);
+            toast({
+              description: "There was an issue updating your statistics.",
+              variant: "destructive",
+            });
+          }
         }
 
         // Save local stats
