@@ -54,28 +54,17 @@ export const updateExperience = async (userId: string, score: number) => {
     const experienceGain = Math.floor((20 - score) * 10);
     logDatabaseOperation('Calculating Experience Gain', { score, experienceGain });
 
-    // Get current experience
-    const { data: currentProfile, error: fetchError } = await supabase
-      .from('profiles')
-      .select('experience')
-      .eq('id', userId)
-      .single();
+    const { error } = await supabase.rpc(
+      'increment_experience',
+      { 
+        user_id: userId,
+        amount: experienceGain
+      }
+    );
 
-    logDatabaseOperation('Current Profile Data', { currentProfile, error: fetchError });
-    
-    if (fetchError) throw fetchError;
+    if (error) throw error;
 
-    const newExperience = (currentProfile?.experience || 0) + experienceGain;
-
-    // Direct update with integer value
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ experience: newExperience })
-      .eq('id', userId);
-
-    if (updateError) throw updateError;
-
-    logDatabaseOperation('Experience Updated', { newExperience });
+    logDatabaseOperation('Experience Updated Successfully', { experienceGain });
 
   } catch (error) {
     logDatabaseOperation('Error Updating Experience', { error });
@@ -106,38 +95,18 @@ export const updateDailyScore = async (userId: string, score: number, seedDate: 
       return;
     }
 
-    // Get current daily score
-    const { data: existingScore, error: fetchError } = await supabase
-      .from('daily_scores')
-      .select('score')
-      .eq('user_id', userId)
-      .eq('date', today)
-      .single();
+    const { error } = await supabase.rpc(
+      'update_daily_score',
+      { 
+        p_user_id: userId,
+        p_score: score,
+        p_date: today
+      }
+    );
 
-    logDatabaseOperation('Fetching Existing Daily Score', { 
-      existingScore,
-      error: fetchError 
-    });
+    if (error) throw error;
 
-    // Only update if no existing score or new score is better (lower)
-    if (!existingScore || score < existingScore.score) {
-      const { error: updateError } = await supabase
-        .from('daily_scores')
-        .upsert({
-          user_id: userId,
-          score,
-          date: today
-        });
-
-      if (updateError) throw updateError;
-
-      logDatabaseOperation('Daily Score Updated', { score });
-    } else {
-      logDatabaseOperation('Daily Score Not Updated - Existing Score Better', {
-        existingScore: existingScore.score,
-        newScore: score
-      });
-    }
+    logDatabaseOperation('Daily Score Updated Successfully', { score });
 
   } catch (error) {
     logDatabaseOperation('Error Updating Daily Score', { error });
