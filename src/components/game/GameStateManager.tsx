@@ -44,29 +44,36 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
           const currentLevel = userData?.level || 1;
           const experienceGain = calculateExperienceGain(score, currentLevel);
 
-          // Update daily score using upsert
+          // Update daily score using upsert with onConflict strategy
           const { error: scoreError } = await supabase
             .from('daily_scores')
-            .upsert({
-              user_id: session.user.id,
-              score,
-              date: today.toISOString().split('T')[0]
-            }, {
-              onConflict: 'user_id,date'
-            });
+            .upsert(
+              {
+                user_id: session.user.id,
+                score,
+                date: today.toISOString().split('T')[0]
+              },
+              {
+                onConflict: 'user_id,date',
+                ignoreDuplicates: false
+              }
+            );
 
           if (scoreError) throw scoreError;
 
           // Update total games and score
           const { error: statsError } = await supabase
             .from('user_statistics')
-            .upsert({
-              user_id: session.user.id,
-              total_games: 1,
-              total_score: score
-            }, {
-              onConflict: 'user_id'
-            });
+            .upsert(
+              {
+                user_id: session.user.id,
+                total_games: 1,
+                total_score: score
+              },
+              {
+                onConflict: 'user_id'
+              }
+            );
 
           if (statsError) throw statsError;
 
