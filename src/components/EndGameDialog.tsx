@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { GameState } from "@/lib/types";
 import { generateShareText } from "@/lib/utils/share";
 import { toast } from "@/components/ui/use-toast";
-import { Share, Shuffle } from "lucide-react";
+import { Share, Shuffle, Trophy } from "lucide-react";
 import { findRandomWordPair } from "@/lib/embeddings/game";
+import { useNavigate } from "react-router-dom";
 
 interface EndGameDialogProps {
   game: GameState;
@@ -19,6 +20,8 @@ interface EndGameDialogProps {
 }
 
 const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => {
+  const navigate = useNavigate();
+  
   const nextPuzzleTime = new Date();
   nextPuzzleTime.setHours(24, 0, 0, 0);
   
@@ -100,6 +103,14 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
           >
             <Share className="mr-2 h-4 w-4" />
             Share
+          </Button>
+
+          <Button 
+            onClick={() => navigate('/leaderboard')}
+            className="w-full bg-[#FFD700] hover:bg-[#FFD700]/90 text-white"
+          >
+            <Trophy className="mr-2 h-4 w-4" />
+            View Leaderboard
           </Button>
 
           <Button 

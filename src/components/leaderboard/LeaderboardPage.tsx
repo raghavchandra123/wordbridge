@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { ScrollArea } from '../ui/scroll-area';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { useAuth } from '../auth/AuthProvider';
-import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 interface LeaderboardEntry {
   username: string;
@@ -17,8 +17,14 @@ interface LeaderboardEntry {
 export default function LeaderboardPage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const { session } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
+    if (!session) {
+      navigate('/login');
+      return;
+    }
+
     const fetchLeaderboard = async () => {
       const today = new Date().toISOString().split('T')[0];
       
@@ -65,7 +71,7 @@ export default function LeaderboardPage() {
     };
 
     fetchLeaderboard();
-  }, []);
+  }, [session, navigate]);
 
   const getLevelColor = (level: number) => {
     if (level >= 10) return 'bg-purple-500';
@@ -76,8 +82,15 @@ export default function LeaderboardPage() {
   return (
     <div className="min-h-screen bg-[#97BED9] p-4">
       <Card className="max-w-2xl mx-auto">
-        <CardHeader>
+        <CardHeader className="flex justify-between items-center">
+          <button
+            onClick={() => navigate('/')}
+            className="text-sm px-3 py-1 rounded-md bg-blue-500 hover:bg-blue-600 text-white transition-colors"
+          >
+            Back to Game
+          </button>
           <CardTitle className="text-2xl text-center">Leaderboard</CardTitle>
+          <div className="w-20" /> {/* Spacer for alignment */}
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-[70vh]">

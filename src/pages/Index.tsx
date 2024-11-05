@@ -31,12 +31,6 @@ const Index = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!session) {
-      navigate('/login');
-    }
-  }, [session, navigate]);
-
   const handleWordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentWord || isChecking) return;
@@ -118,36 +112,35 @@ const Index = () => {
       timestamp: Date.now(),
     });
     
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return;
+    if (session?.user) {
+      const score = completedGame.currentChain.length - 1;
+      const experienceGained = Math.max(20 - score, 1) * 10;
 
-    const score = completedGame.currentChain.length - 1;
-    const experienceGained = Math.max(20 - score, 1) * 10; // More experience for shorter chains
+      // Update daily score
+      const { error: scoreError } = await supabase
+        .from('daily_scores')
+        .upsert({
+          user_id: session.user.id,
+          score,
+          date: new Date().toISOString().split('T')[0]
+        });
 
-    // Update daily score
-    const { error: scoreError } = await supabase
-      .from('daily_scores')
-      .upsert({
-        user_id: session.user.id,
-        score,
-        date: new Date().toISOString().split('T')[0]
-      });
+      if (scoreError) {
+        console.error('Error updating score:', scoreError);
+        return;
+      }
 
-    if (scoreError) {
-      console.error('Error updating score:', scoreError);
-      return;
-    }
+      // Update experience
+      const { error: expError } = await supabase
+        .from('profiles')
+        .update({
+          experience: supabase.rpc('increment_experience', { amount: experienceGained })
+        })
+        .eq('id', session.user.id);
 
-    // Update experience
-    const { error: expError } = await supabase
-      .from('profiles')
-      .update({
-        experience: supabase.rpc('increment_experience', { amount: experienceGained })
-      })
-      .eq('id', session.user.id);
-
-    if (expError) {
-      console.error('Error updating experience:', expError);
+      if (expError) {
+        console.error('Error updating experience:', expError);
+      }
     }
 
     setShowEndGame(true);
@@ -181,12 +174,21 @@ const Index = () => {
               Leaderboard
             </button>
             <CardTitle className="text-4xl text-center flex-1">Word Bridge</CardTitle>
-            <button
-              onClick={() => supabase.auth.signOut()}
-              className="text-sm px-3 py-1 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors"
-            >
-              Sign Out
-            </button>
+            {session ? (
+              <button
+                onClick={() => supabase.auth.signOut()}
+                className="text-sm px-3 py-1 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors"
+              >
+                Sign Out
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate('/login')}
+                className="text-sm px-3 py-1 rounded-md bg-blue-500 hover:bg-blue-600 text-white transition-colors"
+              >
+                Sign In
+              </button>
+            )}
           </div>
           <Dialog>
             <DialogTrigger asChild>

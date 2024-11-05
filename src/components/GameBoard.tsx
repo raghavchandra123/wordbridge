@@ -49,14 +49,14 @@ const GameBoard = ({
   // Background loading effect
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval>;
-    
+
     const initializeBackgroundLoading = async () => {
       intervalId = await startBackgroundLoading();
       await loadInitialChunks([0, 1]);
     };
-    
+
     initializeBackgroundLoading();
-    
+
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
@@ -112,9 +112,9 @@ const GameBoard = ({
       onWordRejected();
       const newChain = [...game.currentChain];
       newChain.pop();
-      
+
       const newProgresses = await recalculateChainProgress(newChain);
-      
+
       setGame({
         ...game,
         currentChain: newChain,
@@ -152,9 +152,9 @@ const GameBoard = ({
       onNewGameWithoutCompletion();
     }
     try {
-      const [startWord, targetWord] = await findRandomWordPair({ 
+      const [startWord, targetWord] = await findRandomWordPair({
         minThreshold,
-        maxThreshold 
+        maxThreshold
       });
       setGame({
         startWord,
@@ -181,7 +181,7 @@ const GameBoard = ({
     try {
       const previousWord = game.currentChain[game.currentChain.length - 1];
       const currentProgress = game.wordProgresses[game.wordProgresses.length - 1] || 0;
-      
+
       const hint = await generateHint(
         previousWord,
         game.targetWord,
@@ -261,13 +261,13 @@ const GameBoard = ({
   const cardPadding = 16;
   const cardHeaderHeight = 60;
   const containerWidth = containerRef?.offsetWidth ?? 300;
-  
+
   const availableScrollHeight = visualViewport.height - headerHeight - inputSectionHeight - cardPadding - cardHeaderHeight - completionButtonsHeight;
   const maxScrollHeight = Math.min(availableScrollHeight, visualViewport.height * 0.4);
 
   return (
     <GameContainer mainHeight={visualViewport.height} ref={setContainerRef}>
-      <HeaderSection 
+      <HeaderSection
         startWord={game.startWord}
         targetWord={game.targetWord}
         progress={game.wordProgresses[game.wordProgresses.length - 1] || 0}
