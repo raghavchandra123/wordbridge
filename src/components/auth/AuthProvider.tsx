@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Session } from '@supabase/supabase-js';
 import { toast } from '../ui/use-toast';
@@ -13,7 +13,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
-  const navigate = useNavigate();
   const location = useLocation();
 
   const ensureUserProfile = async (session: Session) => {
@@ -93,19 +92,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session);
       if (session) {
         ensureUserProfile(session);
-      } else if (location.pathname === '/leaderboard') {
-        navigate('/login');
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, location]);
+  }, []);
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    if (location.pathname === '/leaderboard') {
-      navigate('/login');
-    }
   };
 
   return (
