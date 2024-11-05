@@ -5,6 +5,7 @@ import { ScrollArea } from '../ui/scroll-area';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { useAuth } from '../auth/AuthProvider';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '../ui/button';
 
 interface LeaderboardEntry {
   username: string;
@@ -21,7 +22,6 @@ export default function LeaderboardPage() {
 
   useEffect(() => {
     if (!session) {
-      navigate('/login');
       return;
     }
 
@@ -59,7 +59,6 @@ export default function LeaderboardPage() {
         };
       });
 
-      // Sort by today's score (players who haven't played today go to the bottom)
       processedData.sort((a, b) => {
         if (!a.has_played_today && !b.has_played_today) return 0;
         if (!a.has_played_today) return 1;
@@ -71,7 +70,7 @@ export default function LeaderboardPage() {
     };
 
     fetchLeaderboard();
-  }, [session, navigate]);
+  }, [session]);
 
   const getLevelColor = (level: number) => {
     if (level >= 10) return 'bg-purple-500';
@@ -83,45 +82,65 @@ export default function LeaderboardPage() {
     <div className="min-h-screen bg-[#97BED9] p-4">
       <Card className="max-w-2xl mx-auto">
         <CardHeader className="flex justify-between items-center">
-          <button
+          <Button
             onClick={() => navigate('/')}
-            className="text-sm px-3 py-1 rounded-md bg-blue-500 hover:bg-blue-600 text-white transition-colors"
+            className="text-sm px-3 py-1 rounded-md bg-[#97BED9] hover:bg-[#97BED9]/90 text-white transition-colors"
           >
             Back to Game
-          </button>
+          </Button>
           <CardTitle className="text-2xl text-center">Leaderboard</CardTitle>
           <div className="w-20" /> {/* Spacer for alignment */}
         </CardHeader>
-        <CardContent>
-          <ScrollArea className="h-[70vh]">
-            <div className="space-y-4">
-              {leaderboard.map((entry, index) => (
-                <div
-                  key={entry.username}
-                  className="flex items-center space-x-4 p-3 rounded-lg bg-gray-50"
-                >
-                  <Avatar className={`${getLevelColor(entry.level)} text-white`}>
-                    <AvatarFallback>{entry.level}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <div className="font-medium">{entry.username}</div>
-                    <div className="text-sm text-gray-500">
-                      Avg Score: {entry.average_score === Infinity ? '-' : entry.average_score}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-medium">
-                      {entry.has_played_today ? `Score: ${entry.score}` : 'Not played today'}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      Level {entry.level}
-                    </div>
-                  </div>
-                </div>
-              ))}
+        {!session ? (
+          <CardContent className="text-center py-8">
+            <p className="mb-4">Please log in to view the leaderboard</p>
+            <div className="flex justify-center gap-4">
+              <Button
+                onClick={() => navigate('/')}
+                className="bg-[#97BED9] hover:bg-[#97BED9]/90 text-white"
+              >
+                Back to Game
+              </Button>
+              <Button
+                onClick={() => navigate('/login')}
+                className="bg-[#97BED9] hover:bg-[#97BED9]/90 text-white"
+              >
+                Login
+              </Button>
             </div>
-          </ScrollArea>
-        </CardContent>
+          </CardContent>
+        ) : (
+          <CardContent>
+            <ScrollArea className="h-[70vh]">
+              <div className="space-y-4">
+                {leaderboard.map((entry, index) => (
+                  <div
+                    key={entry.username}
+                    className="flex items-center space-x-4 p-3 rounded-lg bg-gray-50"
+                  >
+                    <Avatar className={`${getLevelColor(entry.level)} text-white`}>
+                      <AvatarFallback>{entry.level}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="font-medium">{entry.username}</div>
+                      <div className="text-sm text-gray-500">
+                        Avg Score: {entry.average_score === Infinity ? '-' : entry.average_score}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium">
+                        {entry.has_played_today ? `Score: ${entry.score}` : 'Not played today'}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Level {entry.level}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        )}
       </Card>
     </div>
   );

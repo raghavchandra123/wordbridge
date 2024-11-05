@@ -107,7 +107,7 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
 
           <Button 
             onClick={() => navigate('/leaderboard')}
-            className="w-full bg-[#FFD700] hover:bg-[#FFD700]/90 text-white"
+            className="w-full bg-[#97BED9] hover:bg-[#97BED9]/90 text-white"
           >
             <Trophy className="mr-2 h-4 w-4" />
             View Leaderboard

@@ -1,19 +1,34 @@
 import { Trophy, BookOpen, LogIn, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { CardTitle, CardHeader } from "@/components/ui/card";
+import { CardTitle } from "@/components/ui/card";
 import { THEME_COLORS } from "@/lib/constants";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useState } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export const GameHeader = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
+  const [showTutorial, setShowTutorial] = useState(false);
 
   return (
     <div className="space-y-2 pb-2">
       <div className="flex justify-between items-center">
-        <div className="w-10" /> {/* Spacer for alignment */}
+        <button
+          onClick={() => setShowTutorial(true)}
+          className="flex items-center justify-center w-8 h-8 rounded-md"
+          style={{ 
+            backgroundColor: `${THEME_COLORS.GRADIENT.MID1}`,
+            color: THEME_COLORS.TEXT.PRIMARY
+          }}
+          title="Tutorial"
+        >
+          <BookOpen className="w-4 h-4" />
+        </button>
+
         <CardTitle className="text-4xl text-center">Word Bridge</CardTitle>
+        
         <div className="flex gap-2">
           <button
             onClick={() => navigate('/leaderboard')}
@@ -55,22 +70,26 @@ export const GameHeader = () => {
         </div>
       </div>
 
-      <div className="text-center space-y-1">
-        <p className="text-sm text-muted-foreground">
-          Connect the words using similar words
-        </p>
-        <button
-          onClick={() => {}}
-          className="inline-flex items-center px-3 py-1 text-sm rounded-md"
-          style={{ 
-            backgroundColor: `${THEME_COLORS.GRADIENT.MID2}33`,
-            color: THEME_COLORS.TEXT.PRIMARY
-          }}
-        >
-          <BookOpen className="w-3 h-3 mr-1" />
-          Tutorial
-        </button>
-      </div>
+      <Dialog open={showTutorial} onOpenChange={setShowTutorial}>
+        <DialogContent className="max-w-2xl">
+          <ScrollArea className="h-[80vh]">
+            <div className="space-y-4 p-4">
+              <h2 className="text-2xl font-bold">How to Play Word Bridge</h2>
+              <img 
+                src="/images/tutorial.jpg" 
+                alt="Tutorial" 
+                className="w-full rounded-lg shadow-md"
+              />
+              <div className="space-y-4">
+                <p>Connect the starting word to the target word using similar words.</p>
+                <p>Each word in your chain should be similar to both its neighbors.</p>
+                <p>The progress bar shows how close your current word is to the target.</p>
+                <p>Try to complete the puzzle in as few steps as possible!</p>
+              </div>
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
