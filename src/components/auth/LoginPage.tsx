@@ -27,9 +27,22 @@ export default function LoginPage() {
         <CardContent>
           <Auth
             supabaseClient={supabase}
-            appearance={{ theme: ThemeSupa }}
-            providers={[]}
+            appearance={{ 
+              theme: ThemeSupa,
+              variables: {
+                default: {
+                  colors: {
+                    brand: '#3b82f6',
+                    brandAccent: '#2563eb',
+                  },
+                },
+              },
+            }}
+            providers={['google', 'facebook']}
+            socialLayout="horizontal"
             theme="light"
+            showLinks={false}
+            view="sign_in"
           />
         </CardContent>
       </Card>
