@@ -33,19 +33,7 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
           
           // Update experience - ensure it's an integer
           const experienceGain = Math.floor(100 / score);
-          const { error: expError } = await supabase
-            .from('profiles')
-            .update({ experience: experienceGain })
-            .eq('id', session.user.id);
-
-          if (expError) {
-            console.error('Error updating experience:', expError);
-            toast({
-              description: "There was an issue updating your experience points.",
-              variant: "destructive",
-            });
-          }
-
+          
           // First get current stats
           const { data: currentStats, error: fetchError } = await supabase
             .from('user_statistics')
@@ -58,14 +46,30 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
             return;
           }
 
-          // Then update with incremented values
+          // Update experience using direct update
+          const { error: expError } = await supabase
+            .from('profiles')
+            .update({ experience: supabase.rpc('increment', { x: experienceGain }) })
+            .eq('id', session.user.id);
+
+          if (expError) {
+            console.error('Error updating experience:', expError);
+            toast({
+              description: "There was an issue updating your experience points.",
+              variant: "destructive",
+            });
+          }
+
+          // Then update statistics with incremented values
           const { error: statsError } = await supabase
             .from('user_statistics')
-            .update({
+            .upsert({
+              user_id: session.user.id,
               total_games: (currentStats?.total_games || 0) + 1,
               total_score: (currentStats?.total_score || 0) + score
-            })
-            .eq('user_id', session.user.id);
+            }, {
+              onConflict: 'user_id'
+            });
 
           if (statsError) {
             console.error('Error updating statistics:', statsError);
