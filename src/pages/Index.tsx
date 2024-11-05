@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { useParams, useNavigate } from "react-router-dom";
 import { isValidWord } from "@/lib/embeddings";
@@ -13,10 +13,10 @@ import { TARGET_WORD_MIN_SIMILARITY } from "@/lib/constants";
 import { calculateProgress } from "@/lib/embeddings/utils";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { BookOpen } from "lucide-react";
 import { useDynamicDifficulty } from "@/hooks/useDynamicDifficulty";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { GameHeader } from "@/components/game/layout/GameHeader";
 
 const Index = () => {
   const { startWord, targetWord } = useParams();
@@ -165,50 +165,8 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-[#97BED9]">
       <Card className="max-w-2xl mx-auto rounded-none h-screen bg-[#F5F8FA]">
-        <CardHeader className="space-y-0 pb-2">
-          <div className="flex justify-between items-center">
-            <button
-              onClick={() => navigate('/leaderboard')}
-              className="text-sm px-3 py-1 rounded-md bg-blue-500 hover:bg-blue-600 text-white transition-colors"
-            >
-              Leaderboard
-            </button>
-            <CardTitle className="text-4xl text-center flex-1">Word Bridge</CardTitle>
-            {session ? (
-              <button
-                onClick={() => supabase.auth.signOut()}
-                className="text-sm px-3 py-1 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors"
-              >
-                Sign Out
-              </button>
-            ) : (
-              <button
-                onClick={() => navigate('/login')}
-                className="text-sm px-3 py-1 rounded-md bg-blue-500 hover:bg-blue-600 text-white transition-colors"
-              >
-                Sign In
-              </button>
-            )}
-          </div>
-          <Dialog>
-            <DialogTrigger asChild>
-              <button className="inline-flex items-center px-2 py-1 text-sm rounded-md bg-blue-500 hover:bg-blue-600 text-white transition-colors ml-2">
-                <BookOpen className="w-3 h-3 mr-1" />
-                Tutorial
-              </button>
-            </DialogTrigger>
-            <DialogContent className="max-w-3xl">
-              <ScrollArea className="h-[80vh]">
-                <img 
-                  src="/images/tutorial.jpg" 
-                  alt="Tutorial" 
-                  className="w-full"
-                />
-              </ScrollArea>
-            </DialogContent>
-          </Dialog>
-        </CardHeader>
         <CardContent>
+          <GameHeader />
           <GameBoard
             game={game}
             setGame={setGame}
