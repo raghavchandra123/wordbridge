@@ -25,21 +25,57 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
       const isDaily = !game.startWord.includes('-');
       
       try {
+        // First ensure user statistics exist
+        const { data: existingStats, error: statsCheckError } = await supabase
+          .from('user_statistics')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single();
+
+        if (statsCheckError && statsCheckError.code !== 'PGRST116') {
+          throw statsCheckError;
+        }
+
+        if (!existingStats) {
+          const { error: createStatsError } = await supabase
+            .from('user_statistics')
+            .insert({
+              user_id: session.user.id,
+              total_games: 1,
+              total_score: score
+            });
+
+          if (createStatsError) throw createStatsError;
+        } else {
+          const { error: updateStatsError } = await supabase
+            .from('user_statistics')
+            .update({
+              total_games: supabase.rpc('increment', { x: 1 }),
+              total_score: existingStats.total_score + score
+            })
+            .eq('user_id', session.user.id);
+
+          if (updateStatsError) throw updateStatsError;
+        }
+        
         if (isDaily) {
-          // Get today's date in GMT
           const today = startOfDay(toZonedTime(new Date(), 'GMT'));
           
-          // First check if a score already exists for today
-          const { data: existingScore } = await supabase
+          // Check for existing daily score
+          const { data: existingScore, error: scoreCheckError } = await supabase
             .from('daily_scores')
             .select('score')
             .eq('user_id', session.user.id)
             .eq('date', today.toISOString().split('T')[0])
             .single();
 
+          if (scoreCheckError && scoreCheckError.code !== 'PGRST116') {
+            throw scoreCheckError;
+          }
+
           // Only update if there's no score or if the new score is better
           if (!existingScore || score < existingScore.score) {
-            const { error } = await supabase
+            const { error: scoreError } = await supabase
               .from('daily_scores')
               .upsert({
                 user_id: session.user.id,
@@ -49,10 +85,10 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
                 onConflict: 'user_id,date'
               });
 
-            if (error) throw error;
+            if (scoreError) throw scoreError;
 
             // Update experience points only for daily games
-            const experienceGain = Math.max(20 - score, 1) * 10; // More points for fewer steps
+            const experienceGain = Math.max(20 - score, 1) * 10;
             const { error: expError } = await supabase
               .from('profiles')
               .update({ 
@@ -63,19 +99,6 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
             if (expError) throw expError;
           }
         }
-
-        // Always update user statistics
-        const { error: statsError } = await supabase
-          .from('user_statistics')
-          .upsert({
-            user_id: session.user.id,
-            total_games: 1,
-            total_score: score
-          }, {
-            onConflict: 'user_id'
-          });
-
-        if (statsError) throw statsError;
 
         saveGameStats(score, isDaily);
         onGameComplete();
