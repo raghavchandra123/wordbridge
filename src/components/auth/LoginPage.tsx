@@ -9,6 +9,7 @@ import { Button } from '../ui/button';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const redirectTo = window.location.origin;
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -52,6 +53,7 @@ export default function LoginPage() {
             socialLayout="horizontal"
             theme="light"
             showLinks={true}
+            redirectTo={redirectTo}
           />
         </CardContent>
       </Card>
