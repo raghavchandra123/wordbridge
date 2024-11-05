@@ -5,22 +5,35 @@ export const updateDailyScore = async (userId: string, score: number): Promise<b
   try {
     const today = new Date().toISOString().split('T')[0];
     
-    // Use the update_daily_score function which handles the comparison logic
-    const { data, error } = await supabase
-      .rpc('update_daily_score', {
-        p_user_id: userId,
-        p_score: score,
-        p_date: today
-      });
+    // Check if there's an existing score for today
+    const { data: existingScore } = await supabase
+      .from('daily_scores')
+      .select('score')
+      .eq('user_id', userId)
+      .eq('date', today)
+      .single();
 
-    if (error) {
-      console.error('Error updating score:', error);
-      toast({
-        title: "Error Saving Score",
-        description: "There was an issue saving your score.",
-        variant: "destructive",
-      });
-      return false;
+    // Only update if there's no score or if the new score is better (lower)
+    if (!existingScore || score < existingScore.score) {
+      const { error } = await supabase
+        .from('daily_scores')
+        .upsert({
+          user_id: userId,
+          score: score,
+          date: today
+        }, {
+          onConflict: 'user_id,date'
+        });
+
+      if (error) {
+        console.error('Error updating score:', error);
+        toast({
+          title: "Error Saving Score",
+          description: "There was an issue saving your score.",
+          variant: "destructive",
+        });
+        return false;
+      }
     }
 
     return true;

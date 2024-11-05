@@ -33,7 +33,7 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
           await updateDailyScore(session.user.id, score);
         }
 
-        // Get current experience value
+        // Get and update experience
         const { data: currentProfile, error: profileError } = await supabase
           .from('profiles')
           .select('experience')
@@ -45,11 +45,9 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
           return;
         }
 
-        // Calculate new experience
         const experienceGain = Math.floor(100 / score);
         const newExperience = (currentProfile?.experience || 0) + experienceGain;
 
-        // Update experience
         const { error: expError } = await supabase
           .from('profiles')
           .update({ experience: newExperience })
@@ -63,47 +61,24 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
           });
         }
 
-        // Get current stats
-        const { data: currentStats, error: statsError } = await supabase
+        // Update user statistics using upsert
+        const { error: statsError } = await supabase
           .from('user_statistics')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .single();
+          .upsert({
+            user_id: session.user.id,
+            total_games: 1,
+            total_score: score
+          }, {
+            onConflict: 'user_id',
+            ignoreDuplicates: false
+          });
 
-        if (!currentStats) {
-          // If no stats exist, create new entry
-          const { error: insertError } = await supabase
-            .from('user_statistics')
-            .insert({
-              user_id: session.user.id,
-              total_games: 1,
-              total_score: score
-            });
-
-          if (insertError) {
-            console.error('Error creating statistics:', insertError);
-            toast({
-              description: "There was an issue saving your statistics.",
-              variant: "destructive",
-            });
-          }
-        } else {
-          // Update existing stats
-          const { error: updateError } = await supabase
-            .from('user_statistics')
-            .update({
-              total_games: currentStats.total_games + 1,
-              total_score: currentStats.total_score + score
-            })
-            .eq('user_id', session.user.id);
-
-          if (updateError) {
-            console.error('Error updating statistics:', updateError);
-            toast({
-              description: "There was an issue updating your statistics.",
-              variant: "destructive",
-            });
-          }
+        if (statsError) {
+          console.error('Error updating statistics:', statsError);
+          toast({
+            description: "There was an issue updating your statistics.",
+            variant: "destructive",
+          });
         }
 
         // Save local stats

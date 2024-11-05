@@ -71,21 +71,18 @@ export type Database = {
       user_statistics: {
         Row: {
           created_at: string
-          id: string
           total_games: number
           total_score: number
           user_id: string
         }
         Insert: {
           created_at?: string
-          id?: string
           total_games?: number
           total_score?: number
           user_id: string
         }
         Update: {
           created_at?: string
-          id?: string
           total_games?: number
           total_score?: number
           user_id?: string
