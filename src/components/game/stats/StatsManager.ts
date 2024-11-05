@@ -74,40 +74,27 @@ export const updateDailyScore = async (userId: string, score: number, seedDate: 
       });
     }
   } catch (error) {
-    console.error('Error in updateDailyScore:', error);
+    logDatabaseOperation('Daily Score Update Failed', { error });
     throw error;
   }
 };
 
 export const updateExperience = async (userId: string, amount: number) => {
   try {
-    // First get current experience
-    const { data: currentProfile, error: fetchError } = await supabase
-      .from('profiles')
-      .select('experience')
-      .eq('id', userId)
-      .single();
-
-    if (fetchError) throw fetchError;
-
-    const currentExp = currentProfile?.experience || 0;
-    const newExp = currentExp + amount;
-
     const { error } = await supabase
       .from('profiles')
-      .update({ experience: newExp })
+      .update({ experience: amount })
       .eq('id', userId);
 
     if (error) throw error;
   } catch (error) {
-    console.error('Error updating experience:', error);
+    logDatabaseOperation('Experience Update Failed', { error });
     throw error;
   }
 };
 
 export const updateTotalStats = async (userId: string, score: number) => {
   try {
-    // First get current stats
     const { data: currentStats, error: fetchError } = await supabase
       .from('user_statistics')
       .select('total_games, total_score')
@@ -131,7 +118,7 @@ export const updateTotalStats = async (userId: string, score: number) => {
 
     if (error) throw error;
   } catch (error) {
-    console.error('Error updating total stats:', error);
+    logDatabaseOperation('Total Stats Update Failed', { error });
     throw error;
   }
 };

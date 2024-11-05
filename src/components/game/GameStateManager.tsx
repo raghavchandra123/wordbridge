@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { GameState } from '@/lib/types';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { updateDailyScore, updateExperience, updateTotalStats } from './stats/StatsManager';
-import { logDatabaseOperation } from './stats/StatsLogger';
+import { logDatabaseOperation } from '@/lib/utils/dbLogger';
 
 interface GameStateManagerProps {
   game: GameState;
@@ -16,6 +16,14 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
   useEffect(() => {
     const updateGameStats = async () => {
       if (!game.isComplete || !session?.user?.id || hasUpdatedRef.current) {
+        logDatabaseOperation('Skipping Game Stats Update', {
+          reason: !game.isComplete ? 'Game not complete' : 
+                 !session?.user?.id ? 'No user session' : 
+                 'Already updated',
+          hasUpdated: hasUpdatedRef.current,
+          isComplete: game.isComplete,
+          userId: session?.user?.id
+        });
         return;
       }
 
@@ -25,12 +33,13 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
         
         logDatabaseOperation('Starting Game Stats Update', {
           score,
-          seedDate: game.metadata?.seedDate
+          seedDate: game.metadata?.seedDate,
+          hasUpdated: hasUpdatedRef.current
         });
 
         // Only update daily score if this is a daily game
         if (game.metadata?.seedDate) {
-          await updateDailyScore(session.user.id, score, game.metadata?.seedDate);
+          await updateDailyScore(session.user.id, score, game.metadata.seedDate);
         } else {
           logDatabaseOperation('Skipping Daily Score Update', {
             reason: 'Not a daily game',
@@ -44,6 +53,8 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
         onGameComplete();
       } catch (error) {
         logDatabaseOperation('Game Stats Update Failed', { error });
+        // Reset the flag if update fails so it can be retried
+        hasUpdatedRef.current = false;
       }
     };
 
