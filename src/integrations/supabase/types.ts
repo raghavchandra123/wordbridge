@@ -13,21 +13,18 @@ export type Database = {
         Row: {
           created_at: string
           date: string
-          id: string
           score: number
           user_id: string
         }
         Insert: {
           created_at?: string
           date?: string
-          id?: string
           score: number
           user_id: string
         }
         Update: {
           created_at?: string
           date?: string
-          id?: string
           score?: number
           user_id?: string
         }

@@ -29,47 +29,43 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
         const isDaily = !game.startWord.includes('-');
         
         if (isDaily) {
-          const success = await updateDailyScore(session.user.id, score);
+          await updateDailyScore(session.user.id, score);
           
-          if (success) {
-            // Update experience
-            const experienceGain = Math.round(100 / score);
-            const { error: expError } = await supabase.rpc('increment_experience', {
-              user_id: session.user.id,
-              amount: experienceGain
+          // Update experience
+          const experienceGain = Math.round(100 / score);
+          const { error: expError } = await supabase.rpc('increment_experience', {
+            user_id: session.user.id,
+            amount: experienceGain
+          });
+
+          if (expError) {
+            console.error('Error updating experience:', expError);
+            toast({
+              description: "There was an issue updating your experience points.",
+              variant: "destructive",
             });
+          }
 
-            if (expError) {
-              console.error('Error updating experience:', expError);
-              toast({
-                title: "Error Updating Experience",
-                description: "There was an issue updating your experience points.",
-                variant: "destructive",
-              });
-            }
+          // Update statistics
+          const { error: statsError } = await supabase
+            .from('user_statistics')
+            .upsert(
+              {
+                user_id: session.user.id,
+                total_games: 1,
+                total_score: score
+              },
+              {
+                onConflict: 'user_id'
+              }
+            );
 
-            // Update statistics
-            const { error: statsError } = await supabase
-              .from('user_statistics')
-              .upsert(
-                {
-                  user_id: session.user.id,
-                  total_games: 1,
-                  total_score: score
-                },
-                {
-                  onConflict: 'user_id'
-                }
-              );
-
-            if (statsError) {
-              console.error('Error updating statistics:', statsError);
-              toast({
-                title: "Error Updating Statistics",
-                description: "There was an issue updating your statistics.",
-                variant: "destructive",
-              });
-            }
+          if (statsError) {
+            console.error('Error updating statistics:', statsError);
+            toast({
+              description: "There was an issue updating your statistics.",
+              variant: "destructive",
+            });
           }
         }
 
@@ -77,12 +73,10 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
       } catch (error) {
         console.error('Error in updateScore:', error);
         toast({
-          title: "Error Saving Game",
           description: "There was an issue saving your game progress.",
           variant: "destructive",
         });
       } finally {
-        // Always show completion dialog
         onGameComplete();
       }
     };
