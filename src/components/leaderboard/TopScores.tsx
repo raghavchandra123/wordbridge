@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Card } from '../ui/card';
 import { ScrollArea } from '../ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Button } from '../ui/button';
@@ -28,11 +27,13 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
     const fetchTopScores = async () => {
       const today = toZonedTime(new Date(), 'GMT').toISOString().split('T')[0];
       
-      const { data, error } = await supabase
+      // First get today's scores
+      const { data: todayScores, error: todayError } = await supabase
         .from('daily_scores')
         .select(`
           score,
-          profiles:user_id (
+          user_id,
+          profiles!inner (
             username,
             full_name,
             avatar_url,
@@ -44,20 +45,39 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
         .order('score', { ascending: true })
         .limit(3);
 
-      if (error) {
-        console.error('Error fetching top scores:', error);
+      if (todayError) {
+        console.error('Error fetching top scores:', todayError);
         return;
       }
 
-      const processedData = data.map((entry: any) => ({
-        username: entry.profiles.username,
-        full_name: entry.profiles.full_name || entry.profiles.username,
-        avatar_url: entry.profiles.avatar_url,
-        level: entry.profiles.level,
-        experience: entry.profiles.experience,
-        score: entry.score,
-        average_score: entry.score // For now, just using the daily score
-      }));
+      // Then get average scores for these users
+      const userIds = todayScores?.map(score => score.user_id) || [];
+      const { data: statsData, error: statsError } = await supabase
+        .from('user_statistics')
+        .select('user_id, total_games, total_score')
+        .in('user_id', userIds);
+
+      if (statsError) {
+        console.error('Error fetching user statistics:', statsError);
+        return;
+      }
+
+      const processedData = todayScores?.map((entry: any) => {
+        const userStats = statsData?.find(stat => stat.user_id === entry.user_id);
+        const averageScore = userStats && userStats.total_games > 0
+          ? Math.round(userStats.total_score / userStats.total_games)
+          : null;
+
+        return {
+          username: entry.profiles.username,
+          full_name: entry.profiles.full_name || entry.profiles.username,
+          avatar_url: entry.profiles.avatar_url,
+          level: entry.profiles.level,
+          experience: entry.profiles.experience,
+          score: entry.score,
+          average_score: averageScore
+        };
+      }) || [];
 
       setTopScores(processedData);
     };
@@ -83,7 +103,7 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
         {topScores.map((entry, index) => (
           <div
             key={entry.username}
-            className="grid grid-cols-[auto_1fr_auto] items-center gap-4 p-3 rounded-lg bg-gray-50"
+            className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-4 p-3 rounded-lg bg-gray-50"
           >
             <div className="relative">
               <Avatar className={`h-12 w-12 ring-2 ${getLevelColor(entry.level)}`}>
@@ -97,14 +117,14 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
                 <Progress value={getProgressToNextLevel(entry.experience)} className="h-1" />
               </div>
             </div>
-            <div className="flex flex-col">
-              <div className="font-medium">{entry.full_name}</div>
-              <div className="text-sm text-gray-500">
-                Score: {entry.score === Infinity ? '-' : entry.score}
-              </div>
+            <div className="font-medium">{entry.full_name}</div>
+            <div className="text-right">
+              <div className="font-medium">{entry.score}</div>
+              <div className="text-sm text-gray-500">Today</div>
             </div>
-            <div className="text-right font-medium">
-              #{index + 1}
+            <div className="text-right">
+              <div className="font-medium">{entry.average_score || '-'}</div>
+              <div className="text-sm text-gray-500">Average</div>
             </div>
           </div>
         ))}
