@@ -5,11 +5,13 @@ import { CardTitle } from "@/components/ui/card";
 import { THEME_COLORS } from "@/lib/constants";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useState } from "react";
+import { TopScores } from "@/components/leaderboard/TopScores";
 
 export const GameHeader = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
   const [showTutorial, setShowTutorial] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   return (
     <div className="space-y-2 pb-2">
@@ -31,7 +33,7 @@ export const GameHeader = () => {
         
         <div className="flex gap-2">
           <button
-            onClick={() => navigate('/leaderboard')}
+            onClick={() => setShowLeaderboard(true)}
             className="flex items-center justify-center w-8 h-8 rounded-md"
             style={{ 
               backgroundColor: `${THEME_COLORS.GRADIENT.MID1}`,
@@ -77,6 +79,12 @@ export const GameHeader = () => {
             alt="Tutorial" 
             className="w-full rounded-lg shadow-md"
           />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showLeaderboard} onOpenChange={setShowLeaderboard}>
+        <DialogContent className="sm:max-w-md">
+          <TopScores />
         </DialogContent>
       </Dialog>
     </div>
