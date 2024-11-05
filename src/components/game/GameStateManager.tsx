@@ -37,6 +37,22 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
           const today = startOfDay(toZonedTime(new Date(), 'GMT'));
           console.log('📅 Using date:', today.toISOString());
           
+          // First check if we already have a better score for today
+          const { data: existingScore } = await supabase
+            .from('daily_scores')
+            .select('score')
+            .eq('user_id', session.user.id)
+            .eq('date', today.toISOString().split('T')[0])
+            .single();
+
+          // If we already have a better score, just complete the game without updating
+          if (existingScore && existingScore.score <= score) {
+            console.log('📝 Existing score is better, keeping it:', existingScore.score);
+            saveGameStats(score, isDaily);
+            onGameComplete();
+            return;
+          }
+          
           // Get current user level for XP calculation
           const { data: userData, error: userError } = await supabase
             .from('profiles')
@@ -55,7 +71,7 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
           console.log('⭐ Experience to gain:', experienceGain);
 
           console.log('📊 Attempting to upsert daily score...');
-          const { data: scoreData, error: scoreError } = await supabase
+          const { error: scoreError } = await supabase
             .from('daily_scores')
             .upsert(
               {
@@ -73,7 +89,7 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
             throw scoreError;
           }
           
-          console.log('✅ Daily score updated:', scoreData);
+          console.log('✅ Daily score updated successfully');
 
           // Update total games and score
           console.log('📈 Updating user statistics...');
