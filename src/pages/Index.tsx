@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { isValidWord } from "@/lib/embeddings";
 import { saveHighScore } from "@/lib/storage";
 import { useGameInitialization } from "@/hooks/useGameInitialization";
@@ -15,6 +15,8 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { BookOpen } from "lucide-react";
 import { useDynamicDifficulty } from "@/hooks/useDynamicDifficulty";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 const Index = () => {
   const { startWord, targetWord } = useParams();
@@ -26,6 +28,14 @@ const Index = () => {
   const [isChecking, setIsChecking] = useState(false);
   const [showEndGame, setShowEndGame] = useState(false);
   const { onWordRejected } = useDynamicDifficulty();
+  const { session } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!session) {
+      navigate('/login');
+    }
+  }, [session, navigate]);
 
   const handleWordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,7 +109,7 @@ const Index = () => {
     }
   };
 
-  const handleGameComplete = (completedGame: typeof game) => {
+  const handleGameComplete = async (completedGame: typeof game) => {
     saveHighScore({
       startWord: completedGame.startWord,
       targetWord: completedGame.targetWord,
@@ -108,6 +118,38 @@ const Index = () => {
       timestamp: Date.now(),
     });
     
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return;
+
+    const score = completedGame.currentChain.length - 1;
+    const experienceGained = Math.max(20 - score, 1) * 10; // More experience for shorter chains
+
+    // Update daily score
+    const { error: scoreError } = await supabase
+      .from('daily_scores')
+      .upsert({
+        user_id: session.user.id,
+        score,
+        date: new Date().toISOString().split('T')[0]
+      });
+
+    if (scoreError) {
+      console.error('Error updating score:', scoreError);
+      return;
+    }
+
+    // Update experience
+    const { error: expError } = await supabase
+      .from('profiles')
+      .update({
+        experience: supabase.rpc('increment_experience', { amount: experienceGained })
+      })
+      .eq('id', session.user.id);
+
+    if (expError) {
+      console.error('Error updating experience:', expError);
+    }
+
     setShowEndGame(true);
   };
 
@@ -131,29 +173,38 @@ const Index = () => {
     <div className="min-h-screen bg-[#97BED9]">
       <Card className="max-w-2xl mx-auto rounded-none h-screen bg-[#F5F8FA]">
         <CardHeader className="space-y-0 pb-2">
-          <CardTitle className="text-4xl text-center">Word Bridge</CardTitle>
-          <div className="flex flex-col items-center justify-center space-y-2">
-            <CardDescription className="text-center text-lg">
-              Connect the words using similar words
-              <Dialog>
-                <DialogTrigger asChild>
-                  <button className="inline-flex items-center px-2 py-1 text-sm rounded-md bg-blue-500 hover:bg-blue-600 text-white transition-colors ml-2">
-                    <BookOpen className="w-3 h-3 mr-1" />
-                    Tutorial
-                  </button>
-                </DialogTrigger>
-                <DialogContent className="max-w-3xl">
-                  <ScrollArea className="h-[80vh]">
-                    <img 
-                      src="/images/tutorial.jpg" 
-                      alt="Tutorial" 
-                      className="w-full"
-                    />
-                  </ScrollArea>
-                </DialogContent>
-              </Dialog>
-            </CardDescription>
+          <div className="flex justify-between items-center">
+            <button
+              onClick={() => navigate('/leaderboard')}
+              className="text-sm px-3 py-1 rounded-md bg-blue-500 hover:bg-blue-600 text-white transition-colors"
+            >
+              Leaderboard
+            </button>
+            <CardTitle className="text-4xl text-center flex-1">Word Bridge</CardTitle>
+            <button
+              onClick={() => supabase.auth.signOut()}
+              className="text-sm px-3 py-1 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors"
+            >
+              Sign Out
+            </button>
           </div>
+          <Dialog>
+            <DialogTrigger asChild>
+              <button className="inline-flex items-center px-2 py-1 text-sm rounded-md bg-blue-500 hover:bg-blue-600 text-white transition-colors ml-2">
+                <BookOpen className="w-3 h-3 mr-1" />
+                Tutorial
+              </button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl">
+              <ScrollArea className="h-[80vh]">
+                <img 
+                  src="/images/tutorial.jpg" 
+                  alt="Tutorial" 
+                  className="w-full"
+                />
+              </ScrollArea>
+            </DialogContent>
+          </Dialog>
         </CardHeader>
         <CardContent>
           <GameBoard

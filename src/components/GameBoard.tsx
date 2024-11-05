@@ -17,6 +17,7 @@ import { GameBoardScrollArea } from "./game/GameBoardScrollArea";
 import { GameBoardControls } from "./game/GameBoardControls";
 import { GameControlButtons } from "./game/GameControlButtons";
 import { useDynamicDifficulty } from "@/hooks/useDynamicDifficulty";
+import { supabase } from "@/integrations/supabase/client"; // Added import for supabase
 
 const GameBoard = ({
   game,
@@ -216,8 +217,43 @@ const GameBoard = ({
   useEffect(() => {
     if (game.isComplete) {
       onGameCompleted();
+      updateUserProgress(); // Call to update user progress
     }
   }, [game.isComplete]);
+
+  const updateUserProgress = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return;
+
+    const score = game.currentChain.length - 1;
+    const experienceGained = Math.max(20 - score, 1) * 10; // More experience for shorter chains
+
+    // Update daily score
+    const { error: scoreError } = await supabase
+      .from('daily_scores')
+      .upsert({
+        user_id: session.user.id,
+        score,
+        date: new Date().toISOString().split('T')[0]
+      });
+
+    if (scoreError) {
+      console.error('Error updating score:', scoreError);
+      return;
+    }
+
+    // Update experience
+    const { error: expError } = await supabase
+      .from('profiles')
+      .update({
+        experience: supabase.rpc('increment_experience', { amount: experienceGained })
+      })
+      .eq('id', session.user.id);
+
+    if (expError) {
+      console.error('Error updating experience:', expError);
+    }
+  };
 
   const headerHeight = 120;
   const inputSectionHeight = game.isComplete ? 0 : 60;
