@@ -9,7 +9,7 @@ import { Button } from '../ui/button';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const redirectTo = window.location.origin;
+  const redirectTo = `${window.location.origin}/`;
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
