@@ -34,11 +34,10 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
           if (success) {
             // Update experience
             const experienceGain = Math.round(100 / score);
-            const { error: expError } = await supabase
-              .rpc('increment_experience', {
-                user_id: session.user.id,
-                amount: experienceGain
-              });
+            const { error: expError } = await supabase.rpc('increment_experience', {
+              user_id: session.user.id,
+              amount: experienceGain
+            });
 
             if (expError) {
               console.error('Error updating experience:', expError);
