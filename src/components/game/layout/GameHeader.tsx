@@ -16,7 +16,7 @@ export const GameHeader = () => {
       <div className="flex justify-between items-center">
         <button
           onClick={() => setShowTutorial(true)}
-          className="flex items-center justify-center w-8 h-8 rounded-md"
+          className="flex items-center justify-center gap-2 px-3 h-8 rounded-md"
           style={{ 
             backgroundColor: `${THEME_COLORS.GRADIENT.START}`,
             color: THEME_COLORS.TEXT.PRIMARY
@@ -24,6 +24,7 @@ export const GameHeader = () => {
           title="Tutorial"
         >
           <BookOpen className="w-4 h-4" />
+          <span className="text-sm">Tutorial</span>
         </button>
 
         <CardTitle className="text-4xl text-center">Word Bridge</CardTitle>
