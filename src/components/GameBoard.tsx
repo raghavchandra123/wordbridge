@@ -16,6 +16,7 @@ import { findRandomWordPair } from "@/lib/embeddings";
 import { GameBoardScrollArea } from "./game/GameBoardScrollArea";
 import { GameBoardControls } from "./game/GameBoardControls";
 import { GameControlButtons } from "./game/GameControlButtons";
+import { useDynamicDifficulty } from "@/hooks/useDynamicDifficulty";
 
 const GameBoard = ({
   game,
@@ -35,6 +36,14 @@ const GameBoard = ({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<number>();
   const { updateProgress, recalculateChainProgress } = useProgressManager(game, setGame);
+  const {
+    minThreshold,
+    maxThreshold,
+    onHintUsed,
+    onNewGameWithoutCompletion,
+    onWordRejected,
+    onGameCompleted,
+  } = useDynamicDifficulty();
 
   // Background loading effect
   useEffect(() => {
@@ -85,6 +94,7 @@ const GameBoard = ({
   };
 
   const handleRetry = () => {
+    onNewGameWithoutCompletion();
     setGame({
       ...game,
       currentChain: [game.startWord],
@@ -98,6 +108,7 @@ const GameBoard = ({
     if (editingIndex !== null) {
       onWordClick(null);
     } else if (game.currentChain.length > 1) {
+      onWordRejected();
       const newChain = [...game.currentChain];
       newChain.pop();
       
@@ -136,8 +147,14 @@ const GameBoard = ({
   };
 
   const handleNewWords = async () => {
+    if (!game.isComplete) {
+      onNewGameWithoutCompletion();
+    }
     try {
-      const [startWord, targetWord] = await findRandomWordPair({});
+      const [startWord, targetWord] = await findRandomWordPair({ 
+        minThreshold,
+        maxThreshold 
+      });
       setGame({
         startWord,
         targetWord,
@@ -158,6 +175,7 @@ const GameBoard = ({
   const handleHint = async () => {
     if (isGeneratingHint) return;
     setIsGeneratingHint(true);
+    onHintUsed();
 
     try {
       const previousWord = game.currentChain[game.currentChain.length - 1];
@@ -194,6 +212,12 @@ const GameBoard = ({
       setIsGeneratingHint(false);
     }
   };
+
+  useEffect(() => {
+    if (game.isComplete) {
+      onGameCompleted();
+    }
+  }, [game.isComplete]);
 
   const headerHeight = 120;
   const inputSectionHeight = game.isComplete ? 0 : 60;

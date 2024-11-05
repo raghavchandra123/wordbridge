@@ -5,6 +5,16 @@ export const ADJACENT_WORD_MIN_SIMILARITY = 0.12; // Minimum similarity required
 export const TARGET_WORD_MIN_SIMILARITY = 0.20; // Minimum similarity required with target word to win
 export const PROGRESS_MAX_SIMILARITY = 0.25;   // Maximum similarity for progress calculation (100%)
 
+// Dynamic Difficulty Settings
+export const INITIAL_MIN_THRESHOLD = 0;        // Starting minimum similarity threshold for daily puzzle
+export const INITIAL_THRESHOLD_RANGE = 0.08;   // Width of the similarity threshold window
+export const MIN_POSSIBLE_THRESHOLD = -0.12;   // Lower bound for difficulty adjustment
+export const MAX_POSSIBLE_THRESHOLD = 0.12;    // Upper bound for difficulty adjustment
+export const HINT_PENALTY = 0.02;             // Increase thresholds when hint is used
+export const NEW_GAME_PENALTY = 0.02;         // Increase thresholds when new game is started without completion
+export const WORD_REJECT_PENALTY = 0.005;     // Increase thresholds when word is rejected
+export const COMPLETION_REWARD = 0.04;        // Decrease thresholds when game is completed
+
 // Theme Colors
 export const THEME_COLORS = {
   START: "#8C9EDE",    // Pastel Blue
