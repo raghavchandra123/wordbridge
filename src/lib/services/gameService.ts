@@ -6,6 +6,7 @@ import { toast } from '@/components/ui/use-toast';
 import { pauseBackgroundLoading, resumeBackgroundLoading } from '../embeddings/backgroundLoader';
 import { validateWordWithTarget, validateWordWithPrevious } from './wordValidationService';
 import { calculateProgress } from '../embeddings/utils';
+import { logDatabaseOperation } from '@/lib/utils/dbLogger';
 
 const getDateSeed = () => {
   const today = new Date();
@@ -94,6 +95,10 @@ export const initializeGame = async (): Promise<GameState> => {
   console.log(`✅ Game initialized with start word "${startWord}" and target word "${targetWord}"`);
   const similarity = await cosineSimilarity(startWord, targetWord);
   const progress = Math.max(0, Math.min(100, (similarity + 0.2) / 0.45 * 100));
+  
+  // Add metadata including the seed date for daily games
+  const today = new Date().toISOString().split('T')[0];
+  
   return {
     startWord,
     targetWord,
@@ -101,6 +106,9 @@ export const initializeGame = async (): Promise<GameState> => {
     wordProgresses: [],
     isComplete: false,
     score: 0,
-    initialProgress: progress
+    initialProgress: progress,
+    metadata: {
+      seedDate: today
+    }
   };
 };
