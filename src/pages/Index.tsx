@@ -130,11 +130,11 @@ const Index = () => {
         return;
       }
 
-      // Update experience using rpc function
-      const { error: expError } = await supabase.rpc('increment_experience', {
-        user_id: session.user.id,
-        amount: experienceGained
-      });
+      // Update experience using direct SQL update
+      const { error: expError } = await supabase
+        .from('profiles')
+        .update({ experience: experienceGained })
+        .eq('id', session.user.id);
 
       if (expError) {
         console.error('Error updating experience:', expError);
