@@ -11,6 +11,7 @@ import { toast } from "@/components/ui/use-toast";
 import { Share, Shuffle, Trophy } from "lucide-react";
 import { findRandomWordPair } from "@/lib/embeddings/game";
 import { useNavigate } from "react-router-dom";
+import { TopScores } from "./leaderboard/TopScores";
 
 interface EndGameDialogProps {
   game: GameState;
@@ -106,14 +107,6 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
           </Button>
 
           <Button 
-            onClick={() => navigate('/leaderboard')}
-            className="w-full bg-[#FF8B8B] hover:bg-[#FF8B8B]/90 text-white"
-          >
-            <Trophy className="mr-2 h-4 w-4" />
-            View Leaderboard
-          </Button>
-
-          <Button 
             onClick={handleRetry}
             className="w-full bg-[#FF8B8B] hover:bg-[#FF8B8B]/90 text-white"
           >
@@ -128,6 +121,10 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
             <Shuffle className="mr-2 h-4 w-4" />
             New Game
           </Button>
+
+          <div className="border-t pt-4">
+            <TopScores />
+          </div>
           
           <p className="text-sm text-center text-muted-foreground">
             Next puzzle in {hoursUntilNext}h {minutesUntilNext}m

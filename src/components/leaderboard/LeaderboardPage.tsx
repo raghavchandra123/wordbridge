@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback } from '../ui/avatar';
 import { useAuth } from '../auth/AuthProvider';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../ui/button';
+import { TopScores } from './TopScores';
 
 interface LeaderboardEntry {
   username: string;
@@ -89,21 +90,24 @@ export default function LeaderboardPage() {
           <CardTitle className="text-2xl text-center">Leaderboard</CardTitle>
           <div className="w-20" /> {/* Spacer for alignment */}
         </CardHeader>
-        {!session ? (
-          <CardContent className="text-center py-8">
-            <p className="mb-4">Please log in to view the leaderboard</p>
-            <Button
-              onClick={() => navigate('/')}
-              className="bg-[#97BED9] hover:bg-[#97BED9]/90 text-white"
-            >
-              Back to Game
-            </Button>
-          </CardContent>
-        ) : (
-          <CardContent>
+        <CardContent>
+          {!session ? (
+            <div className="space-y-8">
+              <TopScores />
+              <div className="text-center">
+                <p className="mb-4 text-gray-600">Sign in to see the full leaderboard and track your progress!</p>
+                <Button
+                  onClick={() => navigate('/login')}
+                  className="bg-[#97BED9] hover:bg-[#97BED9]/90 text-white"
+                >
+                  Sign In
+                </Button>
+              </div>
+            </div>
+          ) : (
             <ScrollArea className="h-[70vh]">
               <div className="space-y-4">
-                {leaderboard.map((entry, index) => (
+                {leaderboard.map((entry) => (
                   <div
                     key={entry.username}
                     className="flex items-center space-x-4 p-3 rounded-lg bg-gray-50"
@@ -129,8 +133,8 @@ export default function LeaderboardPage() {
                 ))}
               </div>
             </ScrollArea>
-          </CardContent>
-        )}
+          )}
+        </CardContent>
       </Card>
     </div>
   );
