@@ -52,7 +52,6 @@ export default function LoginPage() {
             providers={['google']}
             socialLayout="horizontal"
             theme="light"
-            showLinks={true}
             redirectTo={redirectTo}
           />
         </CardContent>
