@@ -2,16 +2,20 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { ScrollArea } from '../ui/scroll-area';
-import { Avatar, AvatarFallback } from '../ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useAuth } from '../auth/AuthProvider';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../ui/button';
 import { TopScores } from './TopScores';
+import { Progress } from '../ui/progress';
 
 interface LeaderboardEntry {
   username: string;
+  full_name: string;
+  avatar_url: string;
   score: number;
   level: number;
+  experience: number;
   average_score: number;
   has_played_today: boolean;
 }
@@ -29,7 +33,10 @@ export default function LeaderboardPage() {
         .from('profiles')
         .select(`
           username,
+          full_name,
+          avatar_url,
           level,
+          experience,
           daily_scores!inner (
             score,
             date
@@ -49,7 +56,10 @@ export default function LeaderboardPage() {
         
         return {
           username: profile.username,
+          full_name: profile.full_name,
+          avatar_url: profile.avatar_url,
           level: profile.level,
+          experience: profile.experience,
           score: todayScore?.score || Infinity,
           average_score: scores.length ? Math.round(totalScore / scores.length) : Infinity,
           has_played_today: !!todayScore
@@ -75,6 +85,11 @@ export default function LeaderboardPage() {
     if (level >= 10) return 'bg-purple-500';
     if (level >= 5) return 'bg-blue-500';
     return 'bg-green-500';
+  };
+
+  const getProgressToNextLevel = (experience: number) => {
+    const currentLevelExp = (Math.floor(experience / 100)) * 100;
+    return ((experience - currentLevelExp) / 100) * 100;
   };
 
   return (
@@ -107,16 +122,30 @@ export default function LeaderboardPage() {
           ) : (
             <ScrollArea className="h-[70vh]">
               <div className="space-y-4">
-                {leaderboard.map((entry) => (
+                <div className="grid grid-cols-[auto_1fr_auto] gap-4 px-3 py-2 font-semibold text-gray-600">
+                  <div>Rank</div>
+                  <div>Player</div>
+                  <div className="text-right">Score</div>
+                </div>
+                {leaderboard.map((entry, index) => (
                   <div
                     key={entry.username}
-                    className="flex items-center space-x-4 p-3 rounded-lg bg-gray-50"
+                    className="grid grid-cols-[auto_1fr_auto] items-center gap-4 p-3 rounded-lg bg-gray-50"
                   >
-                    <Avatar className={`${getLevelColor(entry.level)} text-white`}>
-                      <AvatarFallback>{entry.level}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="font-medium">{entry.username}</div>
+                    <div className="relative">
+                      <Avatar className={`h-12 w-12 ring-2 ${getLevelColor(entry.level)}`}>
+                        <AvatarImage src={entry.avatar_url} />
+                        <AvatarFallback>{entry.username?.[0]}</AvatarFallback>
+                      </Avatar>
+                      <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 rounded-full">
+                        {entry.level}
+                      </div>
+                      <div className="absolute -bottom-4 left-0 w-full">
+                        <Progress value={getProgressToNextLevel(entry.experience)} className="h-1" />
+                      </div>
+                    </div>
+                    <div className="flex flex-col">
+                      <div className="font-medium">{entry.full_name || entry.username}</div>
                       <div className="text-sm text-gray-500">
                         Avg Score: {entry.average_score === Infinity ? '-' : entry.average_score}
                       </div>
@@ -124,9 +153,6 @@ export default function LeaderboardPage() {
                     <div className="text-right">
                       <div className="font-medium">
                         {entry.has_played_today ? `Score: ${entry.score}` : 'Not played today'}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        Level {entry.level}
                       </div>
                     </div>
                   </div>
