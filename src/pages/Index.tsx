@@ -10,7 +10,6 @@ import EndGameDialog from "@/components/EndGameDialog";
 import GameBoard from "@/components/GameBoard";
 import { saveGameProgress } from "@/lib/storage/gameStorage";
 import { TARGET_WORD_MIN_SIMILARITY } from "@/lib/constants";
-import { calculateProgress } from "@/lib/embeddings/utils";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { BookOpen } from "lucide-react";
@@ -30,15 +29,16 @@ const Index = () => {
     if (!currentWord || isChecking) return;
 
     setIsChecking(true);
+    console.log(`Checking word: "${currentWord}"`);
 
     try {
       if (!isValidWord(currentWord)) {
+        console.log(`Word "${currentWord}" not in dictionary`);
         toast({
           title: "Invalid word",
           description: "This word is not in our dictionary",
           variant: "destructive",
         });
-        onWordRejected(); // Add difficulty adjustment for invalid words
         return;
       }
 
@@ -46,7 +46,7 @@ const Index = () => {
       const validation = await validateWordForChain(currentWord, previousWord, game.targetWord);
       
       if (!validation.isValid) {
-        onWordRejected(); // Add difficulty adjustment for failed validation
+        console.log(`Word "${currentWord}" failed validation`);
         toast({
           title: "Word not similar enough",
           description: validation.message,
@@ -55,7 +55,8 @@ const Index = () => {
         return;
       }
 
-      const newProgress = calculateProgress(validation.similarityToTarget);
+      const newProgress = validation.similarityToTarget;
+      setProgress(newProgress);
       
       let newWordProgresses;
       if (editingIndex !== null) {
@@ -70,8 +71,6 @@ const Index = () => {
       const newChain = editingIndex !== null
         ? [...game.currentChain.slice(0, editingIndex), currentWord]
         : [...game.currentChain, currentWord];
-      
-      setProgress(newProgress);
       
       const isComplete = validation.similarityToTarget >= TARGET_WORD_MIN_SIMILARITY;
       
