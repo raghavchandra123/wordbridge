@@ -31,10 +31,27 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
       const isDaily = !game.startWord.includes('-');
       
       try {
+        console.log('🎮 Starting daily score update...');
         hasUpdatedRef.current = true; // Mark as updated immediately to prevent duplicate calls
 
         if (isDaily) {
           const today = startOfDay(toZonedTime(new Date(), 'GMT'));
+          console.log('📅 Using date:', today.toISOString());
+          
+          // First check if we already have a score for today
+          const { data: existingScore } = await supabase
+            .from('daily_scores')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .eq('date', today.toISOString().split('T')[0])
+            .single();
+
+          if (existingScore) {
+            console.log('📝 Score already exists for today:', existingScore);
+            saveGameStats(score, isDaily);
+            onGameComplete();
+            return;
+          }
           
           // Get current user level for XP calculation
           const { data: userData, error: userError } = await supabase
@@ -43,29 +60,35 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
             .eq('id', session.user.id)
             .single();
 
-          if (userError) throw userError;
+          if (userError) {
+            console.error('❌ Error fetching user level:', userError);
+            throw userError;
+          }
           
+          console.log('👤 User data:', userData);
           const currentLevel = userData?.level || 1;
           const experienceGain = calculateExperienceGain(score, currentLevel);
+          console.log('⭐ Experience to gain:', experienceGain);
 
-          // Update daily score using upsert
-          const { error: scoreError } = await supabase
+          console.log('📊 Attempting to update daily score...');
+          const { data: scoreData, error: scoreError } = await supabase
             .from('daily_scores')
-            .upsert(
-              {
-                user_id: session.user.id,
-                score,
-                date: today.toISOString().split('T')[0]
-              },
-              {
-                onConflict: 'user_id,date',
-                ignoreDuplicates: true // This ensures we don't update if entry exists
-              }
-            );
+            .insert({
+              user_id: session.user.id,
+              score,
+              date: today.toISOString().split('T')[0]
+            })
+            .select();
 
-          if (scoreError) throw scoreError;
+          if (scoreError) {
+            console.error('❌ Error updating daily score:', scoreError);
+            throw scoreError;
+          }
+          
+          console.log('✅ Daily score updated:', scoreData);
 
           // Update total games and score
+          console.log('📈 Updating user statistics...');
           const { error: statsError } = await supabase
             .from('user_statistics')
             .upsert(
@@ -79,31 +102,43 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
               }
             );
 
-          if (statsError) throw statsError;
+          if (statsError) {
+            console.error('❌ Error updating statistics:', statsError);
+            throw statsError;
+          }
 
           // Update experience points
+          console.log('🌟 Updating experience points...');
           const { error: expError } = await supabase
             .rpc('increment_experience', {
               user_id: session.user.id,
               amount: experienceGain
             });
 
-          if (expError) throw expError;
+          if (expError) {
+            console.error('❌ Error updating experience:', expError);
+            throw expError;
+          }
+
+          console.log('✨ All updates completed successfully!');
         }
 
         saveGameStats(score, isDaily);
         onGameComplete();
       } catch (error: any) {
         console.error('Error in updateScore:', error);
+        hasUpdatedRef.current = false; // Reset the flag if we encounter an error
         
-        // Only show toast for non-duplicate errors
-        if (error.code !== '23505') {
-          toast({
-            title: "Error",
-            description: "Failed to update score. Please try again.",
-            variant: "destructive",
-          });
+        if (error.code === '23505') {
+          console.log('🔄 Duplicate entry detected, skipping update');
+          return;
         }
+
+        toast({
+          title: "Error",
+          description: "Failed to update score. Please try again.",
+          variant: "destructive",
+        });
       }
     };
 
