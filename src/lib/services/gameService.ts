@@ -58,8 +58,7 @@ export const findDailyWordPair = async (): Promise<[string, string]> => {
 export const validateWordForChain = async (
   word: string,
   previousWord: string,
-  targetWord: string,
-  onWordRejected?: () => void
+  targetWord: string
 ): Promise<{ isValid: boolean; similarityToTarget: number; message?: string }> => {
   console.log(`🔍 Validating word "${word}" with previous word "${previousWord}"`);
   
@@ -70,7 +69,6 @@ export const validateWordForChain = async (
     
     if (!previousValidation.isValid) {
       console.log(`❌ Word "${word}" not similar enough to "${previousWord}"`);
-      if (onWordRejected) onWordRejected();
       return {
         isValid: false,
         similarityToTarget: 0,
@@ -87,41 +85,6 @@ export const validateWordForChain = async (
 
   } finally {
     resumeBackgroundLoading();
-  }
-};
-
-export const updateGameWithNewWord = (
-  game: GameState,
-  word: string,
-  similarityToTarget: number,
-  editingIndex: number | null
-): GameState => {
-  const progress = calculateProgress(similarityToTarget);
-  
-  console.log(`📝 Updating game state with word "${word}":
-    - Similarity to target: ${similarityToTarget}
-    - Progress: ${progress}
-    - Editing index: ${editingIndex}`);
-  
-  if (editingIndex !== null) {
-    const newChain = [...game.currentChain.slice(0, editingIndex), word];
-    const newProgresses = [...game.wordProgresses];
-    if (editingIndex > 0) {
-      newProgresses[editingIndex - 1] = progress;
-    }
-    return {
-      ...game,
-      currentChain: newChain,
-      wordProgresses: newProgresses,
-      score: newChain.length - 1
-    };
-  } else {
-    return {
-      ...game,
-      currentChain: [...game.currentChain, word],
-      wordProgresses: [...game.wordProgresses, progress],
-      score: game.currentChain.length
-    };
   }
 };
 
