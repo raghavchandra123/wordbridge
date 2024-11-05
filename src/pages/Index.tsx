@@ -10,10 +10,10 @@ import EndGameDialog from "@/components/EndGameDialog";
 import GameBoard from "@/components/GameBoard";
 import { saveGameProgress } from "@/lib/storage/gameStorage";
 import { TARGET_WORD_MIN_SIMILARITY } from "@/lib/constants";
+import { calculateProgress } from "@/lib/embeddings/utils";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { BookOpen } from "lucide-react";
-import { useDynamicDifficulty } from "@/hooks/useDynamicDifficulty";
 
 const Index = () => {
   const { startWord, targetWord } = useParams();
@@ -24,24 +24,21 @@ const Index = () => {
   const [progress, setProgress] = useState(0);
   const [isChecking, setIsChecking] = useState(false);
   const [showEndGame, setShowEndGame] = useState(false);
-  const { onWordRejected } = useDynamicDifficulty();
 
   const handleWordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentWord || isChecking) return;
 
     setIsChecking(true);
-    console.log(`Checking word: "${currentWord}"`);
 
     try {
       if (!isValidWord(currentWord)) {
-        console.log(`Word "${currentWord}" not in dictionary`);
-        onWordRejected();
         toast({
           title: "Invalid word",
           description: "This word is not in our dictionary",
           variant: "destructive",
         });
+        onWordRejected(); // Add difficulty adjustment for invalid words
         return;
       }
 
@@ -49,8 +46,7 @@ const Index = () => {
       const validation = await validateWordForChain(currentWord, previousWord, game.targetWord);
       
       if (!validation.isValid) {
-        console.log(`Word "${currentWord}" failed validation`);
-        onWordRejected();
+        onWordRejected(); // Add difficulty adjustment for failed validation
         toast({
           title: "Word not similar enough",
           description: validation.message,
@@ -59,8 +55,7 @@ const Index = () => {
         return;
       }
 
-      const newProgress = validation.similarityToTarget;
-      setProgress(newProgress);
+      const newProgress = calculateProgress(validation.similarityToTarget);
       
       let newWordProgresses;
       if (editingIndex !== null) {
@@ -75,6 +70,8 @@ const Index = () => {
       const newChain = editingIndex !== null
         ? [...game.currentChain.slice(0, editingIndex), currentWord]
         : [...game.currentChain, currentWord];
+      
+      setProgress(newProgress);
       
       const isComplete = validation.similarityToTarget >= TARGET_WORD_MIN_SIMILARITY;
       
