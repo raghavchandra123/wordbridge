@@ -7,7 +7,6 @@ import { useAuth } from '../auth/AuthProvider';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../ui/button';
 import { Progress } from '../ui/progress';
-import { toZonedTime } from 'date-fns-tz';
 
 interface LeaderboardEntry {
   username: string;
@@ -26,7 +25,7 @@ export default function LeaderboardPage() {
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
-      const today = toZonedTime(new Date(), 'GMT').toISOString().split('T')[0];
+      const today = new Date().toISOString().split('T')[0];
       
       const { data: todayScores, error: todayError } = await supabase
         .from('daily_scores')
@@ -37,7 +36,8 @@ export default function LeaderboardPage() {
             full_name,
             avatar_url,
             level,
-            experience
+            experience,
+            id
           )
         `)
         .eq('date', today)
@@ -53,7 +53,7 @@ export default function LeaderboardPage() {
         return;
       }
 
-      const userIds = todayScores.map((score: any) => score.profiles.id).filter(Boolean);
+      const userIds = todayScores.map((score: any) => score.profiles.id);
       
       const { data: statsData, error: statsError } = await supabase
         .from('user_statistics')
@@ -65,15 +65,22 @@ export default function LeaderboardPage() {
         return;
       }
 
-      const processedData = todayScores.map((entry: any) => ({
-        username: entry.profiles.username,
-        full_name: entry.profiles.full_name || entry.profiles.username,
-        avatar_url: entry.profiles.avatar_url,
-        level: entry.profiles.level,
-        experience: entry.profiles.experience,
-        score: entry.score,
-        average_score: null
-      }));
+      const processedData = todayScores.map((entry: any) => {
+        const userStats = statsData?.find(stat => stat.user_id === entry.profiles.id);
+        const averageScore = userStats && userStats.total_games > 0
+          ? Number((userStats.total_score / userStats.total_games).toFixed(2))
+          : null;
+
+        return {
+          username: entry.profiles.username,
+          full_name: entry.profiles.full_name || entry.profiles.username,
+          avatar_url: entry.profiles.avatar_url,
+          level: entry.profiles.level,
+          experience: entry.profiles.experience,
+          score: entry.score,
+          average_score: averageScore
+        };
+      });
 
       setLeaderboard(processedData);
     };
@@ -131,8 +138,8 @@ export default function LeaderboardPage() {
             <div className="space-y-4">
               <div className="grid grid-cols-[1fr_auto_auto] gap-4 px-3 py-2 font-semibold text-gray-600">
                 <div>Player</div>
-                <div className="text-right">Today's Score</div>
-                <div className="text-right">Average Score</div>
+                <div className="text-right w-24">Today's Score</div>
+                <div className="text-right w-24">Average Score</div>
               </div>
               {leaderboard.map((entry, index) => (
                 <div
@@ -154,8 +161,8 @@ export default function LeaderboardPage() {
                     </div>
                     <div className="font-medium ml-2">{entry.full_name}</div>
                   </div>
-                  <div className="text-right font-medium">{entry.score}</div>
-                  <div className="text-right font-medium">
+                  <div className="text-right w-24 font-medium">{entry.score}</div>
+                  <div className="text-right w-24 font-medium">
                     {entry.average_score !== null ? entry.average_score.toFixed(2) : '-'}
                   </div>
                 </div>
