@@ -4,24 +4,71 @@ import { logDatabaseOperation } from '@/lib/utils/dbLogger';
 export const updateDailyScore = async (userId: string, score: number, seedDate: string | undefined) => {
   try {
     const today = new Date().toISOString().split('T')[0];
-    // Only update if this is a daily game (seedDate matches today)
-    if (seedDate !== today) {
+    
+    // Log whether this is a daily game
+    const isDailyGame = seedDate === today;
+    console.log('🎲 Daily Game Check:', {
+      seedDate,
+      today,
+      isDailyGame
+    });
+
+    // Only update if this is a daily game
+    if (!isDailyGame) {
+      console.log('⏭️ Skipping daily score update - not a daily game');
       return;
     }
 
-    const { error } = await supabase
+    // First check if there's an existing score for today
+    const { data: existingScore, error: fetchError } = await supabase
       .from('daily_scores')
-      .upsert({
-        user_id: userId,
-        score,
-        date: today
-      }, {
-        onConflict: 'user_id,date'
-      });
+      .select('score')
+      .eq('user_id', userId)
+      .eq('date', today)
+      .single();
 
-    if (error) throw error;
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      console.error('❌ Error fetching existing score:', fetchError);
+      throw fetchError;
+    }
+
+    console.log('🎯 Score Comparison:', {
+      existingScore: existingScore?.score,
+      newScore: score,
+      shouldUpdate: !existingScore || score < existingScore.score
+    });
+
+    // Only update if there's no score or if the new score is better (lower)
+    if (!existingScore || score < existingScore.score) {
+      const { error } = await supabase
+        .from('daily_scores')
+        .upsert({
+          user_id: userId,
+          score,
+          date: today
+        }, {
+          onConflict: 'user_id,date'
+        });
+
+      if (error) {
+        console.error('❌ Error updating daily score:', error);
+        throw error;
+      }
+
+      console.log('✅ Daily score updated successfully:', {
+        userId,
+        score,
+        date: today,
+        previousScore: existingScore?.score
+      });
+    } else {
+      console.log('⏭️ Skipping update - existing score is better:', {
+        existingScore: existingScore.score,
+        newScore: score
+      });
+    }
   } catch (error) {
-    console.error('Error updating daily score:', error);
+    console.error('❌ Error in updateDailyScore:', error);
     throw error;
   }
 };
