@@ -20,64 +20,69 @@ interface TopScore {
 
 export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => {
   const [topScores, setTopScores] = useState<TopScore[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { session } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchTopScores = async () => {
-      const today = toZonedTime(new Date(), 'GMT').toISOString().split('T')[0];
-      
-      const { data: todayScores, error: todayError } = await supabase
-        .from('daily_scores')
-        .select(`
-          score,
-          user_id,
-          profiles!inner (
-            username,
-            full_name,
-            avatar_url,
-            level,
-            experience
-          )
-        `)
-        .eq('date', today)
-        .order('score', { ascending: true })
-        .limit(3);
+      setIsLoading(true);
+      try {
+        // Wait for a short delay to ensure database updates are complete
+        await new Promise(resolve => setTimeout(resolve, 500));
 
-      if (todayError) {
-        console.error('Error fetching top scores:', todayError);
-        return;
+        const today = toZonedTime(new Date(), 'GMT').toISOString().split('T')[0];
+        
+        const { data: todayScores, error: todayError } = await supabase
+          .from('daily_scores')
+          .select(`
+            score,
+            user_id,
+            profiles!inner (
+              username,
+              full_name,
+              avatar_url,
+              level,
+              experience
+            )
+          `)
+          .eq('date', today)
+          .order('score', { ascending: true })
+          .limit(3);
+
+        if (todayError) throw todayError;
+
+        const userIds = todayScores?.map(score => score.user_id) || [];
+        const { data: statsData, error: statsError } = await supabase
+          .from('user_statistics')
+          .select('user_id, total_games, total_score')
+          .in('user_id', userIds);
+
+        if (statsError) throw statsError;
+
+        const processedData: TopScore[] = todayScores?.map((entry: any) => {
+          const userStats = statsData?.find(stat => stat.user_id === entry.user_id);
+          const averageScore = userStats && userStats.total_games > 0
+            ? Number((userStats.total_score / userStats.total_games).toFixed(2))
+            : null;
+
+          return {
+            username: entry.profiles.username,
+            full_name: entry.profiles.full_name || entry.profiles.username,
+            avatar_url: entry.profiles.avatar_url,
+            level: entry.profiles.level,
+            experience: entry.profiles.experience,
+            score: entry.score,
+            average_score: averageScore
+          };
+        }) || [];
+
+        setTopScores(processedData);
+      } catch (error) {
+        console.error('Error fetching top scores:', error);
+      } finally {
+        setIsLoading(false);
       }
-
-      const userIds = todayScores?.map(score => score.user_id) || [];
-      const { data: statsData, error: statsError } = await supabase
-        .from('user_statistics')
-        .select('user_id, total_games, total_score')
-        .in('user_id', userIds);
-
-      if (statsError) {
-        console.error('Error fetching user statistics:', statsError);
-        return;
-      }
-
-      const processedData: TopScore[] = todayScores?.map((entry: any) => {
-        const userStats = statsData?.find(stat => stat.user_id === entry.user_id);
-        const averageScore = userStats && userStats.total_games > 0
-          ? Number((userStats.total_score / userStats.total_games).toFixed(2))
-          : null;
-
-        return {
-          username: entry.profiles.username,
-          full_name: entry.profiles.full_name || entry.profiles.username,
-          avatar_url: entry.profiles.avatar_url,
-          level: entry.profiles.level,
-          experience: entry.profiles.experience,
-          score: entry.score,
-          average_score: averageScore
-        };
-      }) || [];
-
-      setTopScores(processedData);
     };
 
     fetchTopScores();
@@ -93,6 +98,28 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
     const currentLevelExp = (Math.floor(experience / 100)) * 100;
     return ((experience - currentLevelExp) / 100) * 100;
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="text-lg font-semibold text-center mb-4">Top Players Today</div>
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="animate-pulse grid grid-cols-[auto_1fr_auto_auto] items-center gap-4 p-3 rounded-lg bg-gray-50">
+            <div className="h-12 w-12 bg-gray-200 rounded-full" />
+            <div className="h-4 bg-gray-200 rounded w-3/4" />
+            <div className="space-y-2">
+              <div className="h-4 bg-gray-200 rounded w-12" />
+              <div className="h-3 bg-gray-200 rounded w-8" />
+            </div>
+            <div className="space-y-2">
+              <div className="h-4 bg-gray-200 rounded w-12" />
+              <div className="h-3 bg-gray-200 rounded w-8" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
