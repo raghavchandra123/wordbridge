@@ -65,16 +65,16 @@ export const updateDailyScore = async (userId: string, score: number, seedDate: 
   }
 };
 
-const calculateExperience = (score: number): number => {
-  return Math.ceil(100 / score);
+const calculateExperience = (score: number, level: number): number => {
+  return Math.ceil(100 / (score * (1 + 0.1 * level)));
 };
 
 export const updateExperience = async (userId: string, score: number) => {
   try {
-    // First get the current experience
+    // First get the current level
     const { data: profile, error: fetchError } = await supabase
       .from('profiles')
-      .select('experience')
+      .select('level, experience')
       .eq('id', userId)
       .single();
 
@@ -83,17 +83,19 @@ export const updateExperience = async (userId: string, score: number) => {
       throw fetchError;
     }
 
+    const currentLevel = profile?.level || 1;
     const currentExperience = profile?.experience || 0;
-    const experienceGained = calculateExperience(score);
+    const experienceGained = calculateExperience(score, currentLevel);
     const newExperience = currentExperience + experienceGained;
     
     logDatabaseOperation('Updating Experience', { 
       userId, 
       score,
+      currentLevel,
       currentExperience,
       experienceGained,
       newExperience,
-      formula: 'ceiling(100/score)'
+      formula: 'ceiling(100/(score*(1+0.1*level)))'
     });
     
     const { error } = await supabase
