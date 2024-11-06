@@ -92,3 +92,18 @@
     "vite": "^5.4.1"
   }
 }
+
+{
+
+  "scripts": {
+
+    "test": "vitest",
+
+    "test:ui": "vitest --ui",
+
+    "test:coverage": "vitest run --coverage"
+
+  }
+
+}
+
