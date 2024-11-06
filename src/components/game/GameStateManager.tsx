@@ -32,18 +32,6 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
         return;
       }
 
-      if (hasUpdatedRef.current) {
-        logDatabaseOperation('Game Stats Update Skipped', {
-          reason: 'Already updated',
-          gameState: {
-            startWord: game.startWord,
-            targetWord: game.targetWord,
-            chainLength: game.currentChain.length
-          }
-        });
-        return;
-      }
-
       try {
         const score = game.currentChain.length - 1;
         
@@ -51,9 +39,6 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
           score,
           seedDate: game.metadata?.seedDate
         });
-
-        // Set the flag before making any updates to prevent race conditions
-        hasUpdatedRef.current = true;
 
         // Execute updates in sequence
         if (game.metadata?.seedDate) {
@@ -77,14 +62,17 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
     updateGameStats();
   }, [game.isComplete, session?.user?.id, onGameComplete]);
 
-  // Reset hasUpdated when starting a new game
+  // Reset hasUpdated when game state changes
   useEffect(() => {
+    // Reset the flag whenever the game state meaningfully changes
     if (previousGameStateRef.current?.startWord !== game.startWord || 
-        previousGameStateRef.current?.targetWord !== game.targetWord) {
+        previousGameStateRef.current?.targetWord !== game.targetWord ||
+        previousGameStateRef.current?.currentChain.length !== game.currentChain.length ||
+        !game.isComplete) {
       hasUpdatedRef.current = false;
-      previousGameStateRef.current = game;
     }
-  }, [game.startWord, game.targetWord]);
+    previousGameStateRef.current = game;
+  }, [game.startWord, game.targetWord, game.currentChain.length, game.isComplete]);
 
   return null;
 };
