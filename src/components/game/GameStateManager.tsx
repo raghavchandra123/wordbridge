@@ -15,27 +15,26 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
   const previousGameStateRef = useRef<GameState | null>(null);
 
   useEffect(() => {
-    // Reset hasUpdated when starting a new game
-    if (previousGameStateRef.current?.startWord !== game.startWord || 
-        previousGameStateRef.current?.targetWord !== game.targetWord) {
-      hasUpdatedRef.current = false;
-      previousGameStateRef.current = game;
+    // Only run this effect when game completion status changes
+    if (previousGameStateRef.current?.isComplete === game.isComplete) {
+      return;
     }
+
+    previousGameStateRef.current = game;
 
     const updateGameStats = async () => {
       if (!game.isComplete || !session?.user?.id) {
-        logDatabaseOperation('Skipping Game Stats Update', {
-          reason: !game.isComplete ? 'Game not complete' : 'No user session',
-          isComplete: game.isComplete,
-          userId: session?.user?.id
-        });
+        if (game.isComplete === false) {
+          logDatabaseOperation('Game Stats Update Skipped', {
+            reason: 'Game in progress'
+          });
+        }
         return;
       }
 
       if (hasUpdatedRef.current) {
-        logDatabaseOperation('Skipping Game Stats Update', {
+        logDatabaseOperation('Game Stats Update Skipped', {
           reason: 'Already updated',
-          hasUpdated: hasUpdatedRef.current,
           gameState: {
             startWord: game.startWord,
             targetWord: game.targetWord,
@@ -50,8 +49,7 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
         
         logDatabaseOperation('Starting Game Stats Update', {
           score,
-          seedDate: game.metadata?.seedDate,
-          currentChain: game.currentChain
+          seedDate: game.metadata?.seedDate
         });
 
         // Set the flag before making any updates to prevent race conditions
@@ -60,11 +58,6 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
         // Execute updates in sequence
         if (game.metadata?.seedDate) {
           await updateDailyScore(session.user.id, score, game.metadata.seedDate);
-        } else {
-          logDatabaseOperation('Skipping Daily Score Update', {
-            reason: 'Not a daily game',
-            seedDate: game.metadata?.seedDate
-          });
         }
 
         await updateExperience(session.user.id, score);
@@ -82,7 +75,16 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
     };
 
     updateGameStats();
-  }, [game.isComplete, game.currentChain.length, session?.user?.id, onGameComplete, game]);
+  }, [game.isComplete, session?.user?.id, onGameComplete]);
+
+  // Reset hasUpdated when starting a new game
+  useEffect(() => {
+    if (previousGameStateRef.current?.startWord !== game.startWord || 
+        previousGameStateRef.current?.targetWord !== game.targetWord) {
+      hasUpdatedRef.current = false;
+      previousGameStateRef.current = game;
+    }
+  }, [game.startWord, game.targetWord]);
 
   return null;
 };
