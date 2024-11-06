@@ -14,6 +14,14 @@ import { EndGameProfile } from "./game/EndGameProfile";
 import { EndGameActions } from "./game/EndGameActions";
 import { EndGameTimer } from "./game/EndGameTimer";
 
+interface UserProfile {
+  username: string;
+  full_name: string;
+  avatar_url: string;
+  level: number;
+  experience: number;
+}
+
 interface EndGameDialogProps {
   game: GameState;
   open: boolean;

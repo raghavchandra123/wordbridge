@@ -60,10 +60,10 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
         return;
       }
 
-      const processedData = todayScores?.map((entry: any) => {
+      const processedData: TopScore[] = todayScores?.map((entry: any) => {
         const userStats = statsData?.find(stat => stat.user_id === entry.user_id);
         const averageScore = userStats && userStats.total_games > 0
-          ? (userStats.total_score / userStats.total_games).toFixed(2)
+          ? Number((userStats.total_score / userStats.total_games).toFixed(2))
           : null;
 
         return {

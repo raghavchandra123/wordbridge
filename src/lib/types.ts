@@ -10,3 +10,12 @@ export interface GameState {
     seedDate?: string;
   };
 }
+
+export interface HighScore {
+  score: number;
+  date: string;
+  words: {
+    start: string;
+    target: string;
+  };
+}
