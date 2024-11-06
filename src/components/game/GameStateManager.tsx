@@ -57,6 +57,7 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
         // Set the flag before making any updates to prevent race conditions
         hasUpdatedRef.current = true;
 
+        // Execute updates in sequence
         if (game.metadata?.seedDate) {
           await updateDailyScore(session.user.id, score, game.metadata.seedDate);
         } else {
@@ -69,6 +70,9 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
         await updateExperience(session.user.id, score);
         await updateTotalStats(session.user.id, score);
 
+        // Small delay to ensure database updates are complete
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
         onGameComplete();
       } catch (error) {
         logDatabaseOperation('Game Stats Update Failed', { error });

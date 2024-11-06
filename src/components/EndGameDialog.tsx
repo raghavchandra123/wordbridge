@@ -32,21 +32,36 @@ interface EndGameDialogProps {
 const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => {
   const { session } = useAuth();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    if (session?.user?.id) {
-      supabase
-        .from('profiles')
-        .select('username, full_name, avatar_url, level, experience')
-        .eq('id', session.user.id)
-        .single()
-        .then(({ data, error }) => {
-          if (!error && data) {
-            setUserProfile(data);
-          }
-        });
-    }
-  }, [session?.user?.id]);
+    const fetchUpdatedProfile = async () => {
+      if (!session?.user?.id || !open) return;
+      
+      setIsLoading(true);
+      try {
+        // Wait for a short delay to ensure database updates are complete
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('username, full_name, avatar_url, level, experience')
+          .eq('id', session.user.id)
+          .single();
+          
+        if (error) throw error;
+        if (data) {
+          setUserProfile(data);
+        }
+      } catch (error) {
+        console.error('Error fetching updated profile:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUpdatedProfile();
+  }, [session?.user?.id, open]);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -61,7 +76,14 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
         </DialogHeader>
         
         <div className="space-y-4">
-          {userProfile && <EndGameProfile userProfile={userProfile} />}
+          {isLoading ? (
+            <div className="animate-pulse space-y-4">
+              <div className="h-16 bg-gray-200 rounded-full w-16 mx-auto" />
+              <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto" />
+            </div>
+          ) : (
+            userProfile && <EndGameProfile userProfile={userProfile} />
+          )}
           <EndGameActions game={game} setGame={setGame} onClose={onClose} />
           <div className="border-t pt-4">
             <TopScores />
