@@ -94,11 +94,12 @@ const Index = () => {
       
       if (isComplete) {
         saveHighScore({
-          startWord: newGame.startWord,
-          targetWord: newGame.targetWord,
-          chain: newGame.currentChain,
           score: newGame.currentChain.length - 1,
-          timestamp: Date.now(),
+          date: new Date().toISOString(),
+          words: {
+            start: newGame.startWord,
+            target: newGame.targetWord
+          }
         });
         setShowEndGame(true);
       }
