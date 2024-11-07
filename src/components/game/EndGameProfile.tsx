@@ -1,5 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Progress } from "../ui/progress";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UserProfile {
   username: string;
@@ -10,10 +12,37 @@ interface UserProfile {
 }
 
 interface EndGameProfileProps {
-  userProfile: UserProfile;
+  userId: string;
+  gameComplete: boolean;
 }
 
-export const EndGameProfile = ({ userProfile }: EndGameProfileProps) => {
+export const EndGameProfile = ({ userId, gameComplete }: EndGameProfileProps) => {
+  const { data: userProfile, isLoading } = useQuery({
+    queryKey: ['profile', userId, gameComplete],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username, full_name, avatar_url, level, experience')
+        .eq('id', userId)
+        .single();
+        
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!userId && gameComplete,
+    refetchOnMount: true,
+    staleTime: 0
+  });
+
+  if (isLoading || !userProfile) {
+    return (
+      <div className="animate-pulse space-y-4">
+        <div className="h-16 bg-gray-200 rounded-full w-16 mx-auto" />
+        <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto" />
+      </div>
+    );
+  }
+
   const getProgressToNextLevel = (experience: number) => {
     const currentLevelExp = (Math.floor(experience / 100)) * 100;
     return ((experience - currentLevelExp) / 100) * 100;

@@ -87,22 +87,26 @@ async function fetchLeaderboardData() {
 interface TopScoresProps {
   showViewAll?: boolean;
   forceRefresh?: boolean;
+  gameComplete?: boolean;
 }
 
-export const TopScores = ({ showViewAll = true, forceRefresh = false }: TopScoresProps) => {
+export const TopScores = ({ 
+  showViewAll = true, 
+  forceRefresh = false,
+  gameComplete = false 
+}: TopScoresProps) => {
   const { session } = useAuth();
   const navigate = useNavigate();
 
   const { data: topScores, isLoading } = useQuery({
-    queryKey: ['topScores'],
+    queryKey: ['topScores', gameComplete],
     queryFn: async () => {
       const data = await fetchLeaderboardData();
       return data;
     },
-    staleTime: forceRefresh ? 0 : 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    refetchOnWindowFocus: forceRefresh,
-    refetchOnMount: forceRefresh,
+    staleTime: 0,
+    refetchOnMount: true,
+    enabled: forceRefresh || gameComplete
   });
 
   const getLevelColor = (level: number) => {
