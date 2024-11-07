@@ -116,13 +116,13 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
       <div className="space-y-4">
         <div className="text-lg font-semibold text-center mb-4">Top Players Today</div>
         {[1, 2, 3].map((i) => (
-          <div key={i} className="animate-pulse grid grid-cols-[auto_1fr_auto] items-center gap-2 p-3 rounded-lg bg-gray-50">
-            <div className="h-12 w-12 bg-gray-200 rounded-full" />
-            <div className="h-4 bg-gray-200 rounded w-3/4" />
-            <div className="space-y-2">
-              <div className="h-4 bg-gray-200 rounded w-12" />
-              <div className="h-3 bg-gray-200 rounded w-8" />
+          <div key={i} className="animate-pulse grid grid-cols-[minmax(0,2fr)_minmax(80px,1fr)_minmax(80px,1fr)] items-center gap-2 p-3 rounded-lg bg-gray-50">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 sm:h-12 sm:w-12 bg-gray-200 rounded-full" />
+              <div className="h-4 bg-gray-200 rounded w-3/4" />
             </div>
+            <div className="h-4 bg-gray-200 rounded" />
+            <div className="h-4 bg-gray-200 rounded" />
           </div>
         ))}
       </div>
@@ -134,27 +134,31 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
       <div className="text-lg font-semibold text-center mb-4">Top Players Today</div>
       <ScrollArea className="h-[300px] w-full">
         <div className="space-y-4 pr-4">
-          {topScores.map((entry) => (
+          {topScores.slice(0, 5).map((entry) => (
             <div
               key={entry.username}
-              className="grid grid-cols-[auto_1fr_auto] items-center gap-2 p-3 rounded-lg bg-gray-50"
+              className="grid grid-cols-[minmax(0,2fr)_minmax(80px,1fr)_minmax(80px,1fr)] items-center gap-2 p-3 rounded-lg bg-gray-50"
             >
-              <div className="relative">
-                <Avatar className={`h-12 w-12 ring-2 ${getLevelColor(entry.level)}`}>
-                  <AvatarImage src={entry.avatar_url} />
-                  <AvatarFallback>{entry.full_name?.[0]}</AvatarFallback>
-                </Avatar>
-                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 rounded-full">
-                  {entry.level}
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="relative flex-shrink-0">
+                  <Avatar className={`h-8 w-8 sm:h-12 sm:w-12 ring-2 ${getLevelColor(entry.level)}`}>
+                    <AvatarImage src={entry.avatar_url} />
+                    <AvatarFallback>{entry.full_name?.[0]}</AvatarFallback>
+                  </Avatar>
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-1.5 rounded-full">
+                    {entry.level}
+                  </div>
+                  <div className="absolute -bottom-4 left-0 w-full">
+                    <Progress value={getProgressToNextLevel(entry.experience)} className="h-1" />
+                  </div>
                 </div>
-                <div className="absolute -bottom-4 left-0 w-full">
-                  <Progress value={getProgressToNextLevel(entry.experience)} className="h-1" />
-                </div>
+                <div className="font-medium truncate ml-2">{entry.full_name}</div>
               </div>
-              <div className="font-medium truncate">{entry.full_name}</div>
-              <div className="text-right space-y-1 min-w-[80px]">
-                <div className="font-medium">{entry.score !== null ? entry.score : '-'}</div>
-                <div className="text-xs text-gray-500">{entry.average_score !== null ? entry.average_score.toFixed(2) : '-'} avg</div>
+              <div className="text-right font-medium">
+                {entry.score !== null ? entry.score : '-'}
+              </div>
+              <div className="text-right text-gray-600">
+                {entry.average_score !== null ? entry.average_score.toFixed(2) : '-'}
               </div>
             </div>
           ))}
