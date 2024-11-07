@@ -21,7 +21,9 @@ const generateWordEmojis = (word: string, progress: number): string => {
 export const generateShareText = (game: GameState): string => {
   const chainLength = game.currentChain.length - 1;
   const baseUrl = window.location.origin.replace('preview--', '');
-  const gameUrl = game.isDaily ? baseUrl : `${baseUrl}/${game.startWord}/${game.targetWord}`;
+  const today = new Date().toISOString().split('T')[0];
+  const isDailyGame = game.metadata?.seedDate === today;
+  const gameUrl = isDailyGame ? baseUrl : `${baseUrl}/${game.startWord}/${game.targetWord}`;
   
   let shareText = `I Connected ${game.startWord.toUpperCase()} to ${game.targetWord.toUpperCase()} in ${chainLength} steps!\n\n`;
   
@@ -38,7 +40,7 @@ export const generateShareText = (game: GameState): string => {
   // Add target word after the last emoji line
   shareText += `${game.targetWord.toUpperCase()}\n\n`;
   
-  shareText += `Play ${game.isDaily ? "today's game" : "with these words"}: ${gameUrl}`;
+  shareText += `Play ${isDailyGame ? "today's game" : "with these words"}: ${gameUrl}`;
   
   return shareText;
 };
