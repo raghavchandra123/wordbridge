@@ -56,10 +56,10 @@ interface State {
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
 const addToRemoveQueue = (toastId: string, duration: number = TOAST_REMOVE_DELAY) => {
+  // Clear existing timeout if any
   if (toastTimeouts.has(toastId)) {
-    const timeout = toastTimeouts.get(toastId)
-    if (timeout) clearTimeout(timeout)
-    toastTimeouts.delete(toastId)
+    clearTimeout(toastTimeouts.get(toastId)!);
+    toastTimeouts.delete(toastId);
   }
 
   const timeout = setTimeout(() => {

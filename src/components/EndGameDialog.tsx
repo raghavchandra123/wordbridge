@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { EndGameProfile } from "./game/EndGameProfile";
 import { EndGameActions } from "./game/EndGameActions";
 import { EndGameTimer } from "./game/EndGameTimer";
+import { useQuery } from "@tanstack/react-query";
 
 interface UserProfile {
   username: string;
@@ -34,34 +35,33 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
-  useEffect(() => {
-    const fetchUpdatedProfile = async () => {
-      if (!session?.user?.id || !open) return;
+  const { data: profile } = useQuery({
+    queryKey: ['profile', session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user?.id) throw new Error('No user ID');
       
-      setIsLoading(true);
-      try {
-        // Wait for a short delay to ensure database updates are complete
-        await new Promise(resolve => setTimeout(resolve, 500));
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username, full_name, avatar_url, level, experience')
+        .eq('id', session.user.id)
+        .single();
         
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('username, full_name, avatar_url, level, experience')
-          .eq('id', session.user.id)
-          .single();
-          
-        if (error) throw error;
-        if (data) {
-          setUserProfile(data);
-        }
-      } catch (error) {
-        console.error('Error fetching updated profile:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!session?.user?.id && open,
+    staleTime: 30 * 1000, // Data stays fresh for 30 seconds
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false
+  });
 
-    fetchUpdatedProfile();
-  }, [session?.user?.id, open]);
+  useEffect(() => {
+    if (profile) {
+      setUserProfile(profile);
+      setIsLoading(false);
+    }
+  }, [profile]);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
