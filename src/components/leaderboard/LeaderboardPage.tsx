@@ -12,7 +12,7 @@ interface LeaderboardEntry {
   username: string;
   full_name: string;
   avatar_url: string;
-  score: number;
+  score: number | null;
   level: number;
   experience: number;
   average_score: number | null;
@@ -27,59 +27,73 @@ export default function LeaderboardPage() {
     const fetchLeaderboard = async () => {
       const today = new Date().toISOString().split('T')[0];
       
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select(`
+          username,
+          full_name,
+          avatar_url,
+          level,
+          experience,
+          id
+        `);
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        return;
+      }
+
       const { data: todayScores, error: todayError } = await supabase
         .from('daily_scores')
         .select(`
           score,
-          profiles!inner (
-            username,
-            full_name,
-            avatar_url,
-            level,
-            experience,
-            id
-          )
+          user_id
         `)
-        .eq('date', today)
-        .order('score', { ascending: true });
+        .eq('date', today);
 
       if (todayError) {
-        console.error('Error fetching leaderboard:', todayError);
+        console.error('Error fetching today\'s scores:', todayError);
         return;
       }
 
-      if (!todayScores) {
-        setLeaderboard([]);
-        return;
-      }
-
-      const userIds = todayScores.map((score: any) => score.profiles.id);
-      
       const { data: statsData, error: statsError } = await supabase
         .from('user_statistics')
-        .select('user_id, total_games, total_score')
-        .in('user_id', userIds);
+        .select('user_id, total_games, total_score');
 
       if (statsError) {
         console.error('Error fetching user statistics:', statsError);
         return;
       }
 
-      const processedData = todayScores.map((entry: any) => {
-        const userStats = statsData?.find(stat => stat.user_id === entry.profiles.id);
+      const processedData: LeaderboardEntry[] = profiles.map((profile: any) => {
+        const todayScore = todayScores?.find(score => score.user_id === profile.id);
+        const userStats = statsData?.find(stat => stat.user_id === profile.id);
         const averageScore = userStats && userStats.total_games > 0
           ? Number((userStats.total_score / userStats.total_games).toFixed(2))
           : null;
 
         return {
-          username: entry.profiles.username,
-          full_name: entry.profiles.full_name || entry.profiles.username,
-          avatar_url: entry.profiles.avatar_url,
-          level: entry.profiles.level,
-          experience: entry.profiles.experience,
-          score: entry.score,
+          username: profile.username,
+          full_name: profile.full_name || profile.username,
+          avatar_url: profile.avatar_url,
+          level: profile.level,
+          experience: profile.experience,
+          score: todayScore ? todayScore.score : null,
           average_score: averageScore
         };
+      });
+
+      // Sort the leaderboard: first by today's score (nulls last), then by average score
+      processedData.sort((a, b) => {
+        if (a.score === null && b.score === null) {
+          return (b.average_score || 0) - (a.average_score || 0);
+        }
+        if (a.score === null) return 1;
+        if (b.score === null) return -1;
+        if (a.score === b.score) {
+          return (b.average_score || 0) - (a.average_score || 0);
+        }
+        return a.score - b.score;
       });
 
       setLeaderboard(processedData);
@@ -161,7 +175,9 @@ export default function LeaderboardPage() {
                     </div>
                     <div className="font-medium ml-2">{entry.full_name}</div>
                   </div>
-                  <div className="text-right w-24 font-medium">{entry.score}</div>
+                  <div className="text-right w-24 font-medium">
+                    {entry.score !== null ? entry.score : '-'}
+                  </div>
                   <div className="text-right w-24 font-medium">
                     {entry.average_score !== null ? entry.average_score.toFixed(2) : '-'}
                   </div>
