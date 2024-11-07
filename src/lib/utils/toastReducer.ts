@@ -1,5 +1,5 @@
 import { ToasterToast, State } from "../types/toast"
-import { TOAST_REMOVE_DELAY } from "../constants/toast"
+import { TOAST_REMOVE_DELAY, TOAST_LIMIT } from "../constants/toast"
 import { addToRemoveQueue } from "./toastTimeouts"
 
 export const actionTypes = {

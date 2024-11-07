@@ -72,9 +72,9 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
 
       return data;
     },
-    enabled: !!session?.user?.id && open, // Only run query when dialog is open
-    staleTime: Infinity, // Never consider data stale
-    cacheTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    enabled: !!session?.user?.id && open,
+    staleTime: Infinity,
+    gcTime: 5 * 60 * 1000, // Changed from cacheTime to gcTime
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false
@@ -92,7 +92,6 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
     }
   }, [profile]);
 
-  // Don't render anything if dialog is not open
   if (!open) return null;
 
   return (
