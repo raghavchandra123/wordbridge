@@ -17,6 +17,7 @@ import { GameBoardControls } from "./game/GameBoardControls";
 import { GameControlButtons } from "./game/GameControlButtons";
 import { useDynamicDifficulty } from "@/hooks/useDynamicDifficulty";
 import { GameStateManager } from "./game/GameStateManager";
+import { handleToast } from "@/lib/utils/toastManager";
 
 const GameBoard = ({
   game,
@@ -128,23 +129,14 @@ const GameBoard = ({
     const shareText = generateShareText(game);
     try {
       if (navigator.share) {
-        await navigator.share({
-          text: shareText,
-        });
+        await navigator.share({ text: shareText });
       } else {
         await navigator.clipboard.writeText(shareText);
-        toast({
-          description: "Copied to clipboard!",
-          duration: 3000,
-        });
+        handleToast("Copied to clipboard!");
       }
     } catch (err) {
       console.error('Share failed:', err);
-      toast({
-        description: "Sharing failed. Please try again",
-        variant: "destructive",
-        duration: 3000,
-      });
+      handleToast("Sharing failed. Please try again", "destructive");
     }
   };
 
@@ -167,11 +159,7 @@ const GameBoard = ({
       });
     } catch (err) {
       console.error('Failed to generate new words:', err);
-      toast({
-        description: "Failed to generate new words. Please try again.",
-        variant: "destructive",
-        duration: 3000,
-      });
+      handleToast("Failed to generate new words. Please try again.", "destructive");
     }
   };
 
@@ -200,19 +188,11 @@ const GameBoard = ({
           }
         }, 100);
       } else {
-        toast({
-          description: "Couldn't find a hint at this time. Try a different word!",
-          variant: "destructive",
-          duration: 3000,
-        });
+        handleToast("Couldn't find a hint at this time. Try a different word!", "destructive");
       }
     } catch (error) {
       console.error('Error generating hint:', error);
-      toast({
-        description: "Error generating hint. Please try again.",
-        variant: "destructive",
-        duration: 3000,
-      });
+      handleToast("Error generating hint. Please try again.", "destructive");
     } finally {
       setIsGeneratingHint(false);
     }

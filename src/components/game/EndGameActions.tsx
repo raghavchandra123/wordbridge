@@ -2,7 +2,7 @@ import { Button } from "../ui/button";
 import { Share, Shuffle } from "lucide-react";
 import { GameState } from "@/lib/types";
 import { generateShareText } from "@/lib/utils/share";
-import { toast } from "../ui/use-toast";
+import { handleToast } from "@/lib/utils/toastManager";
 import { findRandomWordPair } from "@/lib/embeddings/game";
 
 interface EndGameActionsProps {
@@ -22,18 +22,11 @@ export const EndGameActions = ({ game, setGame, onClose }: EndGameActionsProps) 
         });
       } else {
         await navigator.clipboard.writeText(shareText);
-        toast({
-          description: "Copied to clipboard!",
-          duration: 3000,
-        });
+        handleToast("Copied to clipboard!");
       }
     } catch (err) {
       console.error('Share failed:', err);
-      toast({
-        description: "Sharing failed. Please try again",
-        variant: "destructive",
-        duration: 3000,
-      });
+      handleToast("Sharing failed. Please try again", "destructive");
     }
   };
 
@@ -62,11 +55,7 @@ export const EndGameActions = ({ game, setGame, onClose }: EndGameActionsProps) 
       onClose();
     } catch (err) {
       console.error('Failed to generate new words:', err);
-      toast({
-        description: "Failed to generate new words. Please try again.",
-        variant: "destructive",
-        duration: 3000,
-      });
+      handleToast("Failed to generate new words. Please try again.", "destructive");
     }
   };
 
