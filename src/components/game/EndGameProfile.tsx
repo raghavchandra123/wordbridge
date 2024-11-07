@@ -2,7 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Progress } from "../ui/progress";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { updateExperience } from "./stats/StatsManager";
+import { updateGameStats } from "./stats/StatsManager";
 
 interface UserProfile {
   username: string;
@@ -10,6 +10,10 @@ interface UserProfile {
   avatar_url: string;
   level: number;
   experience: number;
+  user_statistics?: {
+    total_games: number;
+    total_score: number;
+  };
 }
 
 interface EndGameProfileProps {
@@ -20,36 +24,53 @@ interface EndGameProfileProps {
 
 export const EndGameProfile = ({ userId, gameScore, gameComplete }: EndGameProfileProps) => {
   const { data: userProfile, isLoading } = useQuery({
-    queryKey: ['profile', userId],
+    queryKey: ['profile', userId, gameComplete],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('username, full_name, avatar_url, level, experience')
-        .eq('id', userId)
-        .single();
+      if (gameComplete) {
+        const { newExperience, newTotalGames, newTotalScore } = await updateGameStats(
+          userId, 
+          gameScore,
+          new Date().toISOString().split('T')[0]
+        );
         
-      if (error) throw error;
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select(`
+            username,
+            full_name,
+            avatar_url,
+            level
+          `)
+          .eq('id', userId)
+          .single();
 
-      // If game is complete, update experience immediately
-      if (gameComplete && data) {
-        await updateExperience(userId, gameScore);
-        // Calculate new experience and level based on the game score
-        const currentLevelExp = (Math.floor(data.experience / 100)) * 100;
-        const experienceGained = Math.ceil(100 / (gameScore * (1 + 0.1 * data.level)));
-        const newExperience = data.experience + experienceGained;
-        const newLevel = Math.floor(newExperience / 100) + 1;
-        
-        // Return updated profile data
         return {
-          ...data,
+          ...profile,
           experience: newExperience,
-          level: newLevel
+          user_statistics: {
+            total_games: newTotalGames,
+            total_score: newTotalScore
+          }
         };
+      } else {
+        const { data } = await supabase
+          .from('profiles')
+          .select(`
+            username,
+            full_name,
+            avatar_url,
+            level,
+            experience,
+            user_statistics (
+              total_games,
+              total_score
+            )
+          `)
+          .eq('id', userId)
+          .single();
+        return data;
       }
-
-      return data;
-    },
-    staleTime: 0
+    }
   });
 
   if (isLoading || !userProfile) {
@@ -88,6 +109,11 @@ export const EndGameProfile = ({ userId, gameScore, gameComplete }: EndGameProfi
         <p className="text-sm text-center mt-1 text-gray-600">
           {userProfile.experience % 100}/100 XP to next level
         </p>
+        {userProfile.user_statistics && (
+          <p className="text-xs text-center mt-1 text-gray-500">
+            Average Score: {(userProfile.user_statistics.total_score / userProfile.user_statistics.total_games).toFixed(1)}
+          </p>
+        )}
       </div>
     </div>
   );
