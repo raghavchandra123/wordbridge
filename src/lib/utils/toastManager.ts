@@ -7,6 +7,5 @@ export const handleToast = (message: string, variant: ToastVariant = "default") 
     description: message,
     variant,
     duration: 1000,
-    dismissible: true,
   });
 };
