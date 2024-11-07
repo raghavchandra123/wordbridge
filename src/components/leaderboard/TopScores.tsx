@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ScrollArea } from '../ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
@@ -90,8 +89,7 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
 
   const { data: topScores, isLoading } = useQuery({
     queryKey: ['topScores'],
-    queryFn: fetchLeaderboardData,
-    refetchInterval: 5000, // Refetch every 5 seconds
+    queryFn: fetchLeaderboardData
   });
 
   const getLevelColor = (level: number) => {

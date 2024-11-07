@@ -50,7 +50,6 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
       return data;
     },
     enabled: !!session?.user?.id && open,
-    refetchInterval: 1000, // Refetch every second when dialog is open
   });
 
   const handleViewLeaderboard = () => {
