@@ -2,6 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Progress } from "../ui/progress";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { updateExperience } from "./stats/StatsManager";
 
 interface UserProfile {
   username: string;
@@ -13,12 +14,13 @@ interface UserProfile {
 
 interface EndGameProfileProps {
   userId: string;
+  gameScore: number;
   gameComplete: boolean;
 }
 
-export const EndGameProfile = ({ userId, gameComplete }: EndGameProfileProps) => {
+export const EndGameProfile = ({ userId, gameScore, gameComplete }: EndGameProfileProps) => {
   const { data: userProfile, isLoading } = useQuery({
-    queryKey: ['profile', userId, gameComplete],
+    queryKey: ['profile', userId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
@@ -27,10 +29,26 @@ export const EndGameProfile = ({ userId, gameComplete }: EndGameProfileProps) =>
         .single();
         
       if (error) throw error;
+
+      // If game is complete, update experience immediately
+      if (gameComplete && data) {
+        await updateExperience(userId, gameScore);
+        // Calculate new experience and level based on the game score
+        const currentLevelExp = (Math.floor(data.experience / 100)) * 100;
+        const experienceGained = Math.ceil(100 / (gameScore * (1 + 0.1 * data.level)));
+        const newExperience = data.experience + experienceGained;
+        const newLevel = Math.floor(newExperience / 100) + 1;
+        
+        // Return updated profile data
+        return {
+          ...data,
+          experience: newExperience,
+          level: newLevel
+        };
+      }
+
       return data;
     },
-    enabled: !!userId && gameComplete,
-    refetchOnMount: true,
     staleTime: 0
   });
 

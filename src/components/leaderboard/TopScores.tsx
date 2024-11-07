@@ -19,6 +19,10 @@ interface TopScore {
   average_score: number | null;
 }
 
+interface TopScoresProps {
+  forceRefresh?: boolean;
+}
+
 async function fetchLeaderboardData() {
   const today = toZonedTime(new Date(), 'GMT').toISOString().split('T')[0];
   
@@ -84,12 +88,12 @@ async function fetchLeaderboardData() {
   return processedData.slice(0, 5);
 }
 
-export const TopScores = () => {
+export const TopScores = ({ forceRefresh }: TopScoresProps) => {
   const { session } = useAuth();
   const navigate = useNavigate();
 
   const { data: topScores, isLoading } = useQuery({
-    queryKey: ['topScores'],
+    queryKey: ['topScores', forceRefresh],
     queryFn: fetchLeaderboardData,
     staleTime: 0
   });

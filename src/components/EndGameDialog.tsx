@@ -14,7 +14,6 @@ import { EndGameActions } from "./game/EndGameActions";
 import { EndGameTimer } from "./game/EndGameTimer";
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
 
 interface EndGameDialogProps {
   game: GameState;
@@ -26,15 +25,6 @@ interface EndGameDialogProps {
 const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => {
   const { session } = useAuth();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-
-  React.useEffect(() => {
-    if (open && game.isComplete) {
-      // Invalidate queries when dialog opens with completed game
-      queryClient.invalidateQueries({ queryKey: ['topScores'] });
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
-    }
-  }, [open, game.isComplete, queryClient]);
 
   const handleViewLeaderboard = () => {
     onClose();
@@ -58,6 +48,7 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
             {session?.user?.id && (
               <EndGameProfile 
                 userId={session.user.id} 
+                gameScore={game.score}
                 gameComplete={game.isComplete} 
               />
             )}
@@ -65,7 +56,7 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
           </div>
           
           <div className="border-t pt-4 overflow-auto min-h-0 flex-1">
-            <TopScores />
+            <TopScores forceRefresh={game.isComplete} />
           </div>
           
           <div className="flex-shrink-0 pt-2 border-t space-y-2">
