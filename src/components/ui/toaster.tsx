@@ -7,15 +7,16 @@ import {
   ToastTitle,
   ToastViewport,
 } from "@/components/ui/toast"
+import { TOAST_REMOVE_DELAY } from "@/hooks/use-toast"
 
 export function Toaster() {
   const { toasts } = useToast()
 
   return (
-    <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, ...props }) {
+    <ToastProvider duration={TOAST_REMOVE_DELAY}>
+      {toasts.map(function ({ id, title, description, action, duration, ...props }) {
         return (
-          <Toast key={id} {...props}>
+          <Toast key={id} duration={duration} {...props}>
             <div className="grid gap-1">
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && (
