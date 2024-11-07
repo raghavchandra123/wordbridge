@@ -91,9 +91,11 @@ export default function LeaderboardPage() {
   const { data: leaderboard, isLoading } = useQuery({
     queryKey: ['fullLeaderboard'],
     queryFn: fetchFullLeaderboard,
-    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
-    gcTime: 10 * 60 * 1000, // Keep data in cache for 10 minutes
-    enabled: !!session, // Only fetch if user is logged in
+    staleTime: 5 * 60 * 1000,    // Data stays fresh for 5 minutes
+    gcTime: 10 * 60 * 1000,      // Keep in cache for 10 minutes
+    enabled: !!session,           // Only fetch if user is logged in
+    refetchOnWindowFocus: false,  // Prevent refetch on tab focus
+    refetchOnMount: false,        // Prevent refetch on component mount
   });
 
   const getLevelColor = (level: number) => {
