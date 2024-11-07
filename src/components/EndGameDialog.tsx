@@ -50,7 +50,7 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
       return data;
     },
     enabled: !!session?.user?.id && open,
-    cacheTime: 0,
+    gcTime: 0,
     staleTime: 0
   });
 

@@ -90,7 +90,7 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
   const { data: topScores, isLoading } = useQuery({
     queryKey: ['topScores', Date.now()],
     queryFn: fetchLeaderboardData,
-    cacheTime: 0,
+    gcTime: 0,
     staleTime: 0
   });
 
