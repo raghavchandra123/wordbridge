@@ -27,36 +27,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw fetchError;
       }
 
-      // If profile exists, just update it
+      const userData = {
+        username: session.user.user_metadata.name || session.user.email?.split('@')[0] || 'Anonymous User',
+        full_name: session.user.user_metadata.full_name || session.user.user_metadata.name || 'Anonymous User',
+        avatar_url: session.user.user_metadata.avatar_url || null,
+      };
+
       if (existingProfile) {
         const { error: updateError } = await supabase
           .from('profiles')
-          .update({
-            username: session.user.user_metadata.name,
-            full_name: session.user.user_metadata.full_name,
-            avatar_url: session.user.user_metadata.avatar_url,
-          })
+          .update(userData)
           .eq('id', session.user.id);
 
         if (updateError) throw updateError;
         return;
       }
 
-      // If profile doesn't exist, create it along with statistics
       const { error: insertError } = await supabase
         .from('profiles')
         .insert({
           id: session.user.id,
-          username: session.user.user_metadata.name,
-          full_name: session.user.user_metadata.full_name,
-          avatar_url: session.user.user_metadata.avatar_url,
+          ...userData,
           experience: 0,
           level: 1
         });
 
       if (insertError) throw insertError;
 
-      // Initialize user statistics
       const { error: statsError } = await supabase
         .from('user_statistics')
         .insert({

@@ -53,6 +53,7 @@ export default function LoginPage() {
             socialLayout="horizontal"
             theme="light"
             redirectTo={redirectTo}
+            onlyThirdPartyProviders={true}
           />
         </CardContent>
       </Card>
