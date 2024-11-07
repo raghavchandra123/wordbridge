@@ -29,7 +29,7 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
   const navigate = useNavigate();
 
   const { data: profile, isLoading } = useQuery({
-    queryKey: ['profile', session?.user?.id, game.score],
+    queryKey: ['profile', session?.user?.id, game.score, open],
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
@@ -43,7 +43,10 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
       return data;
     },
     enabled: !!session?.user?.id && open,
-    refetchOnMount: true
+    refetchOnMount: true,
+    refetchInterval: false,
+    staleTime: 0,
+    cacheTime: 0
   });
 
   const handleViewLeaderboard = () => {
