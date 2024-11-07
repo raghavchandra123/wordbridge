@@ -15,64 +15,40 @@ export const GameStateManager = ({ game, onGameComplete }: GameStateManagerProps
   const previousGameStateRef = useRef<GameState | null>(null);
 
   useEffect(() => {
-    // Only run this effect when game completion status changes
-    if (previousGameStateRef.current?.isComplete === game.isComplete) {
+    // Only run this effect when the game is completed for the first time
+    if (!game.isComplete || hasUpdatedRef.current || !session?.user?.id) {
       return;
     }
 
-    previousGameStateRef.current = game;
-
     const updateGameStats = async () => {
-      if (!game.isComplete || !session?.user?.id) {
-        if (game.isComplete === false) {
-          logDatabaseOperation('Game Stats Update Skipped', {
-            reason: 'Game in progress'
-          });
-        }
-        return;
-      }
-
       try {
         const score = game.currentChain.length - 1;
+        hasUpdatedRef.current = true;
         
-        logDatabaseOperation('Starting Game Stats Update', {
-          score,
-          seedDate: game.metadata?.seedDate
-        });
-
-        // Execute updates in sequence
         if (game.metadata?.seedDate) {
           await updateDailyScore(session.user.id, score, game.metadata.seedDate);
         }
-
         await updateExperience(session.user.id, score);
         await updateTotalStats(session.user.id, score);
-
-        // Small delay to ensure database updates are complete
-        await new Promise(resolve => setTimeout(resolve, 300));
         
         onGameComplete();
       } catch (error) {
         logDatabaseOperation('Game Stats Update Failed', { error });
-        // Reset the flag if update fails so it can be retried
         hasUpdatedRef.current = false;
       }
     };
 
     updateGameStats();
-  }, [game.isComplete, session?.user?.id, onGameComplete]);
+  }, [game.isComplete, session?.user?.id, onGameComplete, game.metadata?.seedDate, game.currentChain.length]);
 
-  // Reset hasUpdated when game state changes
+  // Reset hasUpdated when starting a new game
   useEffect(() => {
-    // Reset the flag whenever the game state meaningfully changes
     if (previousGameStateRef.current?.startWord !== game.startWord || 
-        previousGameStateRef.current?.targetWord !== game.targetWord ||
-        previousGameStateRef.current?.currentChain.length !== game.currentChain.length ||
-        !game.isComplete) {
+        previousGameStateRef.current?.targetWord !== game.targetWord) {
       hasUpdatedRef.current = false;
     }
     previousGameStateRef.current = game;
-  }, [game.startWord, game.targetWord, game.currentChain.length, game.isComplete]);
+  }, [game.startWord, game.targetWord]);
 
   return null;
 };
