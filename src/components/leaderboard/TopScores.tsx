@@ -12,7 +12,7 @@ interface TopScore {
   username: string;
   full_name: string;
   avatar_url: string;
-  score: number;
+  score: number | null;
   level: number;
   experience: number;
   average_score: number | null;
@@ -28,56 +28,69 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
     const fetchTopScores = async () => {
       setIsLoading(true);
       try {
-        // Wait for a short delay to ensure database updates are complete
-        await new Promise(resolve => setTimeout(resolve, 500));
-
         const today = toZonedTime(new Date(), 'GMT').toISOString().split('T')[0];
         
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select(`
+            username,
+            full_name,
+            avatar_url,
+            level,
+            experience,
+            id
+          `);
+
+        if (profilesError) throw profilesError;
+
         const { data: todayScores, error: todayError } = await supabase
           .from('daily_scores')
           .select(`
             score,
-            user_id,
-            profiles!inner (
-              username,
-              full_name,
-              avatar_url,
-              level,
-              experience
-            )
+            user_id
           `)
-          .eq('date', today)
-          .order('score', { ascending: true })
-          .limit(3);
+          .eq('date', today);
 
         if (todayError) throw todayError;
 
-        const userIds = todayScores?.map(score => score.user_id) || [];
         const { data: statsData, error: statsError } = await supabase
           .from('user_statistics')
-          .select('user_id, total_games, total_score')
-          .in('user_id', userIds);
+          .select('user_id, total_games, total_score');
 
         if (statsError) throw statsError;
 
-        const processedData: TopScore[] = todayScores?.map((entry: any) => {
-          const userStats = statsData?.find(stat => stat.user_id === entry.user_id);
+        const processedData: TopScore[] = profiles.map((profile: any) => {
+          const todayScore = todayScores?.find(score => score.user_id === profile.id);
+          const userStats = statsData?.find(stat => stat.user_id === profile.id);
           const averageScore = userStats && userStats.total_games > 0
             ? Number((userStats.total_score / userStats.total_games).toFixed(2))
             : null;
 
           return {
-            username: entry.profiles.username,
-            full_name: entry.profiles.full_name || entry.profiles.username,
-            avatar_url: entry.profiles.avatar_url,
-            level: entry.profiles.level,
-            experience: entry.profiles.experience,
-            score: entry.score,
+            username: profile.username,
+            full_name: profile.full_name || profile.username,
+            avatar_url: profile.avatar_url,
+            level: profile.level,
+            experience: profile.experience,
+            score: todayScore ? todayScore.score : null,
             average_score: averageScore
           };
-        }) || [];
+        });
 
-        setTopScores(processedData);
+        // Sort the leaderboard: first by today's score (nulls last), then by average score
+        processedData.sort((a, b) => {
+          if (a.score === null && b.score === null) {
+            return (b.average_score || 0) - (a.average_score || 0);
+          }
+          if (a.score === null) return 1;
+          if (b.score === null) return -1;
+          if (a.score === b.score) {
+            return (b.average_score || 0) - (a.average_score || 0);
+          }
+          return a.score - b.score;
+        });
+
+        setTopScores(processedData.slice(0, 3)); // Only take top 3 for preview
       } catch (error) {
         console.error('Error fetching top scores:', error);
       } finally {
@@ -144,11 +157,11 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
             </div>
             <div className="font-medium">{entry.full_name}</div>
             <div className="text-right">
-              <div className="font-medium">{entry.score}</div>
+              <div className="font-medium">{entry.score !== null ? entry.score : '-'}</div>
               <div className="text-sm text-gray-500">Today</div>
             </div>
             <div className="text-right">
-              <div className="font-medium">{entry.average_score || '-'}</div>
+              <div className="font-medium">{entry.average_score !== null ? entry.average_score.toFixed(2) : '-'}</div>
               <div className="text-sm text-gray-500">Average</div>
             </div>
           </div>
