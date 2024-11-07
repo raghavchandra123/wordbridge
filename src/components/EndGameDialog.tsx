@@ -8,12 +8,12 @@ import {
 import { GameState } from "@/lib/types";
 import { TopScores } from "./leaderboard/TopScores";
 import { useAuth } from "./auth/AuthProvider";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { EndGameProfile } from "./game/EndGameProfile";
 import { EndGameActions } from "./game/EndGameActions";
 import { EndGameTimer } from "./game/EndGameTimer";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 
 interface UserProfile {
   username: string;
@@ -32,12 +32,13 @@ interface EndGameDialogProps {
 
 const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => {
   const { session } = useAuth();
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Early return if dialog is not open to prevent any unnecessary operations
   if (!open) return null;
   
-  const { data: userProfile } = useQuery({
+  const { data: profile } = useQuery({
     queryKey: ['profile', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) throw new Error('No user ID');
@@ -49,15 +50,22 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
         .single();
         
       if (error) throw error;
-      return data as UserProfile;
+      return data;
     },
     enabled: !!session?.user?.id && open,
-    staleTime: Infinity, // Only fetch once per session
-    gcTime: Infinity,
+    staleTime: 30 * 1000, // Data stays fresh for 30 seconds
+    gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false
   });
+
+  useEffect(() => {
+    if (profile) {
+      setUserProfile(profile);
+      setIsLoading(false);
+    }
+  }, [profile]);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -72,13 +80,13 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
         </DialogHeader>
         
         <div className="space-y-4">
-          {!userProfile ? (
+          {isLoading ? (
             <div className="animate-pulse space-y-4">
               <div className="h-16 bg-gray-200 rounded-full w-16 mx-auto" />
               <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto" />
             </div>
           ) : (
-            <EndGameProfile userProfile={userProfile} />
+            userProfile && <EndGameProfile userProfile={userProfile} />
           )}
           <EndGameActions game={game} setGame={setGame} onClose={onClose} />
           <div className="border-t pt-4">

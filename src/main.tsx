@@ -3,16 +3,14 @@ import App from './App.tsx'
 import './index.css'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
-// Create a client with aggressive caching and no auto-refetching
+// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: Infinity, // Data never goes stale
-      gcTime: Infinity,    // Keep in cache forever
+      staleTime: 30 * 1000, // Data stays fresh for 30 seconds
+      gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
       refetchOnWindowFocus: false,
       refetchOnMount: false,
-      refetchOnReconnect: false,
-      retry: false,        // Don't retry failed queries
     },
   },
 })
