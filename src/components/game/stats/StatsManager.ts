@@ -30,17 +30,41 @@ export const updateGameStats = async (userId: string, score: number, seedDate: s
     const newTotalGames = (currentStats?.user_statistics?.total_games || 0) + 1;
     const newTotalScore = (currentStats?.user_statistics?.total_score || 0) + score;
 
-    // Batch update all stats in a single transaction
-    const { error: updateError } = await supabase.rpc('batch_update_stats', {
-      p_user_id: userId,
-      p_experience: newExperience,
-      p_total_games: newTotalGames,
-      p_total_score: newTotalScore,
-      p_score: score,
-      p_date: isDailyGame ? today : null
-    });
+    // Update experience
+    const { error: expError } = await supabase
+      .from('profiles')
+      .update({ experience: newExperience })
+      .eq('id', userId);
 
-    if (updateError) throw updateError;
+    if (expError) throw expError;
+
+    // Update total stats
+    const { error: statsUpdateError } = await supabase
+      .from('user_statistics')
+      .upsert({
+        user_id: userId,
+        total_games: newTotalGames,
+        total_score: newTotalScore
+      }, {
+        onConflict: 'user_id'
+      });
+
+    if (statsUpdateError) throw statsUpdateError;
+
+    // Update daily score if it's a daily game
+    if (isDailyGame) {
+      const { error: dailyError } = await supabase
+        .from('daily_scores')
+        .upsert({
+          user_id: userId,
+          score,
+          date: today
+        }, {
+          onConflict: 'user_id,date'
+        });
+
+      if (dailyError) throw dailyError;
+    }
 
     return {
       newExperience,
