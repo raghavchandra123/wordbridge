@@ -84,40 +84,20 @@ async function fetchLeaderboardData() {
   return processedData.slice(0, 5);
 }
 
-interface TopScoresProps {
-  showViewAll?: boolean;
-  forceRefresh?: boolean;
-  gameComplete?: boolean;
-}
-
-export const TopScores = ({ 
-  showViewAll = true, 
-  forceRefresh = false,
-  gameComplete = false 
-}: TopScoresProps) => {
+export const TopScores = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
 
   const { data: topScores, isLoading } = useQuery({
-    queryKey: ['topScores', gameComplete],
-    queryFn: async () => {
-      const data = await fetchLeaderboardData();
-      return data;
-    },
-    staleTime: 0,
-    refetchOnMount: true,
-    enabled: forceRefresh || gameComplete
+    queryKey: ['topScores'],
+    queryFn: fetchLeaderboardData,
+    staleTime: 0
   });
 
   const getLevelColor = (level: number) => {
     if (level >= 10) return 'bg-purple-500';
     if (level >= 5) return 'bg-blue-500';
     return 'bg-green-500';
-  };
-
-  const getProgressToNextLevel = (experience: number) => {
-    const currentLevelExp = (Math.floor(experience / 100)) * 100;
-    return ((experience - currentLevelExp) / 100) * 100;
   };
 
   if (isLoading) {
@@ -173,14 +153,12 @@ export const TopScores = ({
           </div>
         ))}
       </div>
-      {showViewAll && (
-        <Button
-          onClick={() => session ? navigate('/leaderboard') : navigate('/login')}
-          className="w-full mt-4"
-        >
-          {session ? 'View Full Leaderboard' : 'Sign in to view full leaderboard'}
-        </Button>
-      )}
+      <Button
+        onClick={() => session ? navigate('/leaderboard') : navigate('/login')}
+        className="w-full mt-4"
+      >
+        {session ? 'View Full Leaderboard' : 'Sign in to view full leaderboard'}
+      </Button>
     </div>
   );
 };

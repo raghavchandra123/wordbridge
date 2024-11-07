@@ -89,7 +89,7 @@ export const GameHeader = () => {
 
       <Dialog open={showLeaderboard} onOpenChange={setShowLeaderboard}>
         <DialogContent className="sm:max-w-md">
-          <TopScores showViewAll={true} forceRefresh={false} gameComplete={false} />
+          <TopScores />
         </DialogContent>
       </Dialog>
     </div>

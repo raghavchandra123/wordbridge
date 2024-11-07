@@ -55,11 +55,7 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
           </div>
           
           <div className="border-t pt-4 overflow-auto min-h-0 flex-1">
-            <TopScores 
-              showViewAll={false} 
-              forceRefresh={true} 
-              gameComplete={game.isComplete} 
-            />
+            <TopScores />
           </div>
           
           <div className="flex-shrink-0 pt-2 border-t space-y-2">
