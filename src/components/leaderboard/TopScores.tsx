@@ -88,21 +88,14 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
   const navigate = useNavigate();
 
   const { data: topScores, isLoading } = useQuery({
-    queryKey: ['topScores', Date.now()],
-    queryFn: fetchLeaderboardData,
-    gcTime: 0,
-    staleTime: 0
+    queryKey: ['topScores'],
+    queryFn: fetchLeaderboardData
   });
 
   const getLevelColor = (level: number) => {
     if (level >= 10) return 'bg-purple-500';
     if (level >= 5) return 'bg-blue-500';
     return 'bg-green-500';
-  };
-
-  const getProgressToNextLevel = (experience: number) => {
-    const currentLevelExp = (Math.floor(experience / 100)) * 100;
-    return ((experience - currentLevelExp) / 100) * 100;
   };
 
   if (isLoading) {
@@ -141,18 +134,21 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
               <div className="relative flex-shrink-0">
                 <Avatar className={`h-8 w-8 ring-2 ${getLevelColor(entry.level)}`}>
                   <AvatarImage src={entry.avatar_url} />
-                  <AvatarFallback>{entry.full_name?.[0]}</AvatarFallback>
+                  <AvatarFallback>{entry.full_name[0]}</AvatarFallback>
                 </Avatar>
-                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-1.5 rounded-full">
+                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-1.5 rounded-full">
                   {entry.level}
                 </div>
+                <div className="absolute -bottom-4 left-0 w-full">
+                  <Progress value={getProgressToNextLevel(entry.experience)} className="h-1" />
+                </div>
               </div>
-              <div className="font-medium truncate text-sm">{entry.full_name}</div>
+              <div className="font-medium truncate ml-2">{entry.full_name}</div>
             </div>
-            <div className="text-right font-medium text-sm">
+            <div className="text-right font-medium">
               {entry.score !== null ? entry.score : '-'}
             </div>
-            <div className="text-right text-gray-600 text-sm">
+            <div className="text-right text-gray-600">
               {entry.average_score !== null ? entry.average_score.toFixed(2) : '-'}
             </div>
           </div>
