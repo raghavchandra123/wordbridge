@@ -28,8 +28,9 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
   const { session } = useAuth();
   const navigate = useNavigate();
 
+  // Query for user profile with enabled flag to ensure it runs after game completion
   const { data: profile, isLoading } = useQuery({
-    queryKey: ['profile', session?.user?.id],
+    queryKey: ['profile', session?.user?.id, game.isComplete],
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
@@ -42,7 +43,9 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
       if (error) throw error;
       return data;
     },
-    enabled: !!session?.user?.id
+    enabled: !!session?.user?.id && open && game.isComplete,
+    refetchOnMount: true,
+    staleTime: 0
   });
 
   const handleViewLeaderboard = () => {
