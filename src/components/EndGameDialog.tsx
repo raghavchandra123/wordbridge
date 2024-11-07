@@ -56,8 +56,8 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
+        <DialogHeader className="space-y-2 flex-shrink-0">
           <DialogTitle className="text-2xl font-bold text-center">
             Congratulations!
           </DialogTitle>
@@ -66,20 +66,26 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
           </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-4">
-          {isLoading ? (
-            <div className="animate-pulse space-y-4">
-              <div className="h-16 bg-gray-200 rounded-full w-16 mx-auto" />
-              <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto" />
-            </div>
-          ) : (
-            profile && <EndGameProfile userProfile={profile} />
-          )}
-          <EndGameActions game={game} setGame={setGame} onClose={onClose} />
-          <div className="border-t pt-4">
-            <TopScores />
+        <div className="flex flex-col gap-4 overflow-hidden">
+          <div className="flex-shrink-0">
+            {isLoading ? (
+              <div className="animate-pulse space-y-4">
+                <div className="h-16 bg-gray-200 rounded-full w-16 mx-auto" />
+                <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto" />
+              </div>
+            ) : (
+              profile && <EndGameProfile userProfile={profile} />
+            )}
+            <EndGameActions game={game} setGame={setGame} onClose={onClose} />
           </div>
-          <EndGameTimer />
+          
+          <div className="border-t pt-4 overflow-auto min-h-0 flex-1">
+            <TopScores showViewAll={false} />
+          </div>
+          
+          <div className="flex-shrink-0 pt-2 border-t">
+            <EndGameTimer />
+          </div>
         </div>
       </DialogContent>
     </Dialog>
