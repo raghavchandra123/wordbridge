@@ -11,11 +11,14 @@ import { TopScores } from "./leaderboard/TopScores";
 import { useAuth } from "./auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { EndGameProfile } from "./game/EndGameProfile";
-import { EndGameActions } from "./game/EndGameActions";
+import { GameControlButtons } from "./game/GameControlButtons";
 import { EndGameTimer } from "./game/EndGameTimer";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router-dom";
+import { generateShareText } from "@/lib/utils/share";
+import { handleToast } from "@/lib/utils/toastManager";
+import { findRandomWordPair } from "@/lib/embeddings/game";
 
 interface EndGameDialogProps {
   game: GameState;
@@ -45,6 +48,53 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
     enabled: !!session?.user?.id
   });
 
+  const handleShare = async () => {
+    const shareText = generateShareText(game);
+    
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          text: shareText,
+        });
+      } else {
+        await navigator.clipboard.writeText(shareText);
+        handleToast("Copied to clipboard!");
+      }
+    } catch (err) {
+      console.error('Share failed:', err);
+      handleToast("Sharing failed. Please try again", "destructive");
+    }
+  };
+
+  const handleRetry = () => {
+    setGame({
+      ...game,
+      currentChain: [game.startWord],
+      wordProgresses: [],
+      isComplete: false,
+      score: 0
+    });
+    onClose();
+  };
+
+  const handleNewWords = async () => {
+    try {
+      const [startWord, targetWord] = await findRandomWordPair({});
+      setGame({
+        startWord,
+        targetWord,
+        currentChain: [startWord],
+        wordProgresses: [],
+        isComplete: false,
+        score: 0
+      });
+      onClose();
+    } catch (err) {
+      console.error('Failed to generate new words:', err);
+      handleToast("Failed to generate new words. Please try again.", "destructive");
+    }
+  };
+
   const handleViewLeaderboard = () => {
     onClose();
     navigate('/leaderboard');
@@ -72,7 +122,12 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
             ) : (
               profile && <EndGameProfile userProfile={profile} />
             )}
-            <EndGameActions game={game} setGame={setGame} onClose={onClose} />
+            <GameControlButtons
+              game={game}
+              handleShare={handleShare}
+              handleRetry={handleRetry}
+              handleNewWords={handleNewWords}
+            />
           </div>
           
           <div className="border-t pt-4 overflow-auto min-h-0 flex-1">
