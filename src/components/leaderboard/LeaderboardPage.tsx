@@ -92,7 +92,7 @@ export default function LeaderboardPage() {
     queryKey: ['fullLeaderboard'],
     queryFn: fetchFullLeaderboard,
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
-    cacheTime: 10 * 60 * 1000, // Keep data in cache for 10 minutes
+    gcTime: 10 * 60 * 1000, // Keep data in cache for 10 minutes
     enabled: !!session, // Only fetch if user is logged in
   });
 
