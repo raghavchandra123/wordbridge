@@ -8,7 +8,7 @@ import {
 import { GameState } from "@/lib/types";
 import { TopScores } from "./leaderboard/TopScores";
 import { useAuth } from "./auth/AuthProvider";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { EndGameProfile } from "./game/EndGameProfile";
 import { EndGameActions } from "./game/EndGameActions";
@@ -32,13 +32,8 @@ interface EndGameDialogProps {
 
 const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => {
   const { session } = useAuth();
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Early return if dialog is not open to prevent any unnecessary operations
-  if (!open) return null;
-  
-  const { data: profile } = useQuery({
+  const { data: profile, isLoading } = useQuery({
     queryKey: ['profile', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) throw new Error('No user ID');
@@ -60,12 +55,7 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
     refetchOnReconnect: false
   });
 
-  useEffect(() => {
-    if (profile) {
-      setUserProfile(profile);
-      setIsLoading(false);
-    }
-  }, [profile]);
+  if (!open) return null;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -86,7 +76,7 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
               <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto" />
             </div>
           ) : (
-            userProfile && <EndGameProfile userProfile={userProfile} />
+            profile && <EndGameProfile userProfile={profile} />
           )}
           <EndGameActions game={game} setGame={setGame} onClose={onClose} />
           <div className="border-t pt-4">
