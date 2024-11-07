@@ -13,6 +13,8 @@ import { EndGameProfile } from "./game/EndGameProfile";
 import { EndGameActions } from "./game/EndGameActions";
 import { EndGameTimer } from "./game/EndGameTimer";
 import { useQuery } from "@tanstack/react-query";
+import { Button } from "./ui/button";
+import { useNavigate } from "react-router-dom";
 
 interface UserProfile {
   username: string;
@@ -31,6 +33,7 @@ interface EndGameDialogProps {
 
 const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => {
   const { session } = useAuth();
+  const navigate = useNavigate();
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['profile', session?.user?.id],
@@ -53,6 +56,11 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
     refetchOnMount: false,
     refetchOnReconnect: false
   });
+
+  const handleViewLeaderboard = () => {
+    onClose();
+    navigate('/leaderboard');
+  };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -83,7 +91,14 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
             <TopScores showViewAll={false} />
           </div>
           
-          <div className="flex-shrink-0 pt-2 border-t">
+          <div className="flex-shrink-0 pt-2 border-t space-y-2">
+            <Button 
+              onClick={handleViewLeaderboard}
+              variant="outline" 
+              className="w-full"
+            >
+              View Full Leaderboard
+            </Button>
             <EndGameTimer />
           </div>
         </div>
