@@ -53,7 +53,7 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
       return data;
     },
     enabled: !!session?.user?.id && open,
-    staleTime: Infinity,
+    staleTime: 30 * 1000, // Data stays fresh for 30 seconds
     gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
