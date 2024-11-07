@@ -12,17 +12,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { EndGameProfile } from "./game/EndGameProfile";
 import { EndGameActions } from "./game/EndGameActions";
 import { EndGameTimer } from "./game/EndGameTimer";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router-dom";
-
-interface UserProfile {
-  username: string;
-  full_name: string;
-  avatar_url: string;
-  level: number;
-  experience: number;
-}
 
 interface EndGameDialogProps {
   game: GameState;
@@ -34,6 +26,15 @@ interface EndGameDialogProps {
 const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => {
   const { session } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  // Invalidate queries when dialog opens to ensure fresh data
+  React.useEffect(() => {
+    if (open) {
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['topScores'] });
+    }
+  }, [open, queryClient]);
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['profile', session?.user?.id],
@@ -50,11 +51,9 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
       return data;
     },
     enabled: !!session?.user?.id && open,
-    staleTime: 30 * 1000,
-    gcTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchOnReconnect: false
+    staleTime: 0, // Always fetch fresh data
+    refetchOnMount: true,
+    refetchOnWindowFocus: true
   });
 
   const handleViewLeaderboard = () => {
@@ -88,7 +87,7 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
           </div>
           
           <div className="border-t pt-4 overflow-auto min-h-0 flex-1">
-            <TopScores showViewAll={false} />
+            <TopScores showViewAll={false} forceRefresh={open} />
           </div>
           
           <div className="flex-shrink-0 pt-2 border-t space-y-2">

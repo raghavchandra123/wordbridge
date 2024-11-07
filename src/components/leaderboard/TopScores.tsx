@@ -84,7 +84,12 @@ async function fetchLeaderboardData() {
   return processedData.slice(0, 5);
 }
 
-export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => {
+interface TopScoresProps {
+  showViewAll?: boolean;
+  forceRefresh?: boolean;
+}
+
+export const TopScores = ({ showViewAll = true, forceRefresh = false }: TopScoresProps) => {
   const { session } = useAuth();
   const navigate = useNavigate();
 
@@ -94,10 +99,10 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
       const data = await fetchLeaderboardData();
       return data;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: forceRefresh ? 0 : 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnWindowFocus: forceRefresh,
+    refetchOnMount: forceRefresh,
   });
 
   const getLevelColor = (level: number) => {
