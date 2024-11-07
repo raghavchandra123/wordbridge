@@ -8,9 +8,8 @@ const originalClient = createClient<Database>(supabaseUrl, supabaseKey);
 
 const getCallerInfo = () => {
   const stack = new Error().stack;
-  if (!stack) return 'Unknown location';
+  if (!stack) return { location: 'Unknown location', component: 'Unknown component' };
   
-  // Split the stack trace into lines
   const lines = stack.split('\n');
   
   // Find the first line that's not from this file or node_modules
@@ -20,11 +19,26 @@ const getCallerInfo = () => {
     line.includes('src/')
   );
   
-  if (!relevantLine) return 'Unknown location';
+  if (!relevantLine) return { location: 'Unknown location', component: 'Unknown component' };
   
   // Extract file path and line number
   const match = relevantLine.match(/src\/(.+?):\d+/);
-  return match ? match[1] : 'Unknown location';
+  const location = match ? match[1] : 'Unknown location';
+  
+  // Try to extract component name
+  const componentMatch = location.match(/components\/([^/]+)/);
+  const component = componentMatch ? componentMatch[1] : 'Unknown component';
+  
+  return { location, component };
+};
+
+// Create a Set to track unique query signatures
+const recentQueries = new Set<string>();
+const QUERY_TRACKING_WINDOW = 1000; // 1 second window
+
+// Helper to create a unique query signature
+const createQuerySignature = (operation: string, args: any[], location: string) => {
+  return `${operation}-${JSON.stringify(args)}-${location}`;
 };
 
 // Wrap the Supabase client to add detailed logging
@@ -33,14 +47,35 @@ export const supabase = new Proxy(originalClient, {
     if (typeof target[property] === 'function') {
       return new Proxy(target[property], {
         apply: (target, thisArg, argumentsList) => {
-          const callerInfo = getCallerInfo();
+          const { location, component } = getCallerInfo();
+          const querySignature = createQuerySignature(String(property), argumentsList, location);
+
+          // Check if this exact query was made recently
+          if (recentQueries.has(querySignature)) {
+            console.warn('🚨 Duplicate Query Detected:', {
+              timestamp: new Date().toISOString(),
+              operation: String(property),
+              arguments: argumentsList,
+              component,
+              location,
+              message: 'This exact query was made within the last second'
+            });
+          }
+
+          // Add query to recent set and remove it after window
+          recentQueries.add(querySignature);
+          setTimeout(() => recentQueries.delete(querySignature), QUERY_TRACKING_WINDOW);
+
+          // Log all queries with enhanced details
           console.log('🔍 Supabase Query Details:', {
             timestamp: new Date().toISOString(),
             operation: String(property),
             arguments: argumentsList,
-            callerLocation: callerInfo,
+            component,
+            location,
             stackTrace: new Error().stack
           });
+
           return target.apply(thisArg, argumentsList);
         }
       });
