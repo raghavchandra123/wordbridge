@@ -17,67 +17,66 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const ensureUserProfile = async (session: Session) => {
     try {
-      // First check if profile exists
       const { data: existingProfile, error: fetchError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', session.user.id)
         .single();
 
-      if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 is "not found"
+      if (fetchError && fetchError.code !== 'PGRST116') {
         throw fetchError;
       }
 
-      if (!existingProfile) {
-        // Create profile if it doesn't exist
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .insert({
-            id: session.user.id,
-            username: session.user.user_metadata.name,
-            full_name: session.user.user_metadata.full_name,
-            avatar_url: session.user.user_metadata.avatar_url,
-            experience: 0,
-            level: 1
-          });
-
-        if (insertError) throw insertError;
-
-        // Initialize user statistics
-        const { error: statsError } = await supabase
-          .from('user_statistics')
-          .insert({
-            user_id: session.user.id,
-            total_games: 0,
-            total_score: 0
-          });
-
-        if (statsError) throw statsError;
-      } else {
-        // Update existing profile with latest data
+      // If profile exists, just update it
+      if (existingProfile) {
         const { error: updateError } = await supabase
           .from('profiles')
           .update({
             username: session.user.user_metadata.name,
             full_name: session.user.user_metadata.full_name,
-            avatar_url: session.user.user_metadata.avatar_url
+            avatar_url: session.user.user_metadata.avatar_url,
           })
           .eq('id', session.user.id);
 
         if (updateError) throw updateError;
+        return;
       }
+
+      // If profile doesn't exist, create it along with statistics
+      const { error: insertError } = await supabase
+        .from('profiles')
+        .insert({
+          id: session.user.id,
+          username: session.user.user_metadata.name,
+          full_name: session.user.user_metadata.full_name,
+          avatar_url: session.user.user_metadata.avatar_url,
+          experience: 0,
+          level: 1
+        });
+
+      if (insertError) throw insertError;
+
+      // Initialize user statistics
+      const { error: statsError } = await supabase
+        .from('user_statistics')
+        .insert({
+          user_id: session.user.id,
+          total_games: 0,
+          total_score: 0
+        });
+
+      if (statsError) throw statsError;
     } catch (error: any) {
       console.error('Error ensuring user profile:', error);
       toast({
         title: "Profile Error",
-        description: "There was an error setting up your profile. Please try logging in again.",
+        description: "There was an error setting up your profile. Please try again.",
         variant: "destructive",
       });
     }
   };
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session) {
@@ -85,7 +84,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
