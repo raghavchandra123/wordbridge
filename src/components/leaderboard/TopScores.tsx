@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { Progress } from '../ui/progress';
 import { toZonedTime } from 'date-fns-tz';
+import { useQuery } from '@tanstack/react-query';
 
 interface TopScore {
   username: string;
@@ -18,87 +19,81 @@ interface TopScore {
   average_score: number | null;
 }
 
+async function fetchLeaderboardData() {
+  const today = toZonedTime(new Date(), 'GMT').toISOString().split('T')[0];
+  
+  const { data: profiles, error: profilesError } = await supabase
+    .from('profiles')
+    .select(`
+      username,
+      full_name,
+      avatar_url,
+      level,
+      experience,
+      id
+    `);
+
+  if (profilesError) throw profilesError;
+
+  const { data: todayScores, error: todayError } = await supabase
+    .from('daily_scores')
+    .select(`
+      score,
+      user_id
+    `)
+    .eq('date', today);
+
+  if (todayError) throw todayError;
+
+  const { data: statsData, error: statsError } = await supabase
+    .from('user_statistics')
+    .select('user_id, total_games, total_score');
+
+  if (statsError) throw statsError;
+
+  const processedData: TopScore[] = profiles.map((profile: any) => {
+    const todayScore = todayScores?.find(score => score.user_id === profile.id);
+    const userStats = statsData?.find(stat => stat.user_id === profile.id);
+    const averageScore = userStats && userStats.total_games > 0
+      ? Number((userStats.total_score / userStats.total_games).toFixed(2))
+      : null;
+
+    return {
+      username: profile.username,
+      full_name: profile.full_name || profile.username,
+      avatar_url: profile.avatar_url,
+      level: profile.level,
+      experience: profile.experience,
+      score: todayScore ? todayScore.score : null,
+      average_score: averageScore
+    };
+  });
+
+  processedData.sort((a, b) => {
+    if (a.score === null && b.score === null) {
+      return (b.average_score || 0) - (a.average_score || 0);
+    }
+    if (a.score === null) return 1;
+    if (b.score === null) return -1;
+    if (a.score === b.score) {
+      return (b.average_score || 0) - (a.average_score || 0);
+    }
+    return a.score - b.score;
+  });
+
+  return processedData.slice(0, 5);
+}
+
 export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => {
-  const [topScores, setTopScores] = useState<TopScore[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const { session } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchTopScores = async () => {
-      setIsLoading(true);
-      try {
-        const today = toZonedTime(new Date(), 'GMT').toISOString().split('T')[0];
-        
-        const { data: profiles, error: profilesError } = await supabase
-          .from('profiles')
-          .select(`
-            username,
-            full_name,
-            avatar_url,
-            level,
-            experience,
-            id
-          `);
-
-        if (profilesError) throw profilesError;
-
-        const { data: todayScores, error: todayError } = await supabase
-          .from('daily_scores')
-          .select(`
-            score,
-            user_id
-          `)
-          .eq('date', today);
-
-        if (todayError) throw todayError;
-
-        const { data: statsData, error: statsError } = await supabase
-          .from('user_statistics')
-          .select('user_id, total_games, total_score');
-
-        if (statsError) throw statsError;
-
-        const processedData: TopScore[] = profiles.map((profile: any) => {
-          const todayScore = todayScores?.find(score => score.user_id === profile.id);
-          const userStats = statsData?.find(stat => stat.user_id === profile.id);
-          const averageScore = userStats && userStats.total_games > 0
-            ? Number((userStats.total_score / userStats.total_games).toFixed(2))
-            : null;
-
-          return {
-            username: profile.username,
-            full_name: profile.full_name || profile.username,
-            avatar_url: profile.avatar_url,
-            level: profile.level,
-            experience: profile.experience,
-            score: todayScore ? todayScore.score : null,
-            average_score: averageScore
-          };
-        });
-
-        processedData.sort((a, b) => {
-          if (a.score === null && b.score === null) {
-            return (b.average_score || 0) - (a.average_score || 0);
-          }
-          if (a.score === null) return 1;
-          if (b.score === null) return -1;
-          if (a.score === b.score) {
-            return (b.average_score || 0) - (a.average_score || 0);
-          }
-          return a.score - b.score;
-        });
-
-        setTopScores(processedData.slice(0, 5)); // Only take top 5 for preview
-      } catch (error) {
-        console.error('Error fetching top scores:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchTopScores();
-  }, []);
+  const { data: topScores, isLoading } = useQuery({
+    queryKey: ['topScores'],
+    queryFn: fetchLeaderboardData,
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    cacheTime: 10 * 60 * 1000, // Keep data in cache for 10 minutes
+  });
 
   const getLevelColor = (level: number) => {
     if (level >= 10) return 'bg-purple-500';
@@ -139,7 +134,7 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
       </div>
       <ScrollArea className="h-[300px] w-full">
         <div className="space-y-4 pr-4">
-          {topScores.slice(0, 5).map((entry) => (
+          {topScores?.map((entry) => (
             <div
               key={entry.username}
               className="grid grid-cols-[minmax(0,2fr)_minmax(80px,1fr)_minmax(80px,1fr)] items-center gap-2 p-3 rounded-lg bg-gray-50"
