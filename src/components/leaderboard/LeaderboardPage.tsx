@@ -88,9 +88,27 @@ export default function LeaderboardPage() {
   const { session } = useAuth();
   const navigate = useNavigate();
 
+  console.log('📊 LeaderboardPage render:', {
+    isAuthenticated: !!session,
+    timestamp: new Date().toISOString()
+  });
+
   const { data: leaderboard, isLoading } = useQuery({
     queryKey: ['fullLeaderboard'],
-    queryFn: fetchFullLeaderboard,
+    queryFn: async () => {
+      console.log('🔍 Leaderboard query executing:', {
+        timestamp: new Date().toISOString()
+      });
+      
+      const data = await fetchFullLeaderboard();
+      
+      console.log('✅ Leaderboard query complete:', {
+        entries: data.length,
+        timestamp: new Date().toISOString()
+      });
+      
+      return data;
+    },
     staleTime: 5 * 60 * 1000,    // Data stays fresh for 5 minutes
     gcTime: 10 * 60 * 1000,      // Keep in cache for 10 minutes
     enabled: !!session,           // Only fetch if user is logged in

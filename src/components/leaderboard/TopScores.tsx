@@ -88,9 +88,28 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
   const { session } = useAuth();
   const navigate = useNavigate();
 
+  console.log('🏆 TopScores render:', {
+    isAuthenticated: !!session,
+    showViewAll,
+    timestamp: new Date().toISOString()
+  });
+
   const { data: topScores, isLoading } = useQuery({
     queryKey: ['topScores'],
-    queryFn: fetchLeaderboardData,
+    queryFn: async () => {
+      console.log('🔍 TopScores query executing:', {
+        timestamp: new Date().toISOString()
+      });
+      
+      const data = await fetchLeaderboardData();
+      
+      console.log('✅ TopScores query complete:', {
+        entries: data.length,
+        timestamp: new Date().toISOString()
+      });
+      
+      return data;
+    },
     staleTime: 5 * 60 * 1000, // Data stays fresh for 5 minutes
     gcTime: 10 * 60 * 1000,   // Keep in cache for 10 minutes
     refetchOnWindowFocus: false, // Prevent refetch on tab focus

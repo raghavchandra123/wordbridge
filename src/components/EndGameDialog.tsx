@@ -35,9 +35,20 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
+  console.log('🎮 EndGameDialog render:', {
+    isOpen: open,
+    userId: session?.user?.id,
+    timestamp: new Date().toISOString()
+  });
+  
   const { data: profile } = useQuery({
     queryKey: ['profile', session?.user?.id],
     queryFn: async () => {
+      console.log('🔍 Profile query function executing:', {
+        userId: session?.user?.id,
+        timestamp: new Date().toISOString()
+      });
+      
       if (!session?.user?.id) throw new Error('No user ID');
       
       const { data, error } = await supabase
@@ -46,7 +57,19 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
         .eq('id', session.user.id)
         .single();
         
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Profile query error:', {
+          error,
+          timestamp: new Date().toISOString()
+        });
+        throw error;
+      }
+
+      console.log('✅ Profile query success:', {
+        hasData: !!data,
+        timestamp: new Date().toISOString()
+      });
+
       return data;
     },
     enabled: !!session?.user?.id && open,
@@ -57,6 +80,11 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
   });
 
   useEffect(() => {
+    console.log('👤 Profile data effect:', {
+      hasProfile: !!profile,
+      timestamp: new Date().toISOString()
+    });
+
     if (profile) {
       setUserProfile(profile);
       setIsLoading(false);

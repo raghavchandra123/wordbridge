@@ -56,24 +56,44 @@ interface State {
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
 const addToRemoveQueue = (toastId: string, duration: number = TOAST_REMOVE_DELAY) => {
-  // Clear existing timeout if any
+  console.log('⏱️ Setting toast timeout:', {
+    toastId,
+    requestedDuration: duration,
+    actualDuration: duration || TOAST_REMOVE_DELAY,
+    existingTimeout: toastTimeouts.has(toastId),
+    timestamp: new Date().toISOString()
+  });
+
   if (toastTimeouts.has(toastId)) {
+    console.log('🔄 Clearing existing timeout for toast:', toastId);
     clearTimeout(toastTimeouts.get(toastId)!);
     toastTimeouts.delete(toastId);
   }
 
   const timeout = setTimeout(() => {
+    console.log('⌛ Toast timeout triggered:', {
+      toastId,
+      duration,
+      timestamp: new Date().toISOString()
+    });
     toastTimeouts.delete(toastId)
     dispatch({
       type: "REMOVE_TOAST",
       toastId: toastId,
     })
-  }, duration)
+  }, duration || TOAST_REMOVE_DELAY)
 
   toastTimeouts.set(toastId, timeout)
 }
 
 export const reducer = (state: State, action: Action): State => {
+  console.log('🔄 Toast reducer action:', {
+    type: action.type,
+    payload: action,
+    currentToasts: state.toasts.length,
+    timestamp: new Date().toISOString()
+  });
+
   switch (action.type) {
     case "ADD_TOAST":
       return {
@@ -141,6 +161,12 @@ function dispatch(action: Action) {
 type Toast = Omit<ToasterToast, "id">
 
 function toast({ duration = TOAST_REMOVE_DELAY, ...props }: Toast) {
+  console.log('🆕 Creating new toast:', {
+    duration,
+    props,
+    timestamp: new Date().toISOString()
+  });
+
   const id = genId()
 
   const update = (props: ToasterToast) =>
