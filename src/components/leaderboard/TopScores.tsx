@@ -132,6 +132,11 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
   return (
     <div className="space-y-4">
       <div className="text-lg font-semibold text-center mb-4">Top Players Today</div>
+      <div className="grid grid-cols-[minmax(0,2fr)_minmax(80px,1fr)_minmax(80px,1fr)] gap-2 px-3 py-2 font-semibold text-gray-600">
+        <div>Player</div>
+        <div className="text-right">Today</div>
+        <div className="text-right">Average</div>
+      </div>
       <ScrollArea className="h-[300px] w-full">
         <div className="space-y-4 pr-4">
           {topScores.slice(0, 5).map((entry) => (
