@@ -88,8 +88,10 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
   const navigate = useNavigate();
 
   const { data: topScores, isLoading } = useQuery({
-    queryKey: ['topScores'],
-    queryFn: fetchLeaderboardData
+    queryKey: ['topScores', Date.now()],
+    queryFn: fetchLeaderboardData,
+    cacheTime: 0,
+    staleTime: 0
   });
 
   const getLevelColor = (level: number) => {
