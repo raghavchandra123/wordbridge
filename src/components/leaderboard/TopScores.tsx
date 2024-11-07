@@ -98,6 +98,11 @@ export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => 
     return 'bg-green-500';
   };
 
+  const getProgressToNextLevel = (experience: number) => {
+    const currentLevelExp = (Math.floor(experience / 100)) * 100;
+    return ((experience - currentLevelExp) / 100) * 100;
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4">
