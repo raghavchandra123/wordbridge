@@ -38,7 +38,11 @@ describe('EndGameProfile', () => {
   it('renders user profile information correctly', async () => {
     render(
       <QueryClientProvider client={queryClient}>
-        <EndGameProfile userId="test-user-id" gameComplete={true} />
+        <EndGameProfile 
+          userId="test-user-id" 
+          gameComplete={true} 
+          gameScore={3}  // Added gameScore prop
+        />
       </QueryClientProvider>
     );
     
@@ -53,7 +57,11 @@ describe('EndGameProfile', () => {
   it('shows loading state when data is being fetched', () => {
     render(
       <QueryClientProvider client={queryClient}>
-        <EndGameProfile userId="test-user-id" gameComplete={true} />
+        <EndGameProfile 
+          userId="test-user-id" 
+          gameComplete={true} 
+          gameScore={3}  // Added gameScore prop
+        />
       </QueryClientProvider>
     );
     
@@ -64,7 +72,11 @@ describe('EndGameProfile', () => {
   it('applies correct level color based on user level', async () => {
     render(
       <QueryClientProvider client={queryClient}>
-        <EndGameProfile userId="test-user-id" gameComplete={true} />
+        <EndGameProfile 
+          userId="test-user-id" 
+          gameComplete={true} 
+          gameScore={3}  // Added gameScore prop
+        />
       </QueryClientProvider>
     );
     
