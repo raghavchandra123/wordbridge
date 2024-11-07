@@ -24,6 +24,7 @@ export const EndGameActions = ({ game, setGame, onClose }: EndGameActionsProps) 
         await navigator.clipboard.writeText(shareText);
         toast({
           description: "Copied to clipboard!",
+          duration: 3000,
         });
       }
     } catch (err) {
@@ -31,6 +32,7 @@ export const EndGameActions = ({ game, setGame, onClose }: EndGameActionsProps) 
       toast({
         description: "Sharing failed. Please try again",
         variant: "destructive",
+        duration: 3000,
       });
     }
   };
@@ -63,6 +65,7 @@ export const EndGameActions = ({ game, setGame, onClose }: EndGameActionsProps) 
       toast({
         description: "Failed to generate new words. Please try again.",
         variant: "destructive",
+        duration: 3000,
       });
     }
   };

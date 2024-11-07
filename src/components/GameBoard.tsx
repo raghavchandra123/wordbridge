@@ -135,6 +135,7 @@ const GameBoard = ({
         await navigator.clipboard.writeText(shareText);
         toast({
           description: "Copied to clipboard!",
+          duration: 3000,
         });
       }
     } catch (err) {
@@ -142,6 +143,7 @@ const GameBoard = ({
       toast({
         description: "Sharing failed. Please try again",
         variant: "destructive",
+        duration: 3000,
       });
     }
   };
@@ -168,6 +170,7 @@ const GameBoard = ({
       toast({
         description: "Failed to generate new words. Please try again.",
         variant: "destructive",
+        duration: 3000,
       });
     }
   };
@@ -200,6 +203,7 @@ const GameBoard = ({
         toast({
           description: "Couldn't find a hint at this time. Try a different word!",
           variant: "destructive",
+          duration: 3000,
         });
       }
     } catch (error) {
@@ -207,6 +211,7 @@ const GameBoard = ({
       toast({
         description: "Error generating hint. Please try again.",
         variant: "destructive",
+        duration: 3000,
       });
     } finally {
       setIsGeneratingHint(false);
