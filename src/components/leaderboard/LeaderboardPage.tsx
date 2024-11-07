@@ -83,7 +83,6 @@ export default function LeaderboardPage() {
         };
       });
 
-      // Sort the leaderboard: first by today's score (nulls last), then by average score
       processedData.sort((a, b) => {
         if (a.score === null && b.score === null) {
           return (b.average_score || 0) - (a.average_score || 0);
@@ -96,7 +95,7 @@ export default function LeaderboardPage() {
         return a.score - b.score;
       });
 
-      setLeaderboard(processedData);
+      setLeaderboard(processedData.slice(0, 10)); // Only take top 10 for full leaderboard
     };
 
     if (session) {
@@ -150,18 +149,17 @@ export default function LeaderboardPage() {
         <CardContent>
           <ScrollArea className="h-[70vh]">
             <div className="space-y-4">
-              <div className="grid grid-cols-[1fr_auto_auto] gap-4 px-3 py-2 font-semibold text-gray-600">
+              <div className="grid grid-cols-[1fr_auto] gap-2 px-3 py-2 font-semibold text-gray-600">
                 <div>Player</div>
-                <div className="text-right w-24">Today's Score</div>
-                <div className="text-right w-24">Average Score</div>
+                <div className="text-right min-w-[100px]">Score</div>
               </div>
               {leaderboard.map((entry, index) => (
                 <div
                   key={entry.username}
-                  className="grid grid-cols-[1fr_auto_auto] items-center gap-4 p-3 rounded-lg bg-gray-50"
+                  className="grid grid-cols-[1fr_auto] items-center gap-2 p-3 rounded-lg bg-gray-50"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="relative flex-shrink-0">
                       <Avatar className={`h-12 w-12 ring-2 ${getLevelColor(entry.level)}`}>
                         <AvatarImage src={entry.avatar_url} />
                         <AvatarFallback>{entry.full_name[0]}</AvatarFallback>
@@ -173,13 +171,11 @@ export default function LeaderboardPage() {
                         <Progress value={getProgressToNextLevel(entry.experience)} className="h-1" />
                       </div>
                     </div>
-                    <div className="font-medium ml-2">{entry.full_name}</div>
+                    <div className="font-medium truncate">{entry.full_name}</div>
                   </div>
-                  <div className="text-right w-24 font-medium">
-                    {entry.score !== null ? entry.score : '-'}
-                  </div>
-                  <div className="text-right w-24 font-medium">
-                    {entry.average_score !== null ? entry.average_score.toFixed(2) : '-'}
+                  <div className="text-right space-y-1 min-w-[100px]">
+                    <div className="font-medium">{entry.score !== null ? entry.score : '-'}</div>
+                    <div className="text-xs text-gray-500">{entry.average_score !== null ? entry.average_score.toFixed(2) : '-'} avg</div>
                   </div>
                 </div>
               ))}
