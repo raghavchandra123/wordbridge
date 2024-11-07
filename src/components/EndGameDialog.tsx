@@ -8,7 +8,6 @@ import {
 import { GameState } from "@/lib/types";
 import { TopScores } from "./leaderboard/TopScores";
 import { useAuth } from "./auth/AuthProvider";
-import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { EndGameProfile } from "./game/EndGameProfile";
 import { EndGameActions } from "./game/EndGameActions";
@@ -36,7 +35,7 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['profile', session?.user?.id],
     queryFn: async () => {
-      if (!session?.user?.id) throw new Error('No user ID');
+      if (!session?.user?.id) return null;
       
       const { data, error } = await supabase
         .from('profiles')
@@ -48,14 +47,12 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
       return data;
     },
     enabled: !!session?.user?.id && open,
-    staleTime: 30 * 1000, // Data stays fresh for 30 seconds
+    staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false
   });
-
-  if (!open) return null;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
