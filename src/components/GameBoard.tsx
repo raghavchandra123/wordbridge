@@ -17,7 +17,7 @@ import { GameControlButtons } from "./game/GameControlButtons";
 import { useDynamicDifficulty } from "@/hooks/useDynamicDifficulty";
 import { GameStateManager } from "./game/GameStateManager";
 import { handleToast } from "@/lib/utils/toastManager";
-import { loadEmbeddings } from "@/lib/embeddings"; // Import loadEmbeddings instead
+import { loadEmbeddings } from "@/lib/embeddings";
 
 const GameBoard = ({
   game,
@@ -50,7 +50,7 @@ const GameBoard = ({
   useEffect(() => {
     const initializeEmbeddings = async () => {
       try {
-        await loadEmbeddings(); // Use loadEmbeddings to initialize data
+        await loadEmbeddings();
       } catch (error) {
         console.error('Failed to load embeddings:', error);
         handleToast('Failed to load game data', 'destructive');
@@ -201,7 +201,6 @@ const GameBoard = ({
   const completionButtonsHeight = game.isComplete ? 120 : 0;
   const cardPadding = 16;
   const cardHeaderHeight = 60;
-  const containerWidth = containerRef?.offsetWidth ?? 300;
 
   const availableScrollHeight = visualViewport.height - headerHeight - inputSectionHeight - cardPadding - cardHeaderHeight - completionButtonsHeight;
   const maxScrollHeight = Math.min(availableScrollHeight, visualViewport.height * 0.4);

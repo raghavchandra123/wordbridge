@@ -1,4 +1,3 @@
-import { WordDictionary } from './types';
 import { VECTOR_SIZE } from './constants';
 
 let wordBaseformMap: { [key: string]: string } | null = null;
@@ -59,13 +58,11 @@ export const getWordVector = async (word: string): Promise<Float32Array | null> 
     const buffer = await response.arrayBuffer();
     const dataView = new DataView(buffer);
     
-    // Read vector length (first 4 bytes)
     const vectorLength = dataView.getUint32(0, true);
     if (vectorLength !== VECTOR_SIZE) {
       throw new Error(`Invalid vector length for "${word}": got ${vectorLength}, expected ${VECTOR_SIZE}`);
     }
     
-    // Read the vector data (float32 array)
     const vector = new Float32Array(buffer.slice(4));
     console.log(`✅ Successfully loaded vector for word: "${word}" (baseform: "${baseform}", dimensions: ${vector.length})`);
     return vector;
