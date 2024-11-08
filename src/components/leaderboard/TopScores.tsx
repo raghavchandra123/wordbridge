@@ -6,7 +6,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { Progress } from '../ui/progress';
 import { toZonedTime } from 'date-fns-tz';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 
 interface TopScore {
   username: string;
@@ -19,6 +20,7 @@ interface TopScore {
 }
 
 async function fetchLeaderboardData() {
+  console.log('🔄 Fetching fresh leaderboard data');
   const today = toZonedTime(new Date(), 'GMT').toISOString().split('T')[0];
   
   const { data: profiles, error: profilesError } = await supabase
@@ -86,10 +88,20 @@ async function fetchLeaderboardData() {
 export const TopScores = ({ showViewAll = true }: { showViewAll?: boolean }) => {
   const { session } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  // Force a refresh when the component mounts or becomes visible
+  useEffect(() => {
+    console.log('🔄 TopScores mounted - Invalidating queries');
+    queryClient.invalidateQueries({ queryKey: ['topScores'] });
+  }, [queryClient]);
 
   const { data: topScores, isLoading } = useQuery({
     queryKey: ['topScores'],
-    queryFn: fetchLeaderboardData
+    queryFn: fetchLeaderboardData,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0 // Consider all data stale immediately
   });
 
   const getLevelColor = (level: number) => {
