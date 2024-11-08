@@ -17,6 +17,7 @@ import { GameControlButtons } from "./game/GameControlButtons";
 import { useDynamicDifficulty } from "@/hooks/useDynamicDifficulty";
 import { GameStateManager } from "./game/GameStateManager";
 import { handleToast } from "@/lib/utils/toastManager";
+import { loadEmbeddings } from "@/lib/embeddings"; // Import loadEmbeddings instead
 
 const GameBoard = ({
   game,
@@ -47,18 +48,16 @@ const GameBoard = ({
   } = useDynamicDifficulty();
 
   useEffect(() => {
-    let intervalId: ReturnType<typeof setInterval>;
-
-    const initializeBackgroundLoading = async () => {
-      intervalId = await startBackgroundLoading();
-      await loadInitialChunks([0, 1]);
+    const initializeEmbeddings = async () => {
+      try {
+        await loadEmbeddings(); // Use loadEmbeddings to initialize data
+      } catch (error) {
+        console.error('Failed to load embeddings:', error);
+        handleToast('Failed to load game data', 'destructive');
+      }
     };
 
-    initializeBackgroundLoading();
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
+    initializeEmbeddings();
   }, []);
 
   const scrollToBottom = () => {
@@ -215,17 +214,21 @@ const GameBoard = ({
         startWord={game.startWord}
         targetWord={game.targetWord}
         progress={game.wordProgresses[game.wordProgresses.length - 1] || 0}
-        containerWidth={containerWidth}
+        containerWidth={containerRef?.offsetWidth ?? 300}
       />
 
       <GameBoardScrollArea
         ref={scrollAreaRef}
-        maxScrollHeight={maxScrollHeight}
+        maxScrollHeight={Math.min(visualViewport.height * 0.4, visualViewport.height - 240)}
         game={game}
         editingIndex={editingIndex}
         onWordClick={onWordClick}
-        getWordProgress={getWordProgress}
-        containerWidth={containerWidth}
+        getWordProgress={(index) => 
+          index === 0 ? 0 : 
+          index === game.currentChain.length - 1 ? progress : 
+          game.wordProgresses[index - 1] || 0
+        }
+        containerWidth={containerRef?.offsetWidth ?? 300}
         inputRef={inputRef}
       />
 
