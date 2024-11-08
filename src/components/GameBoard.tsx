@@ -7,7 +7,6 @@ import { GameContainer } from "./game/layout/GameContainer";
 import { GameBoardProps } from "./game/GameBoardTypes";
 import { generateShareText } from "@/lib/utils/share";
 import { toast } from "./ui/use-toast";
-import { loadInitialChunks, startBackgroundLoading } from "@/lib/embeddings/backgroundLoader";
 import { useViewport } from "@/hooks/useViewport";
 import { useProgressManager } from "./game/ProgressManager";
 import { generateHint } from "@/lib/utils/hintGenerator";

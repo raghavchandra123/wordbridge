@@ -1,5 +1,4 @@
 import { WordDictionary } from './types';
-import { loadWordChunk } from './chunkLoader';
 import { VECTOR_SIZE } from './constants';
 
 let wordBaseformMap: { [key: string]: string } | null = null;

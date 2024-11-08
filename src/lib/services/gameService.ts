@@ -3,7 +3,6 @@ import { cosineSimilarity } from '../embeddings';
 import { GameState } from '../types';
 import { INITIAL_MIN_THRESHOLD, INITIAL_THRESHOLD_RANGE } from '../constants';
 import { toast } from '@/components/ui/use-toast';
-import { pauseBackgroundLoading, resumeBackgroundLoading } from '../embeddings/backgroundLoader';
 import { validateWordWithTarget, validateWordWithPrevious } from './wordValidationService';
 import { calculateProgress } from '../embeddings/utils';
 import { logDatabaseOperation } from '@/lib/utils/dbLogger';
@@ -63,8 +62,6 @@ export const validateWordForChain = async (
 ): Promise<{ isValid: boolean; similarityToTarget: number; message?: string }> => {
   console.log(`🔍 Validating word "${word}" with previous word "${previousWord}"`);
   
-  pauseBackgroundLoading();
-  
   try {
     const previousValidation = await validateWordWithPrevious(word, previousWord);
     
@@ -83,9 +80,9 @@ export const validateWordForChain = async (
       isValid: true,
       similarityToTarget: targetValidation.similarity
     };
-
-  } finally {
-    resumeBackgroundLoading();
+  } catch (error) {
+    console.error('Error validating word:', error);
+    throw error;
   }
 };
 
