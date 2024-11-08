@@ -95,24 +95,18 @@ const GameBoard = ({
     });
   };
 
-  const handleBackButton = async () => {
+  const handleBackButton = () => {
     if (editingIndex !== null) {
       onWordClick(null);
     } else if (game.currentChain.length > 1) {
-      onWordRejected();
       const newChain = [...game.currentChain];
       newChain.pop();
-
-      const newProgresses = await recalculateChainProgress(newChain);
-
       setGame({
         ...game,
         currentChain: newChain,
-        wordProgresses: newProgresses,
         score: newChain.length - 1
       });
     }
-    setTimeout(() => inputRef.current?.focus(), 0);
   };
 
   const handleShare = async () => {
@@ -231,18 +225,13 @@ const GameBoard = ({
           handleNewWords={handleNewWords}
         />
       ) : (
-        <GameBoardControls
-          game={game}
+        <GameBoardInput
           currentWord={currentWord}
           onWordChange={onWordChange}
           onWordSubmit={onWordSubmit}
           editingIndex={editingIndex}
           isChecking={isChecking}
-          handleBackButton={handleBackButton}
-          handleHint={handleHint}
-          handleNewWords={handleNewWords}
-          handleShare={handleShare}
-          isGeneratingHint={isGeneratingHint}
+          onEditCancel={handleBackButton}
           inputRef={inputRef}
         />
       )}
