@@ -1,12 +1,10 @@
-import pako from 'pako';
 import { WordDictionary } from './types';
 import { loadWordChunk } from './chunkLoader';
+import { VECTOR_SIZE } from './constants';
 
 let wordBaseformMap: { [key: string]: string } | null = null;
 let commonWords: string[] = [];
 let wordList: string[] = [];
-
-const EXPECTED_VECTOR_DIMENSION = 300;
 
 export const loadEmbeddings = async () => {
   console.log("🔄 Loading initial embeddings data...");
@@ -53,25 +51,29 @@ export const getWordVector = async (word: string): Promise<Float32Array | null> 
   
   console.log(`📝 Using baseform: "${baseform}" for word: "${word}"`);
   
-  const chunkData = await loadWordChunk(baseform);
-  if (!chunkData) {
-    console.error(`❌ No chunk data found containing baseform: "${baseform}"`);
-    throw new Error(`No chunk data found for baseform: "${baseform}"`);
+  try {
+    const response = await fetch(`/data/words/${baseform}.vec`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch vector for word: ${baseform}`);
+    }
+    
+    const buffer = await response.arrayBuffer();
+    const dataView = new DataView(buffer);
+    
+    // Read vector length (first 4 bytes)
+    const vectorLength = dataView.getUint32(0, true);
+    if (vectorLength !== VECTOR_SIZE) {
+      throw new Error(`Invalid vector length for "${word}": got ${vectorLength}, expected ${VECTOR_SIZE}`);
+    }
+    
+    // Read the vector data (float32 array)
+    const vector = new Float32Array(buffer.slice(4));
+    console.log(`✅ Successfully loaded vector for word: "${word}" (baseform: "${baseform}", dimensions: ${vector.length})`);
+    return vector;
+  } catch (error) {
+    console.error(`❌ Error loading vector for word "${word}":`, error);
+    throw error;
   }
-
-  const vector = chunkData[baseform];
-  if (!vector) {
-    console.error(`❌ Vector not found in chunk for baseform: "${baseform}"`);
-    throw new Error(`Vector not found for baseform: "${baseform}"`);
-  }
-
-  if (vector.length !== EXPECTED_VECTOR_DIMENSION) {
-    console.error(`❌ Invalid vector dimensionality for "${word}": got ${vector.length}, expected ${EXPECTED_VECTOR_DIMENSION}`);
-    throw new Error(`Invalid vector dimensionality for "${word}"`);
-  }
-
-  console.log(`✅ Successfully loaded vector for word: "${word}" (baseform: "${baseform}", dimensions: ${vector.length})`);
-  return vector;
 };
 
 export const cosineSimilarity = async (word1: string, word2: string): Promise<number> => {
