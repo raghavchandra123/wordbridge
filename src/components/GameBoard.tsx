@@ -1,8 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "./ui/button";
-import WordDisplay from "./WordDisplay";
-import HeaderSection from "./game/HeaderSection";
-import WordInput from "./game/WordInput";
 import { GameContainer } from "./game/layout/GameContainer";
 import { GameBoardProps } from "./game/GameBoardTypes";
 import { generateShareText } from "@/lib/utils/share";
@@ -10,14 +7,15 @@ import { toast } from "./ui/use-toast";
 import { useViewport } from "@/hooks/useViewport";
 import { useProgressManager } from "./game/ProgressManager";
 import { generateHint } from "@/lib/utils/hintGenerator";
-import { findRandomWordPair } from "@/lib/embeddings";
+import { findRandomWordPair, loadEmbeddings } from "@/lib/embeddings";
 import { GameBoardScrollArea } from "./game/GameBoardScrollArea";
 import { GameBoardControls } from "./game/GameBoardControls";
 import { GameControlButtons } from "./game/GameControlButtons";
 import { useDynamicDifficulty } from "@/hooks/useDynamicDifficulty";
 import { GameStateManager } from "./game/GameStateManager";
 import { handleToast } from "@/lib/utils/toastManager";
-import { loadEmbeddings } from "@/lib/embeddings";
+import { GameBoardHeader } from "./game/layout/GameBoardHeader";
+import { GameBoardInput } from "./game/layout/GameBoardInput";
 
 const GameBoard = ({
   game,
@@ -85,12 +83,6 @@ const GameBoard = ({
     const timeoutId = setTimeout(scrollToBottom, 100);
     return () => clearTimeout(timeoutId);
   }, [game.currentChain.length]);
-
-  const getWordProgress = (index: number) => {
-    if (index === 0) return 0;
-    if (index === game.currentChain.length - 1) return progress;
-    return game.wordProgresses[index - 1] || 0;
-  };
 
   const handleRetry = () => {
     onNewGameWithoutCompletion();
@@ -209,7 +201,7 @@ const GameBoard = ({
     <GameContainer mainHeight={visualViewport.height} ref={setContainerRef}>
       <GameStateManager game={game} onGameComplete={() => setShowEndGame(true)} />
       
-      <HeaderSection
+      <GameBoardHeader
         startWord={game.startWord}
         targetWord={game.targetWord}
         progress={game.wordProgresses[game.wordProgresses.length - 1] || 0}
@@ -218,7 +210,7 @@ const GameBoard = ({
 
       <GameBoardScrollArea
         ref={scrollAreaRef}
-        maxScrollHeight={Math.min(visualViewport.height * 0.4, visualViewport.height - 240)}
+        maxScrollHeight={maxScrollHeight}
         game={game}
         editingIndex={editingIndex}
         onWordClick={onWordClick}

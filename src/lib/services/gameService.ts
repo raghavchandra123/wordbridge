@@ -21,7 +21,6 @@ const seededRandom = (seed: string) => {
 };
 
 export const findDailyWordPair = async (): Promise<[string, string]> => {
-  console.log("🎲 Finding daily word pair...");
   const wordList = getWordList();
   const seed = getDateSeed();
   const random = seededRandom(seed);
@@ -41,7 +40,6 @@ export const findDailyWordPair = async (): Promise<[string, string]> => {
     );
     
     if (similarity >= INITIAL_MIN_THRESHOLD && similarity <= INITIAL_MIN_THRESHOLD + INITIAL_THRESHOLD_RANGE) {
-      console.log(`Found daily word pair with similarity: ${similarity.toFixed(3)}`);
       return [wordList[word1Index], wordList[word2Index]];
     }
     
@@ -56,12 +54,9 @@ export const validateWordForChain = async (
   previousWord: string,
   targetWord: string
 ): Promise<{ isValid: boolean; similarityToTarget: number; message?: string }> => {
-  console.log(`🔍 Validating word "${word}" with previous word "${previousWord}"`);
-  
   const previousValidation = await validateWordWithPrevious(word, previousWord);
   
   if (!previousValidation.isValid) {
-    console.log(`❌ Word "${word}" not similar enough to "${previousWord}"`);
     return {
       isValid: false,
       similarityToTarget: 0,
@@ -78,12 +73,9 @@ export const validateWordForChain = async (
 };
 
 export const initializeGame = async (): Promise<GameState> => {
-  console.log("🎮 Initializing new game...");
   const [startWord, targetWord] = await findDailyWordPair();
-  console.log(`✅ Game initialized with start word "${startWord}" and target word "${targetWord}"`);
   const similarity = await cosineSimilarity(startWord, targetWord);
   const progress = Math.max(0, Math.min(100, (similarity + 0.2) / 0.45 * 100));
-  
   const today = new Date().toISOString().split('T')[0];
   
   return {
