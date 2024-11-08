@@ -18,10 +18,12 @@ export const GameBoardInput = ({
 }: GameBoardInputProps) => {
   return (
     <WordInput
-      value={currentWord}
-      onChange={onWordChange}
-      onSubmit={onWordSubmit}
+      currentWord={currentWord}
+      onWordChange={onWordChange}
+      onWordSubmit={onWordSubmit}
+      editingIndex={null}
       isChecking={isChecking}
+      onEditCancel={() => {}}
       inputRef={inputRef}
     />
   );
