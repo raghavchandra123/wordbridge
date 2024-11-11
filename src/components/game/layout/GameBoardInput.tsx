@@ -7,6 +7,8 @@ interface GameBoardInputProps {
   onWordSubmit: (e: React.FormEvent) => void;
   isChecking: boolean;
   inputRef: React.RefObject<HTMLInputElement>;
+  editingIndex: number | null;
+  onEditCancel: () => void;
 }
 
 export const GameBoardInput = ({
@@ -14,16 +16,18 @@ export const GameBoardInput = ({
   onWordChange,
   onWordSubmit,
   isChecking,
-  inputRef
+  inputRef,
+  editingIndex,
+  onEditCancel
 }: GameBoardInputProps) => {
   return (
     <WordInput
       currentWord={currentWord}
       onWordChange={onWordChange}
       onWordSubmit={onWordSubmit}
-      editingIndex={null}
+      editingIndex={editingIndex}
       isChecking={isChecking}
-      onEditCancel={() => {}}
+      onEditCancel={onEditCancel}
       inputRef={inputRef}
     />
   );
