@@ -65,7 +65,21 @@ export const getWordVector = async (word: string): Promise<Float32Array> => {
       const vectorData = await vectorResponse.arrayBuffer();
       console.log(`📊 Vector data size for "${baseform}": ${vectorData.byteLength} bytes`);
       
-      wordVectors[baseform] = new Float32Array(vectorData);
+      // Read the vector length from the first 4 bytes
+      const vectorLengthView = new Int32Array(vectorData.slice(0, 4));
+      const vectorLength = vectorLengthView[0];
+      console.log(`📏 Vector length from file: ${vectorLength}`);
+      
+      if (vectorLength !== VECTOR_SIZE) {
+        console.error(`❌ Unexpected vector length in file: ${vectorLength} (expected ${VECTOR_SIZE})`);
+        throw new Error(`Invalid vector size in file for word "${baseform}"`);
+      }
+      
+      // Read the actual vector data starting from byte 4
+      const vectorDataView = new Float32Array(vectorData.slice(4));
+      console.log(`📊 Vector data loaded: ${vectorDataView.length} elements`);
+      
+      wordVectors[baseform] = vectorDataView;
       console.log(`✅ Successfully loaded vector for "${baseform}"`);
     } catch (error) {
       console.error(`❌ Failed to load vector for word "${baseform}":`, error);
