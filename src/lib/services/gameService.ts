@@ -33,23 +33,35 @@ export const findDailyWordPair = async (): Promise<[string, string]> => {
   let attempts = 0;
   const maxAttempts = 100;
   
+  console.log(`📝 First word candidate: "${wordList[word1Index]}"`);
+  
   do {
     word2Index = Math.floor(seededRandom(seed + attempts) * wordList.length);
-    if (word1Index === word2Index) continue;
+    if (word1Index === word2Index) {
+      console.log("🔄 Skipping duplicate word index");
+      continue;
+    }
     
-    const similarity = await cosineSimilarity(
-      wordList[word1Index],
-      wordList[word2Index]
-    );
+    const word1 = wordList[word1Index];
+    const word2 = wordList[word2Index];
+    console.log(`🎯 Attempt ${attempts + 1}: Testing "${word1}" with "${word2}"`);
     
-    if (similarity >= INITIAL_MIN_THRESHOLD && similarity <= INITIAL_MIN_THRESHOLD + INITIAL_THRESHOLD_RANGE) {
-      console.log(`Found daily word pair with similarity: ${similarity.toFixed(3)}`);
-      return [wordList[word1Index], wordList[word2Index]];
+    try {
+      const similarity = await cosineSimilarity(word1, word2);
+      console.log(`📊 Similarity: ${similarity.toFixed(4)}`);
+      
+      if (similarity >= INITIAL_MIN_THRESHOLD && similarity <= INITIAL_MIN_THRESHOLD + INITIAL_THRESHOLD_RANGE) {
+        console.log(`✅ Found suitable word pair: "${word1}" -> "${word2}"`);
+        return [word1, word2];
+      }
+    } catch (error) {
+      console.error(`❌ Error testing word pair: "${word1}" -> "${word2}"`, error);
     }
     
     attempts++;
   } while (attempts < maxAttempts);
   
+  console.error(`❌ Failed to find suitable word pair after ${maxAttempts} attempts`);
   throw new Error('Failed to find suitable word pair');
 };
 
@@ -61,6 +73,7 @@ export const validateWordForChain = async (
   console.log(`🔍 Validating word "${word}" with previous word "${previousWord}"`);
   
   try {
+    console.log("📊 Checking similarity with previous word...");
     const previousValidation = await validateWordWithPrevious(word, previousWord);
     
     if (!previousValidation.isValid) {
@@ -72,14 +85,16 @@ export const validateWordForChain = async (
       };
     }
 
+    console.log("📊 Checking similarity with target word...");
     const targetValidation = await validateWordWithTarget(word, targetWord);
+    console.log(`✅ Word "${word}" validated successfully`);
     
     return { 
       isValid: true,
       similarityToTarget: targetValidation.similarity
     };
   } catch (error) {
-    console.error('Error validating word:', error);
+    console.error('❌ Error validating word:', error);
     throw error;
   }
 };
