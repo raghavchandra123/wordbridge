@@ -1,6 +1,5 @@
 import { WordDictionary } from './types';
 import { VECTOR_SIZE } from './constants';
-import { supabase } from '@/integrations/supabase/client';
 
 let wordBaseformMap: { [key: string]: string } | null = null;
 let commonWords: string[] = [];
@@ -10,16 +9,6 @@ let wordVectors: { [key: string]: Float32Array } = {};
 export const loadEmbeddings = async () => {
   try {
     console.log("🔄 Loading initial embeddings data...");
-    
-    // Get vector files count from edge function
-    console.log("📊 Counting vector files...");
-    const { data: countData, error: countError } = await supabase.functions.invoke('count-vec-files');
-    if (countError) {
-      console.error("❌ Error counting vector files:", countError);
-    } else {
-      console.log(`📈 Found ${countData.count} vector files (.vec)`);
-      console.log(`📊 Total folder size: ${(countData.size / 1024 / 1024).toFixed(2)} MB`);
-    }
     
     console.log("📖 Loading common words list...");
     const commonWordsResponse = await fetch('/data/common_words.txt');
