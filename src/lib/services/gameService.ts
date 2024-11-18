@@ -2,8 +2,6 @@ import { getWordList } from '../embeddings/loader';
 import { cosineSimilarity } from '../embeddings';
 import { GameState } from '../types';
 import { INITIAL_MIN_THRESHOLD, INITIAL_THRESHOLD_RANGE } from '../constants';
-import { toast } from '@/components/ui/use-toast';
-import { pauseBackgroundLoading, resumeBackgroundLoading } from '../embeddings/backgroundLoader';
 import { validateWordWithTarget, validateWordWithPrevious } from './wordValidationService';
 import { calculateProgress } from '../embeddings/utils';
 import { logDatabaseOperation } from '@/lib/utils/dbLogger';
@@ -44,7 +42,6 @@ export const findDailyWordPair = async (): Promise<[string, string]> => {
       wordList[word2Index]
     );
     
-    // Use initial thresholds for daily puzzle
     if (similarity >= INITIAL_MIN_THRESHOLD && similarity <= INITIAL_MIN_THRESHOLD + INITIAL_THRESHOLD_RANGE) {
       console.log(`Found daily word pair with similarity: ${similarity.toFixed(3)}`);
       return [wordList[word1Index], wordList[word2Index]];
@@ -62,8 +59,6 @@ export const validateWordForChain = async (
   targetWord: string
 ): Promise<{ isValid: boolean; similarityToTarget: number; message?: string }> => {
   console.log(`🔍 Validating word "${word}" with previous word "${previousWord}"`);
-  
-  pauseBackgroundLoading();
   
   try {
     const previousValidation = await validateWordWithPrevious(word, previousWord);
@@ -83,9 +78,9 @@ export const validateWordForChain = async (
       isValid: true,
       similarityToTarget: targetValidation.similarity
     };
-
-  } finally {
-    resumeBackgroundLoading();
+  } catch (error) {
+    console.error('Error validating word:', error);
+    throw error;
   }
 };
 
@@ -96,7 +91,6 @@ export const initializeGame = async (): Promise<GameState> => {
   const similarity = await cosineSimilarity(startWord, targetWord);
   const progress = Math.max(0, Math.min(100, (similarity + 0.2) / 0.45 * 100));
   
-  // Add metadata including the seed date for daily games
   const today = new Date().toISOString().split('T')[0];
   
   return {

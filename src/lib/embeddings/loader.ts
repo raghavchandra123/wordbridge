@@ -1,5 +1,4 @@
 import { WordDictionary } from './types';
-import { convertFloat16ToFloat32 } from './float16Converter';
 
 let wordBaseformMap: { [key: string]: string } | null = null;
 let commonWords: string[] = [];
@@ -28,20 +27,6 @@ export const loadEmbeddings = async () => {
     wordBaseformMap = await wordBaseformResponse.json();
     console.log("✅ Word baseform mappings loaded");
     
-    console.log("📖 Loading word vectors...");
-    const vectorResponse = await fetch('/data/words.vec');
-    const vectorData = await vectorResponse.arrayBuffer();
-    const vectors = new Float32Array(vectorData);
-    
-    // Process vectors into dictionary
-    let offset = 0;
-    for (const word of Object.keys(wordBaseformMap)) {
-      if (offset + VECTOR_SIZE <= vectors.length) {
-        wordVectors[word] = vectors.slice(offset, offset + VECTOR_SIZE);
-        offset += VECTOR_SIZE;
-      }
-    }
-    
     wordList = commonWords.filter(word => wordBaseformMap?.[word]);
     console.log(`✅ Generated word list with ${wordList.length} words`);
     
@@ -61,7 +46,19 @@ export const getWordVector = async (word: string): Promise<Float32Array | null> 
   if (!baseform) {
     throw new Error(`No baseform found for word: "${word}"`);
   }
-  
+
+  // If we haven't loaded this word's vector yet
+  if (!wordVectors[baseform]) {
+    try {
+      const vectorResponse = await fetch(`/data/words/${baseform}.vec`);
+      const vectorData = await vectorResponse.arrayBuffer();
+      wordVectors[baseform] = new Float32Array(vectorData);
+    } catch (error) {
+      console.error(`Failed to load vector for word "${baseform}":`, error);
+      throw error;
+    }
+  }
+
   const vector = wordVectors[baseform];
   if (!vector) {
     throw new Error(`Vector not found for baseform: "${baseform}"`);
