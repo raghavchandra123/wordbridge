@@ -10,13 +10,6 @@ export const loadEmbeddings = async () => {
   try {
     console.log("🔄 Loading initial embeddings data...");
     
-    // Count .vec files
-    console.log("📊 Counting vector files...");
-    const vectorFilesResponse = await fetch('/data/words/');
-    const vectorFiles = await vectorFilesResponse.text();
-    const vecFileCount = (vectorFiles.match(/\.vec/g) || []).length;
-    console.log(`📈 Found ${vecFileCount} vector files (.vec)`);
-    
     console.log("📖 Loading common words list...");
     const commonWordsResponse = await fetch('/data/common_words.txt');
     const commonWordsText = await commonWordsResponse.text();
