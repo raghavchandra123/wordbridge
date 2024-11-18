@@ -15,6 +15,7 @@ import { EndGameTimer } from "./game/EndGameTimer";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 
 interface UserProfile {
   username: string;
@@ -34,9 +35,20 @@ interface EndGameDialogProps {
 const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => {
   const { session } = useAuth();
   const navigate = useNavigate();
+  const [dataReady, setDataReady] = useState(false);
+
+  // Reset dataReady when dialog opens/closes
+  useEffect(() => {
+    if (open) {
+      // Small delay to ensure DB updates are complete
+      setTimeout(() => setDataReady(true), 500);
+    } else {
+      setDataReady(false);
+    }
+  }, [open]);
 
   const { data: profile, isLoading } = useQuery({
-    queryKey: ['profile', session?.user?.id],
+    queryKey: ['profile', session?.user?.id, dataReady],
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
@@ -49,7 +61,8 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
       if (error) throw error;
       return data;
     },
-    enabled: !!session?.user?.id && open
+    enabled: !!session?.user?.id && open && dataReady,
+    staleTime: 0
   });
 
   const handleViewLeaderboard = () => {
@@ -71,7 +84,7 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
         
         <div className="flex flex-col gap-4 overflow-hidden">
           <div className="flex-shrink-0">
-            {isLoading ? (
+            {isLoading || !dataReady ? (
               <div className="animate-pulse space-y-4">
                 <div className="h-16 bg-gray-200 rounded-full w-16 mx-auto" />
                 <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto" />
@@ -82,9 +95,11 @@ const EndGameDialog = ({ game, open, onClose, setGame }: EndGameDialogProps) => 
             <EndGameActions game={game} setGame={setGame} onClose={onClose} />
           </div>
           
-          <div className="border-t pt-4 overflow-auto min-h-0 flex-1">
-            <TopScores showViewAll={false} />
-          </div>
+          {dataReady && (
+            <div className="border-t pt-4 overflow-auto min-h-0 flex-1">
+              <TopScores showViewAll={false} />
+            </div>
+          )}
           
           <div className="flex-shrink-0 pt-2 border-t space-y-2">
             <Button 
