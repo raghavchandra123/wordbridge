@@ -20,7 +20,6 @@ export const useGameInitialization = (startWord?: string, targetWord?: string) =
       try {
         await loadEmbeddings();
         
-        // If both words are provided and valid, use them
         if (startWord && targetWord && 
             isValidWord(startWord.toLowerCase()) && 
             isValidWord(targetWord.toLowerCase())) {
@@ -33,7 +32,6 @@ export const useGameInitialization = (startWord?: string, targetWord?: string) =
             score: 0,
           });
         } else {
-          // Initialize with random words
           const initialGame = await initializeGame();
           setGame(initialGame);
         }

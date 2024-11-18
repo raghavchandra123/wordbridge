@@ -7,7 +7,6 @@ import { GameContainer } from "./game/layout/GameContainer";
 import { GameBoardProps } from "./game/GameBoardTypes";
 import { generateShareText } from "@/lib/utils/share";
 import { toast } from "./ui/use-toast";
-import { loadInitialChunks, startBackgroundLoading } from "@/lib/embeddings/backgroundLoader";
 import { useViewport } from "@/hooks/useViewport";
 import { useProgressManager } from "./game/ProgressManager";
 import { generateHint } from "@/lib/utils/hintGenerator";
@@ -48,19 +47,10 @@ const GameBoard = ({
   } = useDynamicDifficulty();
 
   useEffect(() => {
-    let intervalId: ReturnType<typeof setInterval>;
-
-    const initializeBackgroundLoading = async () => {
-      intervalId = await startBackgroundLoading();
-      await loadInitialChunks([0, 1]);
-    };
-
-    initializeBackgroundLoading();
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, []);
+    if (inputRef.current && !game.isComplete) {
+      inputRef.current.focus();
+    }
+  }, [currentWord, isChecking, game.isComplete, editingIndex]);
 
   const scrollToBottom = () => {
     if (scrollTimeoutRef.current) {
@@ -76,12 +66,6 @@ const GameBoard = ({
       }
     });
   };
-
-  useEffect(() => {
-    if (inputRef.current && !game.isComplete) {
-      inputRef.current.focus();
-    }
-  }, [currentWord, isChecking, game.isComplete, editingIndex]);
 
   useEffect(() => {
     const timeoutId = setTimeout(scrollToBottom, 100);
