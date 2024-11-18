@@ -1,4 +1,5 @@
 export * from './types';
+export { loadWordChunk } from './chunkLoader';
 export {
   loadEmbeddings,
   getWordList,

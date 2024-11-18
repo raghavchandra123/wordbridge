@@ -1,21 +1,23 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "./ui/button";
+import WordDisplay from "./WordDisplay";
+import HeaderSection from "./game/HeaderSection";
+import WordInput from "./game/WordInput";
 import { GameContainer } from "./game/layout/GameContainer";
 import { GameBoardProps } from "./game/GameBoardTypes";
 import { generateShareText } from "@/lib/utils/share";
 import { toast } from "./ui/use-toast";
+import { loadInitialChunks, startBackgroundLoading } from "@/lib/embeddings/backgroundLoader";
 import { useViewport } from "@/hooks/useViewport";
 import { useProgressManager } from "./game/ProgressManager";
 import { generateHint } from "@/lib/utils/hintGenerator";
-import { findRandomWordPair, loadEmbeddings } from "@/lib/embeddings";
+import { findRandomWordPair } from "@/lib/embeddings";
 import { GameBoardScrollArea } from "./game/GameBoardScrollArea";
 import { GameBoardControls } from "./game/GameBoardControls";
 import { GameControlButtons } from "./game/GameControlButtons";
 import { useDynamicDifficulty } from "@/hooks/useDynamicDifficulty";
 import { GameStateManager } from "./game/GameStateManager";
 import { handleToast } from "@/lib/utils/toastManager";
-import { GameBoardHeader } from "./game/layout/GameBoardHeader";
-import { GameBoardInput } from "./game/layout/GameBoardInput";
 
 const GameBoard = ({
   game,
@@ -46,16 +48,18 @@ const GameBoard = ({
   } = useDynamicDifficulty();
 
   useEffect(() => {
-    const initializeEmbeddings = async () => {
-      try {
-        await loadEmbeddings();
-      } catch (error) {
-        console.error('Failed to load embeddings:', error);
-        handleToast('Failed to load game data', 'destructive');
-      }
+    let intervalId: ReturnType<typeof setInterval>;
+
+    const initializeBackgroundLoading = async () => {
+      intervalId = await startBackgroundLoading();
+      await loadInitialChunks([0, 1]);
     };
 
-    initializeEmbeddings();
+    initializeBackgroundLoading();
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
   }, []);
 
   const scrollToBottom = () => {
@@ -83,6 +87,12 @@ const GameBoard = ({
     const timeoutId = setTimeout(scrollToBottom, 100);
     return () => clearTimeout(timeoutId);
   }, [game.currentChain.length]);
+
+  const getWordProgress = (index: number) => {
+    if (index === 0) return 0;
+    if (index === game.currentChain.length - 1) return progress;
+    return game.wordProgresses[index - 1] || 0;
+  };
 
   const handleRetry = () => {
     onNewGameWithoutCompletion();
@@ -193,6 +203,7 @@ const GameBoard = ({
   const completionButtonsHeight = game.isComplete ? 120 : 0;
   const cardPadding = 16;
   const cardHeaderHeight = 60;
+  const containerWidth = containerRef?.offsetWidth ?? 300;
 
   const availableScrollHeight = visualViewport.height - headerHeight - inputSectionHeight - cardPadding - cardHeaderHeight - completionButtonsHeight;
   const maxScrollHeight = Math.min(availableScrollHeight, visualViewport.height * 0.4);
@@ -201,11 +212,11 @@ const GameBoard = ({
     <GameContainer mainHeight={visualViewport.height} ref={setContainerRef}>
       <GameStateManager game={game} onGameComplete={() => setShowEndGame(true)} />
       
-      <GameBoardHeader
+      <HeaderSection
         startWord={game.startWord}
         targetWord={game.targetWord}
         progress={game.wordProgresses[game.wordProgresses.length - 1] || 0}
-        containerWidth={containerRef?.offsetWidth ?? 300}
+        containerWidth={containerWidth}
       />
 
       <GameBoardScrollArea
@@ -214,12 +225,8 @@ const GameBoard = ({
         game={game}
         editingIndex={editingIndex}
         onWordClick={onWordClick}
-        getWordProgress={(index) => 
-          index === 0 ? 0 : 
-          index === game.currentChain.length - 1 ? progress : 
-          game.wordProgresses[index - 1] || 0
-        }
-        containerWidth={containerRef?.offsetWidth ?? 300}
+        getWordProgress={getWordProgress}
+        containerWidth={containerWidth}
         inputRef={inputRef}
       />
 
