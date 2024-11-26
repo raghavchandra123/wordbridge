@@ -1,5 +1,6 @@
 import { WordDictionary } from './types';
 import { VECTOR_SIZE } from './constants';
+import pako from 'pako';
 
 let wordBaseformMap: { [key: string]: string } | null = null;
 let commonWords: string[] = [];
@@ -28,7 +29,7 @@ export const loadEmbeddings = async () => {
       const baseform = wordBaseformMap?.[word.toLowerCase()];
       if (baseform) {
         try {
-          const response = await fetch(`/data/words/${baseform}.vec`, { method: 'HEAD' });
+          const response = await fetch(`/data/words/${baseform}.vec.gz`, { method: 'HEAD' });
           if (response.ok) {
             vectorCount++;
           }
@@ -73,18 +74,22 @@ export const getWordVector = async (word: string): Promise<Float32Array> => {
   if (!wordVectors[baseform]) {
     try {
       console.log(`📥 Loading vector file for word "${baseform}"`);
-      const vectorResponse = await fetch(`/data/words/${baseform}.vec`);
+      const vectorResponse = await fetch(`/data/words/${baseform}.vec.gz`);
       
       if (!vectorResponse.ok) {
         console.error(`❌ Failed to fetch vector file for "${baseform}". Status: ${vectorResponse.status}`);
         throw new Error(`Failed to fetch vector file for "${baseform}"`);
       }
       
-      const vectorData = await vectorResponse.arrayBuffer();
-      console.log(`📊 Vector data size for "${baseform}": ${vectorData.byteLength} bytes`);
+      const compressedData = await vectorResponse.arrayBuffer();
+      console.log(`📊 Compressed data size for "${baseform}": ${compressedData.byteLength} bytes`);
+      
+      // Decompress the data
+      const decompressedData = pako.inflate(new Uint8Array(compressedData));
+      console.log(`📊 Decompressed data size: ${decompressedData.byteLength} bytes`);
       
       // Read the vector length from the first 4 bytes
-      const vectorLengthView = new Int32Array(vectorData.slice(0, 4));
+      const vectorLengthView = new Int32Array(decompressedData.buffer.slice(0, 4));
       const vectorLength = vectorLengthView[0];
       console.log(`📏 Vector length from file: ${vectorLength}`);
       
@@ -94,7 +99,7 @@ export const getWordVector = async (word: string): Promise<Float32Array> => {
       }
       
       // Read the actual vector data starting from byte 4
-      const vectorDataView = new Float32Array(vectorData.slice(4));
+      const vectorDataView = new Float32Array(decompressedData.buffer.slice(4));
       console.log(`📊 Vector data loaded: ${vectorDataView.length} elements`);
       
       wordVectors[baseform] = vectorDataView;
