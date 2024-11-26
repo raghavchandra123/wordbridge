@@ -1,5 +1,5 @@
-import { WordDictionary } from './types';
-import { VECTOR_SIZE } from './constants';
+import { WordDictionary } from '@/lib/embeddings/types';
+import { VECTOR_SIZE } from '@/lib/embeddings/constants';
 import pako from 'pako';
 
 let wordBaseformMap: { [key: string]: string } | null = null;
