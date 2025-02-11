@@ -22,24 +22,6 @@ export const loadEmbeddings = async () => {
     wordBaseformMap = await wordBaseformResponse.json();
     console.log("✅ Word baseform mappings loaded");
     
-    // Count available vector files
-    console.log("📊 Checking available vector files...");
-    let vectorCount = 0;
-    for (const word of commonWords) {
-      const baseform = wordBaseformMap?.[word.toLowerCase()];
-      if (baseform) {
-        try {
-          const response = await fetch(`/data/words/${baseform}.vec.gz`, { method: 'HEAD' });
-          if (response.ok) {
-            vectorCount++;
-          }
-        } catch (error) {
-          // Silently continue checking other words
-        }
-      }
-    }
-    console.log(`📈 Found ${vectorCount} available vector files`);
-    
     wordList = commonWords.filter(word => wordBaseformMap?.[word]);
     console.log(`✅ Generated word list with ${wordList.length} words`);
     
@@ -74,7 +56,7 @@ export const getWordVector = async (word: string): Promise<Float32Array> => {
   if (!wordVectors[baseform]) {
     try {
       console.log(`📥 Loading vector file for word "${baseform}"`);
-      const vectorResponse = await fetch(`/data/words/${baseform}.vec.gz`);
+      const vectorResponse = await fetch(`/data/words/${baseform}.vec`);
       
       if (!vectorResponse.ok) {
         console.error(`❌ Failed to fetch vector file for "${baseform}". Status: ${vectorResponse.status}`);
@@ -84,8 +66,8 @@ export const getWordVector = async (word: string): Promise<Float32Array> => {
       const compressedData = await vectorResponse.arrayBuffer();
       console.log(`📊 Compressed data size for "${baseform}": ${compressedData.byteLength} bytes`);
       
-      // Decompress the data
-      const decompressedData = pako.inflate(new Uint8Array(compressedData));
+      // Decompress the data using raw DEFLATE
+      const decompressedData = pako.inflate(new Uint8Array(compressedData), { raw: true });
       console.log(`📊 Decompressed data size: ${decompressedData.byteLength} bytes`);
       
       // Read the vector length from the first 4 bytes
