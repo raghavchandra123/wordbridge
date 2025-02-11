@@ -22,24 +22,6 @@ export const loadEmbeddings = async () => {
     wordBaseformMap = await wordBaseformResponse.json();
     console.log("✅ Word baseform mappings loaded");
     
-    // Count available vector files
-    console.log("📊 Checking available vector files...");
-    let vectorCount = 0;
-    for (const word of commonWords) {
-      const baseform = wordBaseformMap?.[word.toLowerCase()];
-      if (baseform) {
-        try {
-          const response = await fetch(`/data/words/${baseform}.vec.gz`, { method: 'HEAD' });
-          if (response.ok) {
-            vectorCount++;
-          }
-        } catch (error) {
-          // Silently continue checking other words
-        }
-      }
-    }
-    console.log(`📈 Found ${vectorCount} available vector files`);
-    
     wordList = commonWords.filter(word => wordBaseformMap?.[word]);
     console.log(`✅ Generated word list with ${wordList.length} words`);
     

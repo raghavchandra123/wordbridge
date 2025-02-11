@@ -7,8 +7,7 @@ import { calculateProgress } from '../embeddings/utils';
 import { logDatabaseOperation } from '@/lib/utils/dbLogger';
 
 const getDateSeed = () => {
-  const today = new Date();
-  return `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+  return new Date().toISOString().split('T')[0];
 };
 
 const seededRandom = (seed: string) => {

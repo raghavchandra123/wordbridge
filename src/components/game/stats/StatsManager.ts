@@ -7,17 +7,32 @@ export const updateDailyScore = async (userId: string, score: number, seedDate: 
     
     const isDailyGame = seedDate === today;
     logDatabaseOperation('Daily Score Update Check', {
+      userId,
+      score,
       seedDate,
       today,
       isDailyGame,
-      score
+      dateComparison: {
+        seedDate,
+        today,
+        areEqual: seedDate === today,
+        seedDateType: typeof seedDate,
+        todayType: typeof today
+      }
     });
 
     if (!isDailyGame) {
       logDatabaseOperation('Daily Score Update Skipped', {
         reason: 'Not a daily game',
         seedDate,
-        today
+        today,
+        dateComparison: {
+          seedDate,
+          today,
+          areEqual: seedDate === today,
+          seedDateType: typeof seedDate,
+          todayType: typeof today
+        }
       });
       return;
     }
@@ -31,12 +46,24 @@ export const updateDailyScore = async (userId: string, score: number, seedDate: 
       .single();
 
     if (fetchError && fetchError.code !== 'PGRST116') {
-      logDatabaseOperation('Daily Score Fetch Error', { error: fetchError });
+      logDatabaseOperation('Daily Score Fetch Error', { 
+        error: fetchError,
+        userId,
+        date: today
+      });
       throw fetchError;
     }
 
     // Only update if there's no score or if the new score is better (lower)
     if (!existingScore || score < existingScore.score) {
+      logDatabaseOperation('Daily Score Update Attempt', {
+        userId,
+        newScore: score,
+        existingScore: existingScore?.score,
+        date: today,
+        reason: !existingScore ? 'No existing score' : 'Better score'
+      });
+
       const { error } = await supabase
         .from('daily_scores')
         .upsert({
@@ -48,19 +75,38 @@ export const updateDailyScore = async (userId: string, score: number, seedDate: 
         });
 
       if (error) {
-        logDatabaseOperation('Daily Score Update Error', { error });
+        logDatabaseOperation('Daily Score Update Error', { 
+          error,
+          userId,
+          score,
+          date: today
+        });
         throw error;
       }
 
-      logDatabaseOperation('Daily Score Updated', {
+      logDatabaseOperation('Daily Score Updated Successfully', {
         userId,
         score,
         date: today,
         previousScore: existingScore?.score
       });
+    } else {
+      logDatabaseOperation('Daily Score Update Skipped', {
+        reason: 'Existing score is better',
+        userId,
+        newScore: score,
+        existingScore: existingScore.score,
+        date: today
+      });
     }
   } catch (error) {
-    logDatabaseOperation('Daily Score Update Failed', { error });
+    logDatabaseOperation('Daily Score Update Failed', { 
+      error,
+      userId,
+      score,
+      seedDate,
+      today
+    });
     throw error;
   }
 };
