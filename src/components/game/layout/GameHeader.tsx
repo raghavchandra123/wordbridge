@@ -78,12 +78,14 @@ export const GameHeader = () => {
       </div>
 
       <Dialog open={showTutorial} onOpenChange={setShowTutorial}>
-        <DialogContent className="max-w-2xl">
-          <img 
-            src="/images/tutorial.jpg" 
-            alt="Tutorial" 
-            className="w-full rounded-lg shadow-md"
-          />
+        <DialogContent className="max-w-2xl max-h-[90vh] p-0 overflow-hidden">
+          <div className="overflow-y-auto max-h-full p-6">
+            <img 
+              src="/images/tutorial.jpg" 
+              alt="Tutorial" 
+              className="w-full rounded-lg shadow-md"
+            />
+          </div>
         </DialogContent>
       </Dialog>
 
