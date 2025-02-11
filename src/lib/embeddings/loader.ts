@@ -74,7 +74,7 @@ export const getWordVector = async (word: string): Promise<Float32Array> => {
   if (!wordVectors[baseform]) {
     try {
       console.log(`📥 Loading vector file for word "${baseform}"`);
-      const vectorResponse = await fetch(`/data/words/${baseform}.vec.gz`);
+      const vectorResponse = await fetch(`/data/words/${baseform}.vec`);
       
       if (!vectorResponse.ok) {
         console.error(`❌ Failed to fetch vector file for "${baseform}". Status: ${vectorResponse.status}`);
@@ -84,8 +84,8 @@ export const getWordVector = async (word: string): Promise<Float32Array> => {
       const compressedData = await vectorResponse.arrayBuffer();
       console.log(`📊 Compressed data size for "${baseform}": ${compressedData.byteLength} bytes`);
       
-      // Decompress the data
-      const decompressedData = pako.inflate(new Uint8Array(compressedData));
+      // Decompress the data using raw DEFLATE
+      const decompressedData = pako.inflate(new Uint8Array(compressedData), { raw: true });
       console.log(`📊 Decompressed data size: ${decompressedData.byteLength} bytes`);
       
       // Read the vector length from the first 4 bytes
